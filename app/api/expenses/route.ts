@@ -2,9 +2,8 @@ import { setDateToEndOfDay, setDateToStartOfDay } from "@/app/components/utils/d
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { NextResponse } from "next/server";
 import { db, TABLE_NAME } from "../../../lib/aws/dynamo";
-import { expenseSchema, getExpenseSchema } from "../../../lib/aws/schemas";
-import { randomBytes } from "crypto";
-import { deleteExpenseSchema } from "@/lib/aws/schemas/deleteSchema";
+import { expenseSchema, getExpenseSchema, deleteExpenseSchema, updateExpenseSchema } from "../../../lib/aws/schemas";
+import { randomBytes } from "node:crypto";
 
 
 const USER_ID = "123"; // Aquí usarás tu auth
@@ -70,13 +69,15 @@ export async function GET(request: Request) {
     }
     const year = new Date(parsed.data.startDate!).getFullYear();
     const normalizedStartDate = setDateToStartOfDay(new Date(parsed.data.startDate!));
-    const normalizedEndDate = parsed.data.endDate ? setDateToStartOfDay(new Date(parsed.data.endDate!)) : normalizedStartDate;
-    const normalizedCategory = parsed.data.category ?? "*";
+    const normalizedEndDate = parsed.data.endDate ? setDateToEndOfDay(new Date(parsed.data.endDate!)) : setDateToEndOfDay(normalizedStartDate);
     const result = await db.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
       ExpressionAttributeValues: { ":pk": buildPK(year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
     }));
+    if (category) {
+      result.Items = result.Items?.filter(item => item.category === category);
+    }
     return NextResponse.json(result.Items ?? [], { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
@@ -126,9 +127,20 @@ export async function DELETE(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const date = searchParams.get('date');
-    const year = searchParams.get('year');
+    const body = await request.json();
+    const result = updateExpenseSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { errors: result.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    await db.send(new PutCommand({
+      TableName: TABLE_NAME,
+      Item: result.data,
+    }));
+    return NextResponse.json({ message: "Gasto actualizado", item: result.data }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }

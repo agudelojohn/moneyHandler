@@ -1,20 +1,23 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { env } from "@/lib/config/env";
 
-// Configuración base con variables de entorno
+const hasStaticCreds = env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY;
+
 const client = new DynamoDBClient({
-    region: process.env.AWS_REGION,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
+  region: env.AWS_REGION,
+  ...(hasStaticCreds
+    ? {
+        credentials: {
+          accessKeyId: env.AWS_ACCESS_KEY_ID!,
+          secretAccessKey: env.AWS_SECRET_ACCESS_KEY!,
+        },
+      }
+    : {}),
 });
 
-// El DocumentClient simplifica la vida: maneja JSON plano automáticamente
 export const db = DynamoDBDocumentClient.from(client, {
-    marshallOptions: {
-        removeUndefinedValues: true, // Evita errores si un campo opcional es undefined
-    },
+  marshallOptions: { removeUndefinedValues: true },
 });
 
-export const TABLE_NAME = "ExpensesApp_db";
+export const TABLE_NAME = env.AWS_TABLE_NAME;
