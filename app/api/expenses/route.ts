@@ -12,6 +12,31 @@ const buildPK = (year: number) => `USER#${USER_ID}#${year}`;
 const buildSK = (date?: Date | null) => `EXPENSE#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
 
+function parseDatePreservingCalendarDay(date: string): Date {
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const isUtcMidnightIso = /^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/.test(date);
+
+  if (isDateOnly || isUtcMidnightIso) {
+    const [year, month, day] = date.slice(0, 10).split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  return new Date(date);
+}
+
+function buildDateForSK (date: Date): Date {
+  const now = new Date();
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds(),
+    now.getMilliseconds()
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -26,13 +51,15 @@ export async function POST(request: Request) {
     }
 
     const { amount, description, date, category } = result.data;
-    const year = new Date(date).getFullYear();
+    const dateObject = date ? parseDatePreservingCalendarDay(date) : new Date();
+    const year = dateObject.getFullYear();
 
     // 2. Construir el Item para DynamoDB
-    const normalizedDate = setDateToStartOfDay(date ? new Date(date) : new Date());
+    const normalizedDate = setDateToStartOfDay(dateObject);
+    const dateForSK = buildDateForSK(normalizedDate);
     const item = {
       PK: buildPK(year),
-      SK: buildSK(date ? new Date(date) : new Date()),
+      SK: buildSK(dateForSK),
       id: buildUniqueID(),
       amount,
       description,
@@ -67,14 +94,19 @@ export async function GET(request: Request) {
         { status: 400 }
       );
     }
-    const year = new Date(parsed.data.startDate!).getFullYear();
-    const normalizedStartDate = setDateToStartOfDay(new Date(parsed.data.startDate!));
-    const normalizedEndDate = parsed.data.endDate ? setDateToEndOfDay(new Date(parsed.data.endDate!)) : setDateToEndOfDay(normalizedStartDate);
+    const parsedStartDate = parseDatePreservingCalendarDay(parsed.data.startDate!);
+    const year = parsedStartDate.getFullYear();
+    const normalizedStartDate = setDateToStartOfDay(parsedStartDate);
+    const parsedEndDate = parsed.data.endDate
+      ? parseDatePreservingCalendarDay(parsed.data.endDate)
+      : parsedStartDate;
+    const normalizedEndDate = setDateToEndOfDay(parsedEndDate);
     const result = await db.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
       ExpressionAttributeValues: { ":pk": buildPK(year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
     }));
+    // debugger;
     if (category) {
       result.Items = result.Items?.filter(item => item.category === category);
     }
@@ -96,9 +128,10 @@ export async function DELETE(request: Request) {
         { status: 400 }
       );
     }
-    const normalizedStartDate = setDateToStartOfDay(new Date(rawDate!));
-    const normalizedEndDate = setDateToEndOfDay(new Date(rawDate!));
-    const year = new Date(rawDate!).getFullYear();
+    const parsedDate = parseDatePreservingCalendarDay(rawDate!);
+    const normalizedStartDate = setDateToStartOfDay(parsedDate);
+    const normalizedEndDate = setDateToEndOfDay(parsedDate);
+    const year = parsedDate.getFullYear();
     const result = await db.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",

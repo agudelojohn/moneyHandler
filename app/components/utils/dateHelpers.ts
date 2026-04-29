@@ -22,7 +22,9 @@ export const getInclusiveDaysDiff = (startDate: Date, endDate: Date) => {
 }
 
 export const setDateToStartOfDay = (date: Date) => {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  return d
 }
 
 export const setDateToEndOfDay = (date: Date) => {
