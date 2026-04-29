@@ -39,6 +39,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useI18n } from "../i18n/I18nProvider";
+import { type CategoryKey } from "../i18n/translations";
 
 type Category = (typeof CATEGORIES)[number];
 
@@ -61,8 +63,8 @@ type ExpenseFormState = {
   category: Category;
 };
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("es-CO", {
+const formatCurrency = (amount: number, locale = "es-CO") =>
+  new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "COP",
     maximumFractionDigits: 0,
@@ -75,6 +77,13 @@ const toLocalDateInputValue = (date: Date) => {
 
 const buildIsoFromInputDate = (dateInput: string) =>
   new Date(dateInput).toISOString();
+const dateInputToUtcMillis = (dateInput: string, endOfDay = false) => {
+  const [year, month, day] = dateInput.split("-").map(Number);
+  if (!year || !month || !day) return Number.NaN;
+  return endOfDay
+    ? Date.UTC(year, month - 1, day, 23, 59, 59, 999)
+    : Date.UTC(year, month - 1, day, 0, 0, 0, 0);
+};
 const normalizeDescriptionKey = (value: string) =>
   value.toLowerCase().replaceAll(" ", "");
 
@@ -109,7 +118,17 @@ const yearlyDateInputRange = () => {
   };
 };
 
-function EvolutionChart({ items, isMobile }: { items: ExpenseItem[]; isMobile: boolean }) {
+function EvolutionChart({
+  items,
+  isMobile,
+  dateLocale,
+  chartEmptyLabel,
+}: {
+  items: ExpenseItem[];
+  isMobile: boolean;
+  dateLocale: string;
+  chartEmptyLabel: string;
+}) {
   if (!items.length) {
     return (
       <Box
@@ -124,7 +143,7 @@ function EvolutionChart({ items, isMobile }: { items: ExpenseItem[]; isMobile: b
         }}
       >
         <Typography variant="body2" sx={{ color: TEXT_SECONDARY }}>
-          Sin datos para mostrar en el grafico.
+          {chartEmptyLabel}
         </Typography>
       </Box>
     );
@@ -136,7 +155,7 @@ function EvolutionChart({ items, isMobile }: { items: ExpenseItem[]; isMobile: b
 
   const chartData = sorted.map((item) => ({
     ...item,
-    chartDate: new Intl.DateTimeFormat("es-CO", {
+    chartDate: new Intl.DateTimeFormat(dateLocale, {
       day: "2-digit",
       month: "short",
     }).format(new Date(item.date)),
@@ -165,17 +184,17 @@ function EvolutionChart({ items, isMobile }: { items: ExpenseItem[]; isMobile: b
             hide={isMobile}
             tick={{ fontSize: 12, fill: TEXT_SECONDARY }}
             axisLine={{ stroke: DARK_BORDER }}
-            tickFormatter={(value: number) => formatCurrency(value)}
+            tickFormatter={(value: number) => formatCurrency(value, dateLocale)}
           />
           <Tooltip
             formatter={(value) => {
               const numericValue = typeof value === "number" ? value : Number(value ?? 0);
-              return formatCurrency(numericValue);
+              return formatCurrency(numericValue, dateLocale);
             }}
             labelFormatter={(_, payload) => {
               const row = payload?.[0]?.payload as ExpenseItem | undefined;
               if (!row) return "";
-              return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(
+              return new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium" }).format(
                 new Date(row.date)
               );
             }}
@@ -195,6 +214,7 @@ function EvolutionChart({ items, isMobile }: { items: ExpenseItem[]; isMobile: b
 }
 
 export default function ExpensesDashboard() {
+  const { t, dateLocale } = useI18n();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { startDate: initialChartStartDate, endDate: initialChartEndDate } =
@@ -221,13 +241,13 @@ export default function ExpensesDashboard() {
     if (!query) return items;
     return items.filter((item) => {
       const byDescription = item.description.toLowerCase().includes(query);
-      const byDate = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" })
+      const byDate = new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium" })
         .format(new Date(item.date))
         .toLowerCase()
         .includes(query);
       return byDescription || byDate || item.id.toLowerCase().includes(query);
     });
-  }, [items, searchValue]);
+  }, [dateLocale, items, searchValue]);
 
   const totalAmount = useMemo(
     () => items.reduce((acc, item) => acc + Number(item.amount), 0),
@@ -257,29 +277,22 @@ export default function ExpensesDashboard() {
     );
 
     if (!chartStartDate || !chartEndDate) return byDescription;
-    const start = new Date(`${chartStartDate}T00:00:00`).getTime();
-    const end = new Date(`${chartEndDate}T23:59:59.999`).getTime();
+    const start = dateInputToUtcMillis(chartStartDate);
+    const end = dateInputToUtcMillis(chartEndDate, true);
     if (Number.isNaN(start) || Number.isNaN(end) || start > end) return [];
 
     return byDescription.filter((item) => {
       const itemDate = new Date(item.date).getTime();
       return itemDate >= start && itemDate <= end;
     });
-  }, [items, selectedDescription, chartStartDate, chartEndDate]);
+  }, [items, selectedCategory, selectedDescription, chartStartDate, chartEndDate]);
 
   const rangeError = useMemo(() => {
     if (!chartStartDate || !chartEndDate) return null;
     return chartStartDate > chartEndDate
-      ? "El rango de fechas de la grafica es invalido."
+      ? t.expenses.invalidChartRange
       : null;
-  }, [chartStartDate, chartEndDate]);
-
-  useEffect(() => {
-    if (selectedDescription === SELECT_DESCRIPTION) return;
-    if (!descriptionAmountMap.has(selectedDescription)) {
-      setSelectedDescription(SELECT_DESCRIPTION);
-    }
-  }, [descriptionAmountMap, selectedDescription]);
+  }, [chartEndDate, chartStartDate, t.expenses.invalidChartRange]);
 
   const loadExpenses = useCallback(async (category: Category) => {
     setError(null);
@@ -290,13 +303,13 @@ export default function ExpensesDashboard() {
       cache: "no-store",
     });
     if (!response.ok) {
-      throw new Error("No se pudieron cargar los gastos");
+      throw new Error(t.expenses.loadError);
     }
     const payload = (await response.json()) as ExpenseItem[];
     setItems(
       [...payload].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     );
-  }, []);
+  }, [t.expenses.loadError]);
 
   const handleCategoryChange = async (category: Category) => {
     setSelectedCategory(category);
@@ -327,11 +340,11 @@ export default function ExpensesDashboard() {
     setSuccessMessage(null);
     const amount = Number(form.amount);
     if (!Number.isInteger(amount) || amount <= 0) {
-      setError("El monto debe ser un numero entero positivo.");
+      setError(t.expenses.amountValidation);
       return;
     }
     if (form.description.trim().length < 3) {
-      setError("La descripcion debe tener minimo 3 caracteres.");
+      setError(t.expenses.descriptionValidation);
       return;
     }
 
@@ -354,8 +367,8 @@ export default function ExpensesDashboard() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        if (!response.ok) throw new Error("No se pudo actualizar el gasto.");
-        setSuccessMessage("Gasto actualizado correctamente.");
+        if (!response.ok) throw new Error(t.expenses.updateError);
+        setSuccessMessage(t.expenses.updateSuccess);
       } else {
         const payload = {
           amount,
@@ -369,23 +382,21 @@ export default function ExpensesDashboard() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        if (!response.ok) throw new Error("No se pudo crear el gasto.");
-        setSuccessMessage("Gasto creado correctamente.");
+        if (!response.ok) throw new Error(t.expenses.createError);
+        setSuccessMessage(t.expenses.createSuccess);
       }
 
       await loadExpenses(selectedCategory);
       resetForm();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Error inesperado");
+      setError(saveError instanceof Error ? saveError.message : t.expenses.unexpectedError);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const deleteExpense = async (item: ExpenseItem) => {
-    const shouldDelete = window.confirm(
-      "Esta accion eliminara el registro seleccionado. Deseas continuar?"
-    );
+    const shouldDelete = window.confirm(t.expenses.deleteConfirm);
     if (!shouldDelete) return;
     setError(null);
     setSuccessMessage(null);
@@ -395,12 +406,12 @@ export default function ExpensesDashboard() {
       const response = await fetch(`/api/expenses?${params.toString()}`, {
         method: "DELETE",
       });
-      if (!response.ok) throw new Error("No se pudo eliminar el gasto.");
+      if (!response.ok) throw new Error(t.expenses.deleteError);
       await loadExpenses(selectedCategory);
       if (selectedItemId === item.id) resetForm();
-      setSuccessMessage("Gasto eliminado correctamente.");
+      setSuccessMessage(t.expenses.deleteSuccess);
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Error inesperado");
+      setError(deleteError instanceof Error ? deleteError.message : t.expenses.unexpectedError);
     } finally {
       setIsSubmitting(false);
     }
@@ -411,11 +422,11 @@ export default function ExpensesDashboard() {
       try {
         await loadExpenses(selectedCategory);
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "Error inesperado");
+        setError(loadError instanceof Error ? loadError.message : t.expenses.unexpectedError);
       }
     };
     void run();
-  }, [loadExpenses, selectedCategory]);
+  }, [loadExpenses, selectedCategory, t.expenses.unexpectedError]);
 
   return (
     <Stack
@@ -424,8 +435,8 @@ export default function ExpensesDashboard() {
         overflow: 'auto',
         margin: 0,
         minHeight: "100vh",
-        py: { xs: 2, sm: 8 },
-        px: { xs: 1.5, sm: 15 },
+        py: { xs: 8 },
+        px: { xs: 6, sm: 15 },
         backgroundColor: DARK_BG,
         color: TEXT_PRIMARY,
         "& .MuiInputLabel-root": { color: TEXT_SECONDARY },
@@ -443,11 +454,10 @@ export default function ExpensesDashboard() {
         variant="h4"
         sx={{ fontWeight: 800, fontSize: { xs: "1.75rem", sm: "2.125rem" }, color: TEXT_PRIMARY }}
       >
-        Control de Expenses
+        {t.expenses.pageTitle}
       </Typography>
       <Typography sx={{ color: TEXT_SECONDARY }}>
-        Visualiza la evolucion anual por categoria, crea nuevos registros y gestiona
-        los existentes desde una sola vista.
+        {t.expenses.pageSubtitle}
       </Typography>
 
       <Card
@@ -470,40 +480,78 @@ export default function ExpensesDashboard() {
             >
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
                 <FormControl size="small" sx={{ minWidth: { sm: 240 } }} fullWidth={isMobile}>
-                  <InputLabel id="category-select-label">Categoria</InputLabel>
+                  <InputLabel id="category-select-label">{t.expenses.category}</InputLabel>
                   <Select
                     labelId="category-select-label"
                     value={selectedCategory}
-                    label="Categoria"
+                    label={t.expenses.category}
+                    sx={{ "& .MuiSelect-select": { color: TEXT_PRIMARY } }}
+                    MenuProps={{
+                      slotProps: {
+                        paper: {
+                          sx: {
+                            bgcolor: DARK_SURFACE_ALT,
+                            color: TEXT_PRIMARY,
+                            border: "1px solid",
+                            borderColor: DARK_BORDER,
+                            "& .MuiMenuItem-root.Mui-selected": {
+                              bgcolor: "#162542",
+                            },
+                            "& .MuiMenuItem-root.Mui-selected:hover": {
+                              bgcolor: "#1d3253",
+                            },
+                          },
+                        },
+                      },
+                    }}
                     onChange={(event) =>
                       void handleCategoryChange(event.target.value as Category)
                     }
                   >
                     {CATEGORIES.map((category) => (
                       <MenuItem key={category} value={category}>
-                        {category}
+                        {t.categories[category as CategoryKey]}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
                 <FormControl size="small" sx={{ minWidth: { sm: 280 } }} fullWidth={isMobile}>
-                  <InputLabel id="description-select-label">Descripcion</InputLabel>
+                  <InputLabel id="description-select-label">{t.expenses.description}</InputLabel>
                   <Select
                     labelId="description-select-label"
                     value={selectedDescription}
-                    label="Descripcion"
+                    label={t.expenses.description}
+                    sx={{ "& .MuiSelect-select": { color: TEXT_PRIMARY } }}
+                    MenuProps={{
+                      slotProps: {
+                        paper: {
+                          sx: {
+                            bgcolor: DARK_SURFACE_ALT,
+                            color: TEXT_PRIMARY,
+                            border: "1px solid",
+                            borderColor: DARK_BORDER,
+                            "& .MuiMenuItem-root.Mui-selected": {
+                              bgcolor: "#162542",
+                            },
+                            "& .MuiMenuItem-root.Mui-selected:hover": {
+                              bgcolor: "#1d3253",
+                            },
+                          },
+                        },
+                      },
+                    }}
                     onChange={(event) => setSelectedDescription(event.target.value)}
                   >
-                    <MenuItem value={SELECT_DESCRIPTION}>Seleccione una descripcion</MenuItem>
+                    <MenuItem value={SELECT_DESCRIPTION}>{t.expenses.selectDescription}</MenuItem>
                     {Array.from(descriptionAmountMap.entries()).map(([descriptionKey, data]) => (
                       <MenuItem key={descriptionKey} value={descriptionKey}>
-                        {data.label} - {formatCurrency(data.amount)}
+                        {data.label} - {formatCurrency(data.amount, dateLocale)}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
                 <TextField
-                  label="Desde (grafica)"
+                  label={t.expenses.fromChart}
                   type="date"
                   size="small"
                   value={chartStartDate}
@@ -512,7 +560,7 @@ export default function ExpensesDashboard() {
                   sx={{ minWidth: { sm: 190 } }}
                 />
                 <TextField
-                  label="Hasta (grafica)"
+                  label={t.expenses.toChart}
                   type="date"
                   size="small"
                   value={chartEndDate}
@@ -523,7 +571,7 @@ export default function ExpensesDashboard() {
               </Stack>
               <Chip
                 variant="filled"
-                label={`Total anual: ${formatCurrency(totalAmount)}`}
+                label={`${t.expenses.yearlyTotal}: ${formatCurrency(totalAmount, dateLocale)}`}
                 sx={{
                   alignSelf: { xs: "flex-start", sm: "center" },
                   backgroundColor: BLUE_DEEP,
@@ -533,7 +581,12 @@ export default function ExpensesDashboard() {
               />
             </Stack>
             {rangeError && <Alert severity="warning">{rangeError}</Alert>}
-            <EvolutionChart items={[...chartItems].reverse()} isMobile={isMobile} />
+            <EvolutionChart
+              items={[...chartItems].reverse()}
+              isMobile={isMobile}
+              dateLocale={dateLocale}
+              chartEmptyLabel={t.expenses.chartEmpty}
+            />
           </Stack>
         </CardContent>
       </Card>
@@ -556,10 +609,10 @@ export default function ExpensesDashboard() {
             <CardContent sx={{ p: { xs: 1.5, sm: 2.5, md: 3 }, "&:last-child": { pb: { xs: 1.5, sm: 2.5, md: 3 } } }}>
               <Stack spacing={2}>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: TEXT_PRIMARY }}>
-                  {selectedItem ? "Editar gasto" : "Nuevo gasto"}
+                  {selectedItem ? t.expenses.editExpense : t.expenses.newExpense}
                 </Typography>
                 <TextField
-                  label="Monto"
+                  label={t.expenses.amount}
                   value={form.amount}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, amount: event.target.value }))
@@ -568,7 +621,7 @@ export default function ExpensesDashboard() {
                   type="number"
                 />
                 <TextField
-                  label="Descripcion"
+                  label={t.expenses.description}
                   value={form.description}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, description: event.target.value }))
@@ -576,7 +629,7 @@ export default function ExpensesDashboard() {
                   size="small"
                 />
                 <TextField
-                  label="Fecha"
+                  label={t.expenses.date}
                   value={form.date}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, date: event.target.value }))
@@ -586,10 +639,10 @@ export default function ExpensesDashboard() {
                   // InputLabelProps={{ shrink: true }}
                 />
                 <FormControl size="small">
-                  <InputLabel id="category-form-label">Categoria</InputLabel>
+                  <InputLabel id="category-form-label">{t.expenses.category}</InputLabel>
                   <Select
                     labelId="category-form-label"
-                    label="Categoria"
+                    label={t.expenses.category}
                     value={form.category}
                     onChange={(event) =>
                       setForm((prev) => ({
@@ -600,7 +653,7 @@ export default function ExpensesDashboard() {
                   >
                     {CATEGORIES.map((category) => (
                       <MenuItem key={category} value={category}>
-                        {category}
+                        {t.categories[category as CategoryKey]}
                       </MenuItem>
                     ))}
                   </Select>
@@ -617,7 +670,7 @@ export default function ExpensesDashboard() {
                       "&:hover": { backgroundColor: "#1e40af" },
                     }}
                   >
-                    {selectedItem ? "Guardar cambios" : "Crear registro"}
+                    {selectedItem ? t.expenses.saveChanges : t.expenses.createRecord}
                   </Button>
                   <Button
                     onClick={resetForm}
@@ -629,7 +682,7 @@ export default function ExpensesDashboard() {
                       color: BLUE_ACCENT,
                     }}
                   >
-                    Limpiar
+                    {t.expenses.clear}
                   </Button>
                 </Stack>
               </Stack>
@@ -649,11 +702,11 @@ export default function ExpensesDashboard() {
             <CardContent sx={{ p: { xs: 1.5, sm: 2.5, md: 3 }, "&:last-child": { pb: { xs: 1.5, sm: 2.5, md: 3 } } }}>
               <Stack spacing={2}>
                 <Typography variant="h6" sx={{ fontWeight: 700, color: TEXT_PRIMARY }}>
-                  Busqueda y gestion
+                  {t.expenses.searchAndManage}
                 </Typography>
                 <TextField
                   size="small"
-                  placeholder="Buscar por descripcion, fecha o ID"
+                  placeholder={t.expenses.searchPlaceholder}
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
                 />
@@ -678,7 +731,7 @@ export default function ExpensesDashboard() {
                         >
                           <Stack spacing={1}>
                             <Typography variant="body2" sx={{ color: TEXT_SECONDARY }}>
-                              {new Intl.DateTimeFormat("es-CO", {
+                              {new Intl.DateTimeFormat(dateLocale, {
                                 dateStyle: "medium",
                               }).format(new Date(item.date))}
                             </Typography>
@@ -686,7 +739,7 @@ export default function ExpensesDashboard() {
                               {item.description}
                             </Typography>
                             <Typography sx={{ color: BLUE_ACCENT, fontWeight: 700 }}>
-                              {formatCurrency(item.amount)}
+                              {formatCurrency(item.amount, dateLocale)}
                             </Typography>
                             <Stack direction="row" spacing={1}>
                               <Button
@@ -697,7 +750,7 @@ export default function ExpensesDashboard() {
                                 fullWidth
                                 sx={{ borderColor: BLUE_ACCENT, color: BLUE_ACCENT }}
                               >
-                                Editar
+                                {t.expenses.edit}
                               </Button>
                               <Button
                                 size="small"
@@ -707,7 +760,7 @@ export default function ExpensesDashboard() {
                                 onClick={() => void deleteExpense(item)}
                                 fullWidth
                               >
-                                Eliminar
+                                {t.expenses.delete}
                               </Button>
                             </Stack>
                           </Stack>
@@ -716,7 +769,7 @@ export default function ExpensesDashboard() {
                     ))}
                     {!filteredItems.length && (
                       <Typography variant="body2" sx={{ color: TEXT_SECONDARY }}>
-                        No hay resultados para esta categoria en el anio actual.
+                        {t.expenses.noResultsCurrentYear}
                       </Typography>
                     )}
                   </Stack>
@@ -734,16 +787,16 @@ export default function ExpensesDashboard() {
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ backgroundColor: "#0b1220", color: TEXT_PRIMARY }}>
-                            Fecha
+                            {t.expenses.date}
                           </TableCell>
                           <TableCell sx={{ backgroundColor: "#0b1220", color: TEXT_PRIMARY }}>
-                            Descripcion
+                            {t.expenses.description}
                           </TableCell>
                           <TableCell sx={{ backgroundColor: "#0b1220", color: TEXT_PRIMARY }}>
-                            Valor
+                            {t.expenses.value}
                           </TableCell>
                           <TableCell sx={{ backgroundColor: "#0b1220", color: TEXT_PRIMARY }}>
-                            Acciones
+                            {t.expenses.actions}
                           </TableCell>
                         </TableRow>
                       </TableHead>
@@ -760,13 +813,13 @@ export default function ExpensesDashboard() {
                             }}
                           >
                             <TableCell>
-                              {new Intl.DateTimeFormat("es-CO", {
+                              {new Intl.DateTimeFormat(dateLocale, {
                                 dateStyle: "medium",
                               }).format(new Date(item.date))}
                             </TableCell>
                             <TableCell>{item.description}</TableCell>
                             <TableCell sx={{ fontWeight: 700, color: BLUE_ACCENT }}>
-                              {formatCurrency(item.amount)}
+                              {formatCurrency(item.amount, dateLocale)}
                             </TableCell>
                             <TableCell>
                               <Stack direction="row" spacing={1}>
@@ -777,7 +830,7 @@ export default function ExpensesDashboard() {
                                   onClick={() => handleSelectItem(item)}
                                   sx={{ borderColor: BLUE_ACCENT, color: BLUE_ACCENT }}
                                 >
-                                  Editar
+                                  {t.expenses.edit}
                                 </Button>
                                 <Button
                                   size="small"
@@ -786,7 +839,7 @@ export default function ExpensesDashboard() {
                                   startIcon={<DeleteOutlineRoundedIcon />}
                                   onClick={() => void deleteExpense(item)}
                                 >
-                                  Eliminar
+                                  {t.expenses.delete}
                                 </Button>
                               </Stack>
                             </TableCell>
@@ -796,7 +849,7 @@ export default function ExpensesDashboard() {
                           <TableRow>
                             <TableCell colSpan={4}>
                               <Typography variant="body2" color="text.secondary">
-                                No hay resultados para esta categoria en el anio actual.
+                                {t.expenses.noResultsCurrentYear}
                               </Typography>
                             </TableCell>
                           </TableRow>

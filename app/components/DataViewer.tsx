@@ -1,6 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { getInclusiveDaysDiff, getLastBusinessDayOfMonth } from './utils/dateHelpers'
+import { useI18n } from '../i18n/I18nProvider'
 
 type DataViewerProps = {
     totalValue: number,
@@ -10,6 +11,7 @@ type DataViewerProps = {
 }
 
 export default function DataViewer({ totalValue, startDay, environment, initialTodayISO }: DataViewerProps) {
+    const { t, dateLocale } = useI18n()
 
     const [today, setToday] = useState(new Date(initialTodayISO))
 
@@ -25,16 +27,16 @@ export default function DataViewer({ totalValue, startDay, environment, initialT
     }
 
     return (
-        <><h1>Data Viewer</h1>
-            <p>Total Value: {totalValue}</p>
-            <p>Today: {new Intl.DateTimeFormat('es-ES', { timeZone: 'UTC' }).format(today)}</p>
-            <p>Last Business Day: {new Intl.DateTimeFormat('es-ES', { timeZone: 'UTC' }).format(lastBusinessDay)}</p>
-            <p>Diff Days: {diffDays}</p>
+        <><h1>{t.dataViewer.title}</h1>
+            <p>{t.dataViewer.totalValue}: {totalValue}</p>
+            <p>{t.dataViewer.today}: {new Intl.DateTimeFormat(dateLocale, { timeZone: 'UTC' }).format(today)}</p>
+            <p>{t.dataViewer.lastBusinessDay}: {new Intl.DateTimeFormat(dateLocale, { timeZone: 'UTC' }).format(lastBusinessDay)}</p>
+            <p>{t.dataViewer.diffDays}: {diffDays}</p>
 
             {environment === 'development' && (
                 <>
-                    <button onClick={addOneDay}>+1 Day</button>
-                    <button onClick={subtractOneDay}>-1 Day</button>
+                    <button onClick={addOneDay}>{t.dataViewer.plusOneDay}</button>
+                    <button onClick={subtractOneDay}>{t.dataViewer.minusOneDay}</button>
                 </>
             )}
         </>
