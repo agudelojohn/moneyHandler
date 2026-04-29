@@ -85,6 +85,18 @@ const outlinedButtonSx = {
   },
 };
 
+const valuePillSx = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+  px: 1.5,
+  py: 0.75,
+  borderRadius: 999,
+  border: `1px solid ${BORDER_COLOR}`,
+  backgroundColor: "#111827",
+};
+
 export default function ManagementPage() {
   const { t } = useI18n();
   const isDevelopment = process.env.NODE_ENV === "development";
@@ -361,11 +373,8 @@ export default function ManagementPage() {
         color: TEXT_PRIMARY,
       }}
     >
-      <Typography variant="h2" sx={{ fontWeight: 700, textAlign: "center", color: TEXT_PRIMARY }}>
+      <Typography variant="h2" sx={{ fontWeight: 700, textAlign: "center", color: TEXT_PRIMARY, paddingTop: { xs: 10, sm: 2 } }}>
         {t.management.title}
-      </Typography>
-      <Typography sx={{ color: TEXT_SECONDARY, textAlign: "center" }}>
-        {t.management.subtitle}
       </Typography>
       {isDevelopment && isValidDateString(DEV_INITIAL_REQUEST_DATE) ? (
         <Alert severity="info" sx={{ width: "100%", maxWidth: 760 }}>
@@ -400,42 +409,91 @@ export default function ManagementPage() {
                     p: 2,
                   }}
                 >
-                  <Typography sx={{ fontWeight: 700, color: TEXT_PRIMARY }}>
-                    Registro: {record.id}
+                  <Typography sx={{ color: TEXT_SECONDARY, mt: 2, mb: 1 }}>
+                    Fecha de creación: {new Date(record.creationDate).toLocaleDateString()}
                   </Typography>
-                  <Typography sx={{ color: TEXT_SECONDARY }}>
-                    Fecha: {new Date(record.creationDate).toLocaleDateString()}
-                  </Typography>
-                  <Typography sx={{ color: TEXT_SECONDARY }}>
-                    Monto inicial: {currencyFormatter.format(record.initialAmount)}
-                  </Typography>
-                  <Typography sx={{ color: TEXT_SECONDARY }}>
-                    Deducciones: {currencyFormatter.format(deductionTotal)}
-                  </Typography>
-                  <Typography sx={{ color: TEXT_SECONDARY }}>
-                    Dias del mes: {currentDateMetrics.totalDaysInMonth}
-                  </Typography>
-                  <Typography sx={{ color: TEXT_SECONDARY }}>
-                    Dia actual: {currentDateMetrics.currentDayOfMonth}
-                  </Typography>
-                  <Typography sx={{ color: TEXT_SECONDARY }}>
-                    Disponible antes de deducciones:{" "}
-                    {currencyFormatter.format(availableBeforeDeductions)}
-                  </Typography>
-                  <Typography sx={{ color: TEXT_PRIMARY, mt: 1 }}>
-                    Disponible: {currencyFormatter.format(availableAmount)}
-                  </Typography>
+                  <Stack spacing={3} sx={{ mt: 2, width: "100%", mb: 3 }}>
+                    <hr />
+                    <Box
+                      sx={{
+                        ...valuePillSx,
+                        borderColor: BLUE_DEEP,
+                        backgroundColor: availableAmount > 0 ? "#0b1b42" : "#ff0000",
+                        borderWidth: 2,
+                        boxShadow: availableAmount > 0 ? "0 0 0 1px rgba(29, 78, 216, 0.35), 0 10px 24px rgba(29, 78, 216, 0.25)" : "0 0 0 1px rgba(255, 0, 0, 0.35), 0 10px 24px rgba(255, 0, 0, 0.25)",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "#bfdbfe", fontWeight: 700, letterSpacing: 0.3 }}
+                      >
+                        Disponible
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: availableAmount > 0 ? "#ffffff" : "#000",
+                          fontWeight: 800,
+                          textAlign: "right",
+                          fontSize: { xs: "1.15rem", sm: "1.35rem" },
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {currencyFormatter.format(availableAmount)}
+                      </Typography>
+                    </Box>
+                    <hr />
+                    <Box sx={valuePillSx}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                        Monto inicial
+                      </Typography>
+                      <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
+                        {currencyFormatter.format(record.initialAmount)}
+                      </Typography>
+                    </Box>
+                    <Box sx={valuePillSx}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                        Deducciones
+                      </Typography>
+                      <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
+                        {currencyFormatter.format(deductionTotal)}
+                      </Typography>
+                    </Box>
+                    <Box sx={valuePillSx}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                        Dias del mes
+                      </Typography>
+                      <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
+                        {currentDateMetrics.totalDaysInMonth}
+                      </Typography>
+                    </Box>
+                    <Box sx={valuePillSx}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                        Dia actual
+                      </Typography>
+                      <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
+                        {currentDateMetrics.currentDayOfMonth}
+                      </Typography>
+                    </Box>
+                    <Box sx={valuePillSx}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                        Disponible antes
+                      </Typography>
+                      <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
+                        {currencyFormatter.format(availableBeforeDeductions)}
+                      </Typography>
+                    </Box>
+                  </Stack>
                   <Button
                     variant="outlined"
                     onClick={() => handleOpenDeductionModal(record)}
-                    sx={{ ...outlinedButtonSx, mt: 1 }}
+                    sx={{ ...outlinedButtonSx, mt: 1, width: { xs: "100%", sm: "auto" } }}
                   >
                     Agregar deduccion
                   </Button>
                   <Button
                     variant="outlined"
                     onClick={() => handleOpenViewDeductionsModal(record)}
-                    sx={{ ...outlinedButtonSx, mt: 1, ml: 1 }}
+                    sx={{ ...outlinedButtonSx, mt: 1, ml: { xs: 0, sm: 1 }, width: { xs: "100%", sm: "auto" } }}
                   >
                     Ver deducciones
                   </Button>
@@ -453,6 +511,7 @@ export default function ManagementPage() {
             backgroundColor: BLUE_DEEP,
             color: TEXT_PRIMARY,
             "&:hover": { backgroundColor: "#1e40af" },
+            mb: 5
           }}
         >
           {t.common.backToHome}
