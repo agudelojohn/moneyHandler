@@ -18,6 +18,7 @@ import {
   MenuItem,
   Select,
   Stack,
+  TableContainer,
   Table,
   TableBody,
   TableCell,
@@ -25,6 +26,8 @@ import {
   TableRow,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -82,6 +85,14 @@ const initialForm = (): ExpenseFormState => ({
   category: CATEGORIES[0],
 });
 const SELECT_DESCRIPTION = "__SELECT_DESCRIPTION__";
+const DARK_BG = "#020617";
+const DARK_SURFACE = "#0f172a";
+const DARK_SURFACE_ALT = "#0b1220";
+const DARK_BORDER = "#1e293b";
+const BLUE_DEEP = "#1d4ed8";
+const BLUE_ACCENT = "#60a5fa";
+const TEXT_PRIMARY = "#e2e8f0";
+const TEXT_SECONDARY = "#94a3b8";
 
 const yearlyRangeIso = () => {
   const year = new Date().getFullYear();
@@ -98,7 +109,7 @@ const yearlyDateInputRange = () => {
   };
 };
 
-function EvolutionChart({ items }: { items: ExpenseItem[] }) {
+function EvolutionChart({ items, isMobile }: { items: ExpenseItem[]; isMobile: boolean }) {
   if (!items.length) {
     return (
       <Box
@@ -106,12 +117,13 @@ function EvolutionChart({ items }: { items: ExpenseItem[] }) {
           height: 220,
           borderRadius: 3,
           border: "1px dashed",
-          borderColor: "divider",
+          borderColor: DARK_BORDER,
+          backgroundColor: DARK_SURFACE,
           display: "grid",
           placeItems: "center",
         }}
       >
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: TEXT_SECONDARY }}>
           Sin datos para mostrar en el grafico.
         </Typography>
       </Box>
@@ -131,14 +143,28 @@ function EvolutionChart({ items }: { items: ExpenseItem[] }) {
   }));
 
   return (
-    <Box sx={{ width: "100%", height: 260 }}>
+    <Box sx={{ width: "100%", height: isMobile ? 220 : 260 }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 12, right: 18, left: 8, bottom: 6 }}>
-          <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" />
-          <XAxis dataKey="chartDate" tick={{ fontSize: 12 }} />
+        <LineChart
+          data={chartData}
+          margin={{
+            top: 12,
+            right: isMobile ? 8 : 18,
+            left: isMobile ? 0 : 8,
+            bottom: 6,
+          }}
+        >
+          <CartesianGrid strokeDasharray="4 4" stroke="#243247" />
+          <XAxis
+            dataKey="chartDate"
+            tick={{ fontSize: isMobile ? 10 : 12, fill: TEXT_SECONDARY }}
+            axisLine={{ stroke: DARK_BORDER }}
+          />
           <YAxis
             dataKey="amount"
-            tick={{ fontSize: 12 }}
+            hide={isMobile}
+            tick={{ fontSize: 12, fill: TEXT_SECONDARY }}
+            axisLine={{ stroke: DARK_BORDER }}
             tickFormatter={(value: number) => formatCurrency(value)}
           />
           <Tooltip
@@ -157,10 +183,10 @@ function EvolutionChart({ items }: { items: ExpenseItem[] }) {
           <Line
             type="monotone"
             dataKey="amount"
-            stroke="#6f5ef9"
+            stroke={BLUE_ACCENT}
             strokeWidth={3}
-            dot={{ r: 4, fill: "#2b6bef", strokeWidth: 0 }}
-            activeDot={{ r: 6 }}
+            dot={{ r: 4, fill: BLUE_DEEP, strokeWidth: 0 }}
+            activeDot={{ r: 6, fill: BLUE_ACCENT }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -169,6 +195,8 @@ function EvolutionChart({ items }: { items: ExpenseItem[] }) {
 }
 
 export default function ExpensesDashboard() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { startDate: initialChartStartDate, endDate: initialChartEndDate } =
     yearlyDateInputRange();
   const [selectedCategory, setSelectedCategory] = useState<Category>(CATEGORIES[0]);
@@ -390,17 +418,48 @@ export default function ExpensesDashboard() {
   }, [loadExpenses, selectedCategory]);
 
   return (
-    <Stack spacing={3} sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ fontWeight: 800 }}>
+    <Stack
+      spacing={3}
+      sx={{
+        overflow: 'auto',
+        margin: 0,
+        minHeight: "100vh",
+        py: { xs: 2, sm: 8 },
+        px: { xs: 1.5, sm: 15 },
+        backgroundColor: DARK_BG,
+        color: TEXT_PRIMARY,
+        "& .MuiInputLabel-root": { color: TEXT_SECONDARY },
+        "& .MuiOutlinedInput-root": {
+          color: TEXT_PRIMARY,
+          backgroundColor: DARK_SURFACE_ALT,
+          "& fieldset": { borderColor: DARK_BORDER },
+          "&:hover fieldset": { borderColor: BLUE_ACCENT },
+          "&.Mui-focused fieldset": { borderColor: BLUE_ACCENT },
+        },
+        "& .MuiSvgIcon-root": { color: TEXT_SECONDARY },
+      }}
+    >
+      <Typography
+        variant="h4"
+        sx={{ fontWeight: 800, fontSize: { xs: "1.75rem", sm: "2.125rem" }, color: TEXT_PRIMARY }}
+      >
         Control de Expenses
       </Typography>
-      <Typography color="text.secondary">
+      <Typography sx={{ color: TEXT_SECONDARY }}>
         Visualiza la evolucion anual por categoria, crea nuevos registros y gestiona
         los existentes desde una sola vista.
       </Typography>
 
-      <Card sx={{ borderRadius: 4 }}>
-        <CardContent>
+      <Card
+        sx={{
+          borderRadius: 4,
+          border: "1px solid",
+          borderColor: DARK_BORDER,
+          backgroundColor: DARK_SURFACE,
+          color: TEXT_PRIMARY,
+        }}
+      >
+        <CardContent sx={{ p: { xs: 1.5, sm: 2.5, md: 3 }, "&:last-child": { pb: { xs: 1.5, sm: 2.5, md: 3 } } }}>
           <Stack spacing={2}>
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -410,7 +469,7 @@ export default function ExpensesDashboard() {
               }}
             >
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-                <FormControl size="small" sx={{ minWidth: 240 }}>
+                <FormControl size="small" sx={{ minWidth: { sm: 240 } }} fullWidth={isMobile}>
                   <InputLabel id="category-select-label">Categoria</InputLabel>
                   <Select
                     labelId="category-select-label"
@@ -427,7 +486,7 @@ export default function ExpensesDashboard() {
                     ))}
                   </Select>
                 </FormControl>
-                <FormControl size="small" sx={{ minWidth: 280 }}>
+                <FormControl size="small" sx={{ minWidth: { sm: 280 } }} fullWidth={isMobile}>
                   <InputLabel id="description-select-label">Descripcion</InputLabel>
                   <Select
                     labelId="description-select-label"
@@ -449,7 +508,8 @@ export default function ExpensesDashboard() {
                   size="small"
                   value={chartStartDate}
                   onChange={(event) => setChartStartDate(event.target.value)}
-                  sx={{ minWidth: 190 }}
+                  fullWidth={isMobile}
+                  sx={{ minWidth: { sm: 190 } }}
                 />
                 <TextField
                   label="Hasta (grafica)"
@@ -457,17 +517,23 @@ export default function ExpensesDashboard() {
                   size="small"
                   value={chartEndDate}
                   onChange={(event) => setChartEndDate(event.target.value)}
-                  sx={{ minWidth: 190 }}
+                  fullWidth={isMobile}
+                  sx={{ minWidth: { sm: 190 } }}
                 />
               </Stack>
               <Chip
-                color="primary"
-                variant="outlined"
+                variant="filled"
                 label={`Total anual: ${formatCurrency(totalAmount)}`}
+                sx={{
+                  alignSelf: { xs: "flex-start", sm: "center" },
+                  backgroundColor: BLUE_DEEP,
+                  color: TEXT_PRIMARY,
+                  fontWeight: 700,
+                }}
               />
             </Stack>
             {rangeError && <Alert severity="warning">{rangeError}</Alert>}
-            <EvolutionChart items={[...chartItems].reverse()} />
+            <EvolutionChart items={[...chartItems].reverse()} isMobile={isMobile} />
           </Stack>
         </CardContent>
       </Card>
@@ -475,12 +541,21 @@ export default function ExpensesDashboard() {
       {error && <Alert severity="error">{error}</Alert>}
       {successMessage && <Alert severity="success">{successMessage}</Alert>}
 
-      <Grid container spacing={2}>
+      <Grid container spacing={{ xs: 2, md: 2.5 }}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ borderRadius: 4, height: "100%" }}>
-            <CardContent>
+          <Card
+            sx={{
+              borderRadius: 4,
+              height: "100%",
+              border: "1px solid",
+              borderColor: DARK_BORDER,
+              backgroundColor: DARK_SURFACE,
+              color: TEXT_PRIMARY,
+            }}
+          >
+            <CardContent sx={{ p: { xs: 1.5, sm: 2.5, md: 3 }, "&:last-child": { pb: { xs: 1.5, sm: 2.5, md: 3 } } }}>
               <Stack spacing={2}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: TEXT_PRIMARY }}>
                   {selectedItem ? "Editar gasto" : "Nuevo gasto"}
                 </Typography>
                 <TextField
@@ -530,16 +605,30 @@ export default function ExpensesDashboard() {
                     ))}
                   </Select>
                 </FormControl>
-                <Stack direction="row" spacing={1}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                   <Button
                     onClick={() => void saveExpense()}
                     disabled={isSubmitting}
                     variant="contained"
                     startIcon={selectedItem ? <SaveRoundedIcon /> : <AddRoundedIcon />}
+                    fullWidth={isMobile}
+                    sx={{
+                      backgroundColor: BLUE_DEEP,
+                      "&:hover": { backgroundColor: "#1e40af" },
+                    }}
                   >
                     {selectedItem ? "Guardar cambios" : "Crear registro"}
                   </Button>
-                  <Button onClick={resetForm} disabled={isSubmitting} variant="text">
+                  <Button
+                    onClick={resetForm}
+                    disabled={isSubmitting}
+                    variant="outlined"
+                    fullWidth={isMobile}
+                    sx={{
+                      borderColor: BLUE_ACCENT,
+                      color: BLUE_ACCENT,
+                    }}
+                  >
                     Limpiar
                   </Button>
                 </Stack>
@@ -548,10 +637,18 @@ export default function ExpensesDashboard() {
           </Card>
         </Grid>
         <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ borderRadius: 4 }}>
-            <CardContent>
+          <Card
+            sx={{
+              borderRadius: 4,
+              border: "1px solid",
+              borderColor: DARK_BORDER,
+              backgroundColor: DARK_SURFACE,
+              color: TEXT_PRIMARY,
+            }}
+          >
+            <CardContent sx={{ p: { xs: 1.5, sm: 2.5, md: 3 }, "&:last-child": { pb: { xs: 1.5, sm: 2.5, md: 3 } } }}>
               <Stack spacing={2}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: TEXT_PRIMARY }}>
                   Busqueda y gestion
                 </Typography>
                 <TextField
@@ -560,37 +657,45 @@ export default function ExpensesDashboard() {
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
                 />
-                <Box sx={{ maxHeight: 380, overflow: "auto" }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Fecha</TableCell>
-                        <TableCell>Descripcion</TableCell>
-                        <TableCell>Valor</TableCell>
-                        <TableCell>Acciones</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredItems.map((item) => (
-                        <TableRow
-                          key={item.id}
-                          selected={item.id === selectedItemId}
-                          hover
+                {isMobile ? (
+                  <Stack spacing={1.5}>
+                    {filteredItems.map((item) => (
+                      <Card
+                        key={item.id}
+                        variant="outlined"
+                        sx={{
+                          borderColor: item.id === selectedItemId ? BLUE_ACCENT : DARK_BORDER,
+                          backgroundColor:
+                            item.id === selectedItemId ? "#0e1a2e" : DARK_SURFACE_ALT,
+                          color: TEXT_PRIMARY,
+                        }}
+                      >
+                        <CardContent
+                          sx={{
+                            p: { xs: 1.25, sm: 1.5 },
+                            "&:last-child": { pb: { xs: 1.25, sm: 1.5 } },
+                          }}
                         >
-                          <TableCell>
-                            {new Intl.DateTimeFormat("es-CO", {
-                              dateStyle: "medium",
-                            }).format(new Date(item.date))}
-                          </TableCell>
-                          <TableCell>{item.description}</TableCell>
-                          <TableCell>{formatCurrency(item.amount)}</TableCell>
-                          <TableCell>
+                          <Stack spacing={1}>
+                            <Typography variant="body2" sx={{ color: TEXT_SECONDARY }}>
+                              {new Intl.DateTimeFormat("es-CO", {
+                                dateStyle: "medium",
+                              }).format(new Date(item.date))}
+                            </Typography>
+                            <Typography sx={{ fontWeight: 700, color: TEXT_PRIMARY }}>
+                              {item.description}
+                            </Typography>
+                            <Typography sx={{ color: BLUE_ACCENT, fontWeight: 700 }}>
+                              {formatCurrency(item.amount)}
+                            </Typography>
                             <Stack direction="row" spacing={1}>
                               <Button
                                 size="small"
                                 variant="outlined"
                                 startIcon={<EditRoundedIcon />}
                                 onClick={() => handleSelectItem(item)}
+                                fullWidth
+                                sx={{ borderColor: BLUE_ACCENT, color: BLUE_ACCENT }}
                               >
                                 Editar
                               </Button>
@@ -600,25 +705,106 @@ export default function ExpensesDashboard() {
                                 variant="outlined"
                                 startIcon={<DeleteOutlineRoundedIcon />}
                                 onClick={() => void deleteExpense(item)}
+                                fullWidth
                               >
                                 Eliminar
                               </Button>
                             </Stack>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {!filteredItems.length && (
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {!filteredItems.length && (
+                      <Typography variant="body2" sx={{ color: TEXT_SECONDARY }}>
+                        No hay resultados para esta categoria en el anio actual.
+                      </Typography>
+                    )}
+                  </Stack>
+                ) : (
+                  <TableContainer
+                    sx={{
+                      maxHeight: 380,
+                      border: "1px solid",
+                      borderColor: DARK_BORDER,
+                      borderRadius: 2,
+                      backgroundColor: DARK_SURFACE_ALT,
+                    }}
+                  >
+                    <Table size="small" stickyHeader>
+                      <TableHead>
                         <TableRow>
-                          <TableCell colSpan={4}>
-                            <Typography variant="body2" color="text.secondary">
-                              No hay resultados para esta categoria en el anio actual.
-                            </Typography>
+                          <TableCell sx={{ backgroundColor: "#0b1220", color: TEXT_PRIMARY }}>
+                            Fecha
+                          </TableCell>
+                          <TableCell sx={{ backgroundColor: "#0b1220", color: TEXT_PRIMARY }}>
+                            Descripcion
+                          </TableCell>
+                          <TableCell sx={{ backgroundColor: "#0b1220", color: TEXT_PRIMARY }}>
+                            Valor
+                          </TableCell>
+                          <TableCell sx={{ backgroundColor: "#0b1220", color: TEXT_PRIMARY }}>
+                            Acciones
                           </TableCell>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </Box>
+                      </TableHead>
+                      <TableBody>
+                        {filteredItems.map((item) => (
+                          <TableRow
+                            key={item.id}
+                            selected={item.id === selectedItemId}
+                            hover
+                            sx={{
+                              "& td": { color: TEXT_PRIMARY, borderBottomColor: DARK_BORDER },
+                              "&.Mui-selected td": { backgroundColor: "#10203a" },
+                              "&:hover td": { backgroundColor: "#162542" },
+                            }}
+                          >
+                            <TableCell>
+                              {new Intl.DateTimeFormat("es-CO", {
+                                dateStyle: "medium",
+                              }).format(new Date(item.date))}
+                            </TableCell>
+                            <TableCell>{item.description}</TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: BLUE_ACCENT }}>
+                              {formatCurrency(item.amount)}
+                            </TableCell>
+                            <TableCell>
+                              <Stack direction="row" spacing={1}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<EditRoundedIcon />}
+                                  onClick={() => handleSelectItem(item)}
+                                  sx={{ borderColor: BLUE_ACCENT, color: BLUE_ACCENT }}
+                                >
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="small"
+                                  color="error"
+                                  variant="outlined"
+                                  startIcon={<DeleteOutlineRoundedIcon />}
+                                  onClick={() => void deleteExpense(item)}
+                                >
+                                  Eliminar
+                                </Button>
+                              </Stack>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {!filteredItems.length && (
+                          <TableRow>
+                            <TableCell colSpan={4}>
+                              <Typography variant="body2" color="text.secondary">
+                                No hay resultados para esta categoria en el anio actual.
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </Stack>
             </CardContent>
           </Card>
