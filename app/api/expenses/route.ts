@@ -4,25 +4,13 @@ import { NextResponse } from "next/server";
 import { db, TABLE_NAME } from "../../../lib/aws/dynamo";
 import { expenseSchema, getExpenseSchema, deleteExpenseSchema, updateExpenseSchema } from "../../../lib/aws/schemas";
 import { randomBytes } from "node:crypto";
-
+import { parseDatePreservingCalendarDay } from "../common/utils";
 
 const USER_ID = "123"; // Aquí usarás tu auth
 
 const buildPK = (year: number) => `USER#${USER_ID}#${year}`;
 const buildSK = (date?: Date | null) => `EXPENSE#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
-
-function parseDatePreservingCalendarDay(date: string): Date {
-  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(date);
-  const isUtcMidnightIso = /^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/.test(date);
-
-  if (isDateOnly || isUtcMidnightIso) {
-    const [year, month, day] = date.slice(0, 10).split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
-
-  return new Date(date);
-}
 
 function buildDateForSK (date: Date): Date {
   const now = new Date();
