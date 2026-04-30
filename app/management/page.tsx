@@ -16,6 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useI18n } from "../i18n/I18nProvider";
+import { formatDateAsYyyyMmDd } from "../components/utils/dateHelpers";
 
 const DARK_BG = "#020617";
 const BLUE_DEEP = "#1d4ed8";
@@ -26,7 +27,7 @@ const BORDER_COLOR = "#1e293b";
 
 // Cambia este valor para emular la fecha de las peticiones en desarrollo.
 // Usa formato YYYY-MM-DD. Ejemplo: "2026-01-15"
-const DEV_INITIAL_REQUEST_DATE = "2026-05-01";
+const DEV_INITIAL_REQUEST_DATE = "";
 
 type Deduction = {
   description: string;
@@ -37,6 +38,8 @@ type ManagementRecord = {
   id: string;
   initialAmount: number;
   creationDate: string;
+  startDate?: string;
+  endDate?: string;
   deductions: Deduction[];
 };
 
@@ -47,6 +50,38 @@ function isValidDateString(value: string): boolean {
 
   const date = new Date(`${value}T00:00:00`);
   return !Number.isNaN(date.getTime());
+}
+
+function getDateFromDateString(value: string): Date {
+  return new Date(`${value}T00:00:00`);
+}
+
+function normalizeDateOnly(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getInclusiveDaysBetween(startDate: Date, endDate: Date): number {
+  const start = normalizeDateOnly(startDate).getTime();
+  const end = normalizeDateOnly(endDate).getTime();
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  return Math.floor((end - start) / millisecondsPerDay) + 1;
+}
+
+function getElapsedDaysInRange(referenceDate: Date, startDate: Date, endDate: Date): number {
+  // debugger;
+  const normalizedReference = normalizeDateOnly(referenceDate);
+  const normalizedStart = normalizeDateOnly(startDate);
+  const normalizedEnd = normalizeDateOnly(endDate);
+
+  if (normalizedReference.getTime() < normalizedStart.getTime()) {
+    return 0;
+  }
+
+  if (normalizedReference.getTime() > normalizedEnd.getTime()) {
+    return getInclusiveDaysBetween(normalizedStart, normalizedEnd);
+  }
+
+  return getInclusiveDaysBetween(normalizedStart, normalizedReference);
 }
 
 const dialogSx = {
@@ -114,7 +149,8 @@ export default function ManagementPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [initialAmount, setInitialAmount] = useState("");
-  const [creationDate, setCreationDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [rangeStartDate, setRangeStartDate] = useState(() => formatDateAsYyyyMmDd(new Date()));
+  const [rangeEndDate, setRangeEndDate] = useState(() => formatDateAsYyyyMmDd(new Date()));
   const [createError, setCreateError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openDeductionModal, setOpenDeductionModal] = useState(false);
@@ -133,31 +169,15 @@ export default function ManagementPage() {
     if (isDevelopment && isValidDateString(DEV_INITIAL_REQUEST_DATE)) {
       return DEV_INITIAL_REQUEST_DATE;
     }
-    return new Date().toISOString().slice(0, 10);
+    return formatDateAsYyyyMmDd(new Date());
   }, [isDevelopment]);
 
-  const currentDateMetrics = useMemo(() => {
-    const currentDate = new Date(`${baseRequestDate}T00:00:00`);
-    const currentDayOfMonth = currentDate.getDate();
-    const totalDaysInMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-      0
-    ).getDate();
-
-    return { currentDayOfMonth, totalDaysInMonth };
-  }, [baseRequestDate]);
-
   const fetchRecordsByDate = async (dateString: string) => {
-    const selectedDate = new Date(`${dateString}T00:00:00`);
-    const month = selectedDate.getMonth() + 1;
-    const year = selectedDate.getFullYear();
-
     setIsLoading(true);
     setLoadError(null);
 
     try {
-      const response = await fetch(`/api/management?month=${month}&year=${year}`);
+      const response = await fetch(`/api/management?date=${dateString}`);
       const data: ManagementRecord[] | { error?: string } = await response.json();
 
       if (!response.ok) {
@@ -167,7 +187,7 @@ export default function ManagementPage() {
       const parsedData = Array.isArray(data) ? data : [];
       setRecords(parsedData);
       setOpenCreateModal(parsedData.length === 0);
-    } catch (error) {
+    } catch {
       setLoadError("No se pudieron cargar los registros para la fecha consultada.");
       setRecords([]);
       setOpenCreateModal(false);
@@ -177,13 +197,27 @@ export default function ManagementPage() {
   };
 
   useEffect(() => {
-    void fetchRecordsByDate(baseRequestDate);
+    const timeoutId = window.setTimeout(() => {
+      void fetchRecordsByDate(baseRequestDate);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [baseRequestDate]);
 
   const handleCreateRecord = async () => {
     const amount = Number(initialAmount);
     if (!Number.isInteger(amount) || amount <= 0) {
       setCreateError("El monto debe ser un numero entero positivo.");
+      return;
+    }
+    if (!isValidDateString(rangeStartDate) || !isValidDateString(rangeEndDate)) {
+      setCreateError("Las fechas del rango son invalidas.");
+      return;
+    }
+    if (getDateFromDateString(rangeStartDate).getTime() > getDateFromDateString(rangeEndDate).getTime()) {
+      setCreateError("La fecha inicial del rango no puede ser mayor a la fecha final.");
       return;
     }
 
@@ -196,19 +230,22 @@ export default function ManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           initialAmount: amount,
-          creationDate: `${creationDate}T00:00:00.000Z`,
+          creationDate: new Date().toISOString(),
+          startDate: `${rangeStartDate}T00:00:00.000Z`,
+          endDate: `${rangeEndDate}T00:00:00.000Z`,
           deductions: [],
         }),
       });
 
       if (!response.ok) {
-        throw new Error("No se pudo crear el registro");
+        const errorData: { error?: string } = await response.json().catch(() => ({}));
+        throw new Error(errorData.error ?? "No se pudo crear el registro");
       }
 
       setOpenCreateModal(false);
       await fetchRecordsByDate(baseRequestDate);
     } catch (error) {
-      setCreateError("No se pudo crear el registro.");
+      setCreateError(error instanceof Error ? error.message : "No se pudo crear el registro.");
     } finally {
       setIsSubmitting(false);
     }
@@ -309,7 +346,7 @@ export default function ManagementPage() {
       setOpenDeductionModal(false);
       setSelectedRecord(null);
       await fetchRecordsByDate(baseRequestDate);
-    } catch (error) {
+    } catch {
       setDeductionError("No se pudo crear la deduccion.");
     } finally {
       setIsSubmittingDeduction(false);
@@ -354,7 +391,7 @@ export default function ManagementPage() {
       setSelectedRecord(null);
       setEditingDeductionIndex(null);
       await fetchRecordsByDate(baseRequestDate);
-    } catch (error) {
+    } catch {
       setViewDeductionsError("No se pudo actualizar las deducciones.");
     } finally {
       setIsUpdatingDeductions(false);
@@ -393,10 +430,15 @@ export default function ManagementPage() {
             </Alert>
           ) : (
             records.map((record) => {
+              // debugger;
               const deductionTotal = record.deductions.reduce((sum, item) => sum + item.amount, 0);
-              const dailyAvailableAmount = record.initialAmount / currentDateMetrics.totalDaysInMonth;
-              const availableBeforeDeductions =
-                dailyAvailableAmount * currentDateMetrics.currentDayOfMonth;
+              const referenceDate = getDateFromDateString(baseRequestDate);
+              const startDate = new Date(record.startDate ?? record.creationDate);
+              const endDate = new Date(record.endDate ?? record.creationDate);
+              const totalDaysInRange = getInclusiveDaysBetween(startDate, endDate);
+              const elapsedDays = getElapsedDaysInRange(referenceDate, startDate, endDate);
+              const dailyAvailableAmount = record.initialAmount / totalDaysInRange;
+              const availableBeforeDeductions = dailyAvailableAmount * elapsedDays;
               const availableAmount = availableBeforeDeductions - deductionTotal;
 
               return (
@@ -411,6 +453,9 @@ export default function ManagementPage() {
                 >
                   <Typography sx={{ color: TEXT_SECONDARY, mt: 2, mb: 1 }}>
                     Fecha de creación: {new Date(record.creationDate).toLocaleDateString()}
+                  </Typography>
+                  <Typography sx={{ color: TEXT_SECONDARY, mb: 1 }}>
+                    Rango: {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
                   </Typography>
                   <Stack spacing={3} sx={{ mt: 2, width: "100%", mb: 3 }}>
                     <hr />
@@ -460,23 +505,23 @@ export default function ManagementPage() {
                     </Box>
                     <Box sx={valuePillSx}>
                       <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
-                        Dias del mes
+                        Dias del rango
                       </Typography>
                       <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
-                        {currentDateMetrics.totalDaysInMonth}
+                        {totalDaysInRange}
                       </Typography>
                     </Box>
                     <Box sx={valuePillSx}>
                       <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
-                        Dia actual
+                        Dias transcurridos
                       </Typography>
                       <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
-                        {currentDateMetrics.currentDayOfMonth}
+                        {elapsedDays}
                       </Typography>
                     </Box>
                     <Box sx={valuePillSx}>
                       <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
-                        Disponible antes
+                        Disponible diariamente
                       </Typography>
                       <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
                         {currencyFormatter.format(availableBeforeDeductions)}
@@ -486,14 +531,14 @@ export default function ManagementPage() {
                   <Button
                     variant="outlined"
                     onClick={() => handleOpenDeductionModal(record)}
-                    sx={{ ...outlinedButtonSx, mt: 1, width: { xs: "100%", sm: "auto" } }}
+                    sx={{ ...outlinedButtonSx, mt: 1, width: { xs: "100%" }, backgroundColor: '#0b1b42', "&:hover": { backgroundColor: "#1e40af" } }}
                   >
                     Agregar deduccion
                   </Button>
                   <Button
                     variant="outlined"
                     onClick={() => handleOpenViewDeductionsModal(record)}
-                    sx={{ ...outlinedButtonSx, mt: 1, ml: { xs: 0, sm: 1 }, width: { xs: "100%", sm: "auto" } }}
+                    sx={{ ...outlinedButtonSx, mt: 2, mb: 1, width: { xs: "100%" } }}
                   >
                     Ver deducciones
                   </Button>
@@ -680,10 +725,19 @@ export default function ManagementPage() {
               sx={textFieldSx}
             />
             <TextField
-              label="Fecha de creacion"
+              label="Fecha inicial del rango"
               type="date"
-              value={creationDate}
-              onChange={(event) => setCreationDate(event.target.value)}
+              value={rangeStartDate}
+              onChange={(event) => setRangeStartDate(event.target.value)}
+              fullWidth
+              sx={textFieldSx}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <TextField
+              label="Fecha final del rango"
+              type="date"
+              value={rangeEndDate}
+              onChange={(event) => setRangeEndDate(event.target.value)}
               fullWidth
               sx={textFieldSx}
               slotProps={{ inputLabel: { shrink: true } }}

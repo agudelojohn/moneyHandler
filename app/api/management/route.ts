@@ -20,11 +20,25 @@ function normalizeDate(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function getStartOfMonth(month: number): Date {
-    return new Date(new Date().getFullYear(), month - 1, 1);
+function isDateInRange(date: Date, startDate: Date, endDate: Date): boolean {
+    const normalizedDate = normalizeDate(date).getTime();
+    const normalizedStartDate = normalizeDate(startDate).getTime();
+    const normalizedEndDate = normalizeDate(endDate).getTime();
+    return normalizedDate >= normalizedStartDate && normalizedDate <= normalizedEndDate;
 }
-function getEndOfMonth(month: number): Date {
-    return new Date(new Date().getFullYear(), month, 30);
+
+function doRangesOverlap(
+    startDateA: Date,
+    endDateA: Date,
+    startDateB: Date,
+    endDateB: Date
+): boolean {
+    const normalizedStartA = normalizeDate(startDateA).getTime();
+    const normalizedEndA = normalizeDate(endDateA).getTime();
+    const normalizedStartB = normalizeDate(startDateB).getTime();
+    const normalizedEndB = normalizeDate(endDateB).getTime();
+
+    return normalizedStartA <= normalizedEndB && normalizedStartB <= normalizedEndA;
 }
 
 export async function POST(request: Request) {
@@ -33,8 +47,51 @@ export async function POST(request: Request) {
     if (!result.success) {
         return NextResponse.json({ errors: result.error.flatten().fieldErrors }, { status: 400 });
     }
-    const { initialAmount, creationDate: creationDateRaw, deductions } = result.data;
+    const { initialAmount, creationDate: creationDateRaw, startDate: startDateRaw, endDate: endDateRaw, deductions } = result.data;
     const creationDate = creationDateRaw ? parseDatePreservingCalendarDay(creationDateRaw) : new Date();
+    const startDate = parseDatePreservingCalendarDay(startDateRaw);
+    const endDate = parseDatePreservingCalendarDay(endDateRaw);
+
+    if (normalizeDate(startDate).getTime() > normalizeDate(endDate).getTime()) {
+        return NextResponse.json({ error: "La fecha inicial no puede ser mayor a la fecha final" }, { status: 400 });
+    }
+
+    const startYear = startDate.getFullYear();
+    const endYear = endDate.getFullYear();
+    for (let yearToCheck = startYear; yearToCheck <= endYear; yearToCheck += 1) {
+        const startOfYear = new Date(yearToCheck, 0, 1);
+        const endOfYear = new Date(yearToCheck, 11, 31, 23, 59, 59, 999);
+        const queryResult = await db.send(new QueryCommand({
+            TableName: TABLE_NAME,
+            KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
+            ExpressionAttributeValues: {
+                ":pk": buildPK(yearToCheck),
+                ":sk": buildSK(startOfYear),
+                ":sk2": buildSK(endOfYear),
+            }
+        }));
+
+        const hasOverlap = (queryResult.Items ?? []).some((existingItem) => {
+            const existingStartDateRaw = typeof existingItem.startDate === "string"
+                ? existingItem.startDate
+                : existingItem.creationDate;
+            const existingEndDateRaw = typeof existingItem.endDate === "string"
+                ? existingItem.endDate
+                : existingItem.creationDate;
+            const existingStartDate = parseDatePreservingCalendarDay(existingStartDateRaw);
+            const existingEndDate = parseDatePreservingCalendarDay(existingEndDateRaw);
+
+            return doRangesOverlap(startDate, endDate, existingStartDate, existingEndDate);
+        });
+
+        if (hasOverlap) {
+            return NextResponse.json(
+                { error: "El rango de fechas se solapa con un registro existente" },
+                { status: 409 }
+            );
+        }
+    }
+
     const year = creationDate.getFullYear();
     const item = {
         PK: buildPK(year),
@@ -42,6 +99,8 @@ export async function POST(request: Request) {
         id: buildUniqueID(),
         initialAmount,
         creationDate: creationDate.toISOString(),
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
         deductions,
     };
     await db.send(new PutCommand({
@@ -53,9 +112,8 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    const monthRaw = searchParams.get("month");
-    const yearRaw = searchParams.get("year");
-    const parsed = getManagementSchema.safeParse({ month: monthRaw, year: yearRaw });
+    const dateRaw = searchParams.get("date");
+    const parsed = getManagementSchema.safeParse({ date: dateRaw });
 
     if (!parsed.success) {
         return NextResponse.json(
@@ -64,16 +122,26 @@ export async function GET(request: Request) {
         );
     }
 
-    const year = parsed.data.year ?? new Date().getFullYear();
-    const normalizedStartDate = getStartOfMonth(parsed.data.month);
-    const normalizedEndDate = getEndOfMonth(parsed.data.month);
+    const requestedDate = parseDatePreservingCalendarDay(parsed.data.date);
+    const year = requestedDate.getFullYear();
+    const startOfYear = new Date(year, 0, 1);
+    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
 
     const result = await db.send(new QueryCommand({
         TableName: TABLE_NAME,
         KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
-        ExpressionAttributeValues: { ":pk": buildPK(year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
+        ExpressionAttributeValues: { ":pk": buildPK(year), ":sk": buildSK(startOfYear), ":sk2": buildSK(endOfYear) }
     }));
-    return NextResponse.json(result.Items ?? [], { status: 200 });
+
+    const filteredItems = (result.Items ?? []).filter((item) => {
+        const startDateRaw = typeof item.startDate === "string" ? item.startDate : item.creationDate;
+        const endDateRaw = typeof item.endDate === "string" ? item.endDate : item.creationDate;
+        const startDate = parseDatePreservingCalendarDay(startDateRaw);
+        const endDate = parseDatePreservingCalendarDay(endDateRaw);
+        return isDateInRange(requestedDate, startDate, endDate);
+    });
+
+    return NextResponse.json(filteredItems, { status: 200 });
 }
 
 export async function DELETE(request: Request) {
@@ -119,7 +187,7 @@ export async function DELETE(request: Request) {
         }));
 
         return NextResponse.json({ message: "Registro de gestión eliminado" }, { status: 200 });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: "Error interno" }, { status: 500 });
     }
 }
@@ -167,7 +235,7 @@ export async function PUT(request: Request) {
         }));
 
         return NextResponse.json({ message: "Deducciones actualizadas", item: updatedItem }, { status: 200 });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: "Error interno" }, { status: 500 });
     }
 }

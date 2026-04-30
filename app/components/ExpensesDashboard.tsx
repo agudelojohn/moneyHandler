@@ -41,6 +41,7 @@ import {
 } from "recharts";
 import { useI18n } from "../i18n/I18nProvider";
 import { type CategoryKey } from "../i18n/translations";
+import { formatDateAsYyyyMmDd } from "./utils/dateHelpers";
 
 type Category = (typeof CATEGORIES)[number];
 
@@ -70,10 +71,7 @@ const formatCurrency = (amount: number, locale = "es-CO") =>
     maximumFractionDigits: 0,
   }).format(amount);
 
-const toLocalDateInputValue = (date: Date) => {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().split("T")[0];
-};
+const toLocalDateInputValue = (date: Date) => formatDateAsYyyyMmDd(date);
 
 const buildIsoFromInputDate = (dateInput: string) =>
   new Date(dateInput).toISOString();

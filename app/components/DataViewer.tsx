@@ -7,13 +7,13 @@ type DataViewerProps = {
     totalValue: number,
     startDay: Date,
     environment: string,
-    initialTodayISO: string
+    initialTodayDate: string
 }
 
-export default function DataViewer({ totalValue, startDay, environment, initialTodayISO }: DataViewerProps) {
+export default function DataViewer({ totalValue, startDay, environment, initialTodayDate }: DataViewerProps) {
     const { t, dateLocale } = useI18n()
 
-    const [today, setToday] = useState(new Date(initialTodayISO))
+    const [today, setToday] = useState(new Date(`${initialTodayDate}T00:00:00`))
 
     const lastBusinessDay = useMemo(() => getLastBusinessDayOfMonth(today), [today])
     const diffDays = useMemo(() => getInclusiveDaysDiff(startDay, lastBusinessDay), [startDay, lastBusinessDay])
@@ -29,8 +29,8 @@ export default function DataViewer({ totalValue, startDay, environment, initialT
     return (
         <><h1>{t.dataViewer.title}</h1>
             <p>{t.dataViewer.totalValue}: {totalValue}</p>
-            <p>{t.dataViewer.today}: {new Intl.DateTimeFormat(dateLocale, { timeZone: 'UTC' }).format(today)}</p>
-            <p>{t.dataViewer.lastBusinessDay}: {new Intl.DateTimeFormat(dateLocale, { timeZone: 'UTC' }).format(lastBusinessDay)}</p>
+            <p>{t.dataViewer.today}: {new Intl.DateTimeFormat(dateLocale).format(today)}</p>
+            <p>{t.dataViewer.lastBusinessDay}: {new Intl.DateTimeFormat(dateLocale).format(lastBusinessDay)}</p>
             <p>{t.dataViewer.diffDays}: {diffDays}</p>
 
             {environment === 'development' && (

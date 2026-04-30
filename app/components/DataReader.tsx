@@ -1,5 +1,6 @@
 import DataViewer from './DataViewer'
 import { VALUE_KEYS, excelDateToJSDate, fetchSheetData } from './utils/index'
+import { formatDateAsYyyyMmDd } from './utils/dateHelpers'
 
 type SheetCellValue = string | number | boolean | null
 
@@ -16,7 +17,7 @@ export default async function DataReader() {
 
     const totalValue = Number(dataMap.get(VALUE_KEYS.MONTH_START) ?? 0)
     const startDay = excelDateToJSDate(Number(dataMap.get(VALUE_KEYS.START_DATE) ?? 0))
-    const initialTodayISO = new Date().toISOString()
+    const initialTodayDate = formatDateAsYyyyMmDd(new Date())
 
     return (
         <section>
@@ -24,7 +25,7 @@ export default async function DataReader() {
                 totalValue={totalValue}
                 startDay={startDay}
                 environment={process.env.ENVIRONMENT ?? ''}
-                initialTodayISO={initialTodayISO}
+                initialTodayDate={initialTodayDate}
             />
         </section>
     )
