@@ -41,7 +41,7 @@ import {
 } from "recharts";
 import { useI18n } from "../i18n/I18nProvider";
 import { type CategoryKey } from "../i18n/translations";
-import { formatDateAsYyyyMmDd } from "./utils/dateHelpers";
+import { formatDateAsYyyyMmDd } from "../common/utils/dateHelpers";
 
 type Category = (typeof CATEGORIES)[number];
 

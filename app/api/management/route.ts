@@ -10,7 +10,7 @@ import {
     updateManagementSchema
 } from "../../../lib/aws/schemas";
 
-const USER_ID = "123"; // Aquí usarás tu auth
+const USER_ID = process.env.NODE_ENV === "development" ? "123-DEV" : "123"; // Aquí usarás tu auth
 
 const buildPK = (year: number) => `MANAGEMENT#${USER_ID}#${year}`;
 const buildSK = (date?: Date | null) => `ADDITION#${date ? date.toISOString() : new Date().toISOString()}`;

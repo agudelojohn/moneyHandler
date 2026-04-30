@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useEffect,
   useContext,
   useMemo,
   useState,
@@ -21,11 +22,14 @@ const I18N_STORAGE_KEY = "moneyhandler-locale";
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window === "undefined") return "es";
+  const [locale, setLocaleState] = useState<Locale>("es");
+
+  useEffect(() => {
     const storedLocale = window.localStorage.getItem(I18N_STORAGE_KEY);
-    return storedLocale === "es" || storedLocale === "en" ? storedLocale : "es";
-  });
+    if (storedLocale === "es" || storedLocale === "en") {
+      setLocaleState(storedLocale);
+    }
+  }, []);
 
   const setLocale = (nextLocale: Locale) => {
     setLocaleState(nextLocale);

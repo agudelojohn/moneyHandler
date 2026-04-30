@@ -27,6 +27,47 @@ type TranslationSchema = {
   management: {
     title: string;
     subtitle: string;
+    available: string;
+    initialAmount: string;
+    deductions: string;
+    rangeDays: string;
+    elapsedDays: string;
+    dailyAvailable: string;
+    expectedPocket: string;
+    addDeduction: string;
+    viewDeductions: string;
+    deductionModalTitle: string;
+    deductionDescription: string;
+    deductionAmount: string;
+    deductionIsCredit: string;
+    close: string;
+    saving: string;
+    listDeductionsTitle: string;
+    noDeductions: string;
+    amount: string;
+    credit: string;
+    totalCredits: string;
+    edit: string;
+    save: string;
+    updateRecord: string;
+    updatingRecord: string;
+    deleteDeductionAria: string;
+    deleteConfirmTitle: string;
+    deleteConfirmMessage: string;
+    cancel: string;
+    delete: string;
+    updateRecordNotFoundError: string;
+    invalidDeductionCollectionError: string;
+    updateDeductionsError: string;
+    invalidEditedDeductionError: string;
+    createManagementTitle: string;
+    rangeStartDate: string;
+    rangeEndDate: string;
+    creatingRecord: string;
+    initialAmountValidationError: string;
+    invalidRangeDatesError: string;
+    invalidRangeOrderError: string;
+    createRecordError: string;
   };
   expenses: {
     pageTitle: string;
@@ -87,14 +128,60 @@ export const translations: Record<Locale, TranslationSchema> = {
       backToHome: "Volver al inicio",
     },
     home: {
-      title: "Landing Page",
+      title: "Bienvenido!",
       subtitle: "Selecciona el modulo que quieres abrir.",
-      managementButton: "Management",
+      managementButton: "Gestion de dinero",
       expensesButton: "Control de gastos",
     },
     management: {
       title: "Management",
       subtitle: "Esta seccion usa la misma paleta del dashboard.",
+      available: "Disponible",
+      initialAmount: "Monto inicial",
+      deductions: "Deducciones",
+      rangeDays: "Dias del rango",
+      elapsedDays: "Dias transcurridos",
+      dailyAvailable: "Disponible diariamente",
+      expectedPocket: "Bolsillo esperado",
+      addDeduction: "Agregar deduccion",
+      viewDeductions: "Ver deducciones",
+      deductionModalTitle: "Agregar deduccion",
+      deductionDescription: "Descripcion",
+      deductionAmount: "Monto de deduccion",
+      deductionIsCredit: "Es credito",
+      close: "Cerrar",
+      saving: "Guardando...",
+      listDeductionsTitle: "Deducciones del registro",
+      noDeductions: "Este registro no tiene deducciones.",
+      amount: "Monto",
+      credit: "Credito",
+      totalCredits: "Total creditos",
+      edit: "Editar",
+      save: "Guardar",
+      updateRecord: "Actualizar registro",
+      updatingRecord: "Actualizando...",
+      deleteDeductionAria: "Eliminar deduccion",
+      deleteConfirmTitle: "Confirmar eliminacion",
+      deleteConfirmMessage:
+        "Esta accion quitara la deduccion de la lista. ¿Deseas continuar?",
+      cancel: "Cancelar",
+      delete: "Eliminar",
+      updateRecordNotFoundError:
+        "No se encontro el registro para actualizar deducciones.",
+      invalidDeductionCollectionError:
+        "Cada deduccion debe tener descripcion de 3 a 50 caracteres y monto entero.",
+      updateDeductionsError: "No se pudo actualizar las deducciones.",
+      invalidEditedDeductionError:
+        "La deduccion editada no es valida. Revisa descripcion y monto.",
+      createManagementTitle: "Crear registro de management",
+      rangeStartDate: "Fecha inicial del rango",
+      rangeEndDate: "Fecha final del rango",
+      creatingRecord: "Creando...",
+      initialAmountValidationError: "El monto debe ser un numero entero positivo.",
+      invalidRangeDatesError: "Las fechas del rango son invalidas.",
+      invalidRangeOrderError:
+        "La fecha inicial del rango no puede ser mayor a la fecha final.",
+      createRecordError: "No se pudo crear el registro.",
     },
     expenses: {
       pageTitle: "Control de gastos",
@@ -161,14 +248,61 @@ export const translations: Record<Locale, TranslationSchema> = {
       backToHome: "Back to home",
     },
     home: {
-      title: "Landing Page",
+      title: "Welcome!",
       subtitle: "Select the module you want to open.",
-      managementButton: "Management",
+      managementButton: "Money management",
       expensesButton: "Expense control",
     },
     management: {
       title: "Management",
       subtitle: "This section uses the same dashboard color palette.",
+      available: "Available",
+      initialAmount: "Initial amount",
+      deductions: "Deductions",
+      rangeDays: "Range days",
+      elapsedDays: "Elapsed days",
+      dailyAvailable: "Daily available",
+      expectedPocket: "Expected pocket",
+      addDeduction: "Add deduction",
+      viewDeductions: "View deductions",
+      deductionModalTitle: "Add deduction",
+      deductionDescription: "Description",
+      deductionAmount: "Deduction amount",
+      deductionIsCredit: "Is credit",
+      close: "Close",
+      saving: "Saving...",
+      listDeductionsTitle: "Record deductions",
+      noDeductions: "This record has no deductions.",
+      amount: "Amount",
+      credit: "Credit",
+      totalCredits: "Total credits",
+      edit: "Edit",
+      save: "Save",
+      updateRecord: "Update record",
+      updatingRecord: "Updating...",
+      deleteDeductionAria: "Delete deduction",
+      deleteConfirmTitle: "Confirm deletion",
+      deleteConfirmMessage:
+        "This action will remove the deduction from the list. Do you want to continue?",
+      cancel: "Cancel",
+      delete: "Delete",
+      updateRecordNotFoundError:
+        "The record to update deductions was not found.",
+      invalidDeductionCollectionError:
+        "Each deduction must have a description from 3 to 50 characters and a whole-number amount.",
+      updateDeductionsError: "Deductions could not be updated.",
+      invalidEditedDeductionError:
+        "The edited deduction is invalid. Check description and amount.",
+      createManagementTitle: "Create management record",
+      rangeStartDate: "Range start date",
+      rangeEndDate: "Range end date",
+      creatingRecord: "Creating...",
+      initialAmountValidationError:
+        "Initial amount must be a positive whole number.",
+      invalidRangeDatesError: "Range dates are invalid.",
+      invalidRangeOrderError:
+        "The range start date cannot be later than the end date.",
+      createRecordError: "The record could not be created.",
     },
     expenses: {
       pageTitle: "Expenses Control",

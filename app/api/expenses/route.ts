@@ -1,4 +1,4 @@
-import { setDateToEndOfDay, setDateToStartOfDay } from "@/app/components/utils/dateHelpers";
+import { setDateToEndOfDay, setDateToStartOfDay } from "@/app/common/utils/dateHelpers";
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { NextResponse } from "next/server";
 import { db, TABLE_NAME } from "../../../lib/aws/dynamo";
@@ -6,7 +6,7 @@ import { expenseSchema, getExpenseSchema, deleteExpenseSchema, updateExpenseSche
 import { randomBytes } from "node:crypto";
 import { parseDatePreservingCalendarDay } from "../common/utils";
 
-const USER_ID = "123"; // Aquí usarás tu auth
+const USER_ID = process.env.NODE_ENV === "development" ? "123-DEV" : "123"; // Aquí usarás tu auth
 
 const buildPK = (year: number) => `USER#${USER_ID}#${year}`;
 const buildSK = (date?: Date | null) => `EXPENSE#${date ? date.toISOString() : new Date().toISOString()}`;

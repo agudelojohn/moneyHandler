@@ -2,17 +2,11 @@
 import Link from "next/link";
 import { Button, Stack, Typography } from "@mui/material";
 import { useI18n } from "./i18n/I18nProvider";
-
-const DARK_BG = "#020617";
-const DARK_SURFACE = "#0f172a";
-const DARK_BORDER = "#1e293b";
-const BLUE_DEEP = "#1d4ed8";
-const BLUE_ACCENT = "#60a5fa";
-const TEXT_PRIMARY = "#e2e8f0";
-const TEXT_SECONDARY = "#94a3b8";
+import { COLORS } from "./theme";
 
 export default function Home() {
   const { t } = useI18n();
+  const { DARK_BG, TEXT_PRIMARY, TEXT_SECONDARY, BLUE_DEEP, BLUE_ACCENT, DARK_SURFACE, DARK_BORDER } = COLORS;
 
   return (
     <Stack
