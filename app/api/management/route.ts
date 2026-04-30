@@ -133,13 +133,23 @@ export async function GET(request: Request) {
         ExpressionAttributeValues: { ":pk": buildPK(year), ":sk": buildSK(startOfYear), ":sk2": buildSK(endOfYear) }
     }));
 
-    const filteredItems = (result.Items ?? []).filter((item) => {
-        const startDateRaw = typeof item.startDate === "string" ? item.startDate : item.creationDate;
-        const endDateRaw = typeof item.endDate === "string" ? item.endDate : item.creationDate;
-        const startDate = parseDatePreservingCalendarDay(startDateRaw);
-        const endDate = parseDatePreservingCalendarDay(endDateRaw);
-        return isDateInRange(requestedDate, startDate, endDate);
-    });
+    const filteredItems = (result.Items ?? [])
+        .filter((item) => {
+            const startDateRaw = typeof item.startDate === "string" ? item.startDate : item.creationDate;
+            const endDateRaw = typeof item.endDate === "string" ? item.endDate : item.creationDate;
+            const startDate = parseDatePreservingCalendarDay(startDateRaw);
+            const endDate = parseDatePreservingCalendarDay(endDateRaw);
+            return isDateInRange(requestedDate, startDate, endDate);
+        })
+        .map((item) => ({
+            ...item,
+            deductions: Array.isArray(item.deductions)
+                ? item.deductions.map((deduction) => ({
+                    ...deduction,
+                    isCredit: Boolean(deduction.isCredit),
+                }))
+                : [],
+        }));
 
     return NextResponse.json(filteredItems, { status: 200 });
 }

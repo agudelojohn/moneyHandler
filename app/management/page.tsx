@@ -6,11 +6,14 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
+  IconButton,
   Stack,
   TextField,
   Typography,
@@ -32,6 +35,7 @@ const DEV_INITIAL_REQUEST_DATE = "";
 type Deduction = {
   description: string;
   amount: number;
+  isCredit: boolean;
 };
 
 type ManagementRecord = {
@@ -82,6 +86,16 @@ function getElapsedDaysInRange(referenceDate: Date, startDate: Date, endDate: Da
   }
 
   return getInclusiveDaysBetween(normalizedStart, normalizedReference);
+}
+
+const longDateFormatter = new Intl.DateTimeFormat("es-CO", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+function formatDateWithMonthName(date: Date): string {
+  return longDateFormatter.format(date);
 }
 
 const dialogSx = {
@@ -157,6 +171,7 @@ export default function ManagementPage() {
   const [selectedRecord, setSelectedRecord] = useState<ManagementRecord | null>(null);
   const [deductionDescription, setDeductionDescription] = useState("");
   const [deductionAmount, setDeductionAmount] = useState("");
+  const [deductionIsCredit, setDeductionIsCredit] = useState(false);
   const [deductionError, setDeductionError] = useState<string | null>(null);
   const [isSubmittingDeduction, setIsSubmittingDeduction] = useState(false);
   const [openViewDeductionsModal, setOpenViewDeductionsModal] = useState(false);
@@ -164,6 +179,12 @@ export default function ManagementPage() {
   const [editingDeductionIndex, setEditingDeductionIndex] = useState<number | null>(null);
   const [viewDeductionsError, setViewDeductionsError] = useState<string | null>(null);
   const [isUpdatingDeductions, setIsUpdatingDeductions] = useState(false);
+  const [deletingDeductionIndex, setDeletingDeductionIndex] = useState<number | null>(null);
+  const creditDeductionsTotal = useMemo(
+    () =>
+      draftDeductions.reduce((sum, item) => (item.isCredit ? sum + item.amount : sum), 0),
+    [draftDeductions]
+  );
 
   const baseRequestDate = useMemo(() => {
     if (isDevelopment && isValidDateString(DEV_INITIAL_REQUEST_DATE)) {
@@ -184,7 +205,17 @@ export default function ManagementPage() {
         throw new Error("No se pudo consultar management");
       }
 
-      const parsedData = Array.isArray(data) ? data : [];
+      const parsedData = Array.isArray(data)
+        ? data.map((record) => ({
+          ...record,
+          deductions: Array.isArray(record.deductions)
+            ? record.deductions.map((deduction) => ({
+              ...deduction,
+              isCredit: Boolean(deduction.isCredit),
+            }))
+            : [],
+        }))
+        : [];
       setRecords(parsedData);
       setOpenCreateModal(parsedData.length === 0);
     } catch {
@@ -255,13 +286,19 @@ export default function ManagementPage() {
     setSelectedRecord(record);
     setDeductionDescription("");
     setDeductionAmount("");
+    setDeductionIsCredit(false);
     setDeductionError(null);
     setOpenDeductionModal(true);
   };
 
   const handleOpenViewDeductionsModal = (record: ManagementRecord) => {
     setSelectedRecord(record);
-    setDraftDeductions(record.deductions);
+    setDraftDeductions(
+      record.deductions.map((item) => ({
+        ...item,
+        isCredit: Boolean(item.isCredit),
+      }))
+    );
     setEditingDeductionIndex(null);
     setViewDeductionsError(null);
     setOpenViewDeductionsModal(true);
@@ -270,7 +307,7 @@ export default function ManagementPage() {
   const handleDraftDeductionChange = (
     index: number,
     key: keyof Deduction,
-    value: string
+    value: string | boolean
   ) => {
     setDraftDeductions((previous) =>
       previous.map((item, currentIndex) => {
@@ -282,7 +319,11 @@ export default function ManagementPage() {
           return { ...item, amount: Number(value) };
         }
 
-        return { ...item, description: value };
+        if (key === "isCredit") {
+          return { ...item, isCredit: Boolean(value) };
+        }
+
+        return { ...item, description: String(value) };
       })
     );
   };
@@ -326,6 +367,7 @@ export default function ManagementPage() {
         {
           description: deductionDescription.trim(),
           amount,
+          isCredit: deductionIsCredit,
         },
       ];
 
@@ -379,6 +421,7 @@ export default function ManagementPage() {
           deductions: draftDeductions.map((item) => ({
             description: item.description.trim(),
             amount: item.amount,
+            isCredit: item.isCredit,
           })),
         }),
       });
@@ -396,6 +439,37 @@ export default function ManagementPage() {
     } finally {
       setIsUpdatingDeductions(false);
     }
+  };
+
+  const handleRequestDeleteDeduction = (index: number) => {
+    setDeletingDeductionIndex(index);
+  };
+
+  const handleConfirmDeleteDeduction = () => {
+    if (deletingDeductionIndex === null) {
+      return;
+    }
+
+    setDraftDeductions((previous) =>
+      previous.filter((_, currentIndex) => currentIndex !== deletingDeductionIndex)
+    );
+    setViewDeductionsError(null);
+    setEditingDeductionIndex((currentEditingIndex) => {
+      if (currentEditingIndex === null) {
+        return null;
+      }
+
+      if (currentEditingIndex === deletingDeductionIndex) {
+        return null;
+      }
+
+      if (currentEditingIndex > deletingDeductionIndex) {
+        return currentEditingIndex - 1;
+      }
+
+      return currentEditingIndex;
+    });
+    setDeletingDeductionIndex(null);
   };
 
   return (
@@ -452,10 +526,10 @@ export default function ManagementPage() {
                   }}
                 >
                   <Typography sx={{ color: TEXT_SECONDARY, mt: 2, mb: 1 }}>
-                    Fecha de creación: {new Date(record.creationDate).toLocaleDateString()}
+                    Fecha de creación: {formatDateWithMonthName(new Date(record.creationDate))}
                   </Typography>
                   <Typography sx={{ color: TEXT_SECONDARY, mb: 1 }}>
-                    Rango: {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+                    Rango: {formatDateWithMonthName(startDate)} - {formatDateWithMonthName(endDate)}
                   </Typography>
                   <Stack spacing={3} sx={{ mt: 2, width: "100%", mb: 3 }}>
                     <hr />
@@ -470,7 +544,7 @@ export default function ManagementPage() {
                     >
                       <Typography
                         variant="caption"
-                        sx={{ color: "#bfdbfe", fontWeight: 700, letterSpacing: 0.3 }}
+                        sx={{ color: "#bfdbfe", fontWeight: 700, letterSpacing: 0.3, fontSize: 20 }}
                       >
                         Disponible
                       </Typography>
@@ -479,7 +553,7 @@ export default function ManagementPage() {
                           color: availableAmount > 0 ? "#ffffff" : "#000",
                           fontWeight: 800,
                           textAlign: "right",
-                          fontSize: { xs: "1.15rem", sm: "1.35rem" },
+                          fontSize: { xs: "1.8rem" },
                           lineHeight: 1.2,
                         }}
                       >
@@ -488,7 +562,7 @@ export default function ManagementPage() {
                     </Box>
                     <hr />
                     <Box sx={valuePillSx}>
-                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY, fontSize: 15 }}>
                         Monto inicial
                       </Typography>
                       <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
@@ -496,7 +570,7 @@ export default function ManagementPage() {
                       </Typography>
                     </Box>
                     <Box sx={valuePillSx}>
-                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY, fontSize: 15 }}>
                         Deducciones
                       </Typography>
                       <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
@@ -504,7 +578,7 @@ export default function ManagementPage() {
                       </Typography>
                     </Box>
                     <Box sx={valuePillSx}>
-                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY, fontSize: 15 }}>
                         Dias del rango
                       </Typography>
                       <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
@@ -512,7 +586,7 @@ export default function ManagementPage() {
                       </Typography>
                     </Box>
                     <Box sx={valuePillSx}>
-                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY, fontSize: 15 }}>
                         Dias transcurridos
                       </Typography>
                       <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
@@ -520,11 +594,19 @@ export default function ManagementPage() {
                       </Typography>
                     </Box>
                     <Box sx={valuePillSx}>
-                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY }}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY, fontSize: 15 }}>
                         Disponible diariamente
                       </Typography>
                       <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
                         {currencyFormatter.format(availableBeforeDeductions)}
+                      </Typography>
+                    </Box>
+                    <Box sx={valuePillSx}>
+                      <Typography variant="caption" sx={{ color: TEXT_SECONDARY, fontSize: 15 }}>
+                        Bolsillo esperado
+                      </Typography>
+                      <Typography sx={{ color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }}>
+                        {currencyFormatter.format(record.initialAmount - deductionTotal)}
                       </Typography>
                     </Box>
                   </Stack>
@@ -587,6 +669,20 @@ export default function ManagementPage() {
               fullWidth
               sx={textFieldSx}
             />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={deductionIsCredit}
+                  onChange={(event) => setDeductionIsCredit(event.target.checked)}
+                  sx={{
+                    color: TEXT_SECONDARY,
+                    "&.Mui-checked": { color: BLUE_DEEP },
+                  }}
+                />
+              }
+              label="Es credito"
+              sx={{ color: TEXT_PRIMARY }}
+            />
             {deductionError ? <Alert severity="error">{deductionError}</Alert> : null}
           </Stack>
         </DialogContent>
@@ -631,13 +727,14 @@ export default function ManagementPage() {
                       border: `1px solid ${BORDER_COLOR}`,
                       borderRadius: 2,
                       p: 2,
-                      backgroundColor: SURFACE_BG,
+                      backgroundColor: deduction.isCredit ? "#052e16" : SURFACE_BG,
                     }}
                   >
                     <Box
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: "minmax(220px, 1fr) minmax(160px, 220px) auto",
+                        gridTemplateColumns:
+                          "minmax(220px, 1fr) minmax(160px, 220px) auto auto auto",
                         gap: 1.5,
                         alignItems: "center",
                       }}
@@ -663,6 +760,23 @@ export default function ManagementPage() {
                         disabled={!isEditing}
                         sx={textFieldSx}
                       />
+                      {isEditing && <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={deduction.isCredit}
+                            onChange={(event) =>
+                              handleDraftDeductionChange(index, "isCredit", event.target.checked)
+                            }
+                            disabled={!isEditing}
+                            sx={{
+                              color: TEXT_SECONDARY,
+                              "&.Mui-checked": { color: "#22c55e" },
+                            }}
+                          />
+                        }
+                        label="Credito"
+                        sx={{ color: TEXT_PRIMARY, mr: 0 }}
+                      />}
                       <Button
                         variant="outlined"
                         sx={outlinedButtonSx}
@@ -680,11 +794,36 @@ export default function ManagementPage() {
                       >
                         {isEditing ? "Guardar" : "Editar"}
                       </Button>
+                      <IconButton
+                        aria-label="Eliminar deduccion"
+                        onClick={() => handleRequestDeleteDeduction(index)}
+                        disabled={isUpdatingDeductions}
+                        sx={{
+                          color: "#f87171",
+                          border: "1px solid #7f1d1d",
+                          borderRadius: 1,
+                          "&:hover": {
+                            backgroundColor: "#450a0a",
+                          },
+                        }}
+                      >
+                        <Typography component="span" sx={{ fontSize: "1rem", lineHeight: 1 }}>
+                          🗑
+                        </Typography>
+                      </IconButton>
                     </Box>
                   </Box>
                 );
               })
             )}
+            <Box sx={valuePillSx}>
+              <Typography variant="caption" sx={{ color: TEXT_SECONDARY, fontSize: 15 }}>
+                Total creditos
+              </Typography>
+              <Typography sx={{ color: "#86efac", fontWeight: 700, textAlign: "right" }}>
+                {currencyFormatter.format(creditDeductionsTotal)}
+              </Typography>
+            </Box>
             {viewDeductionsError ? <Alert severity="error">{viewDeductionsError}</Alert> : null}
           </Stack>
         </DialogContent>
@@ -703,6 +842,36 @@ export default function ManagementPage() {
             }}
           >
             {isUpdatingDeductions ? "Actualizando..." : "Actualizar registro"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={deletingDeductionIndex !== null}
+        onClose={() => setDeletingDeductionIndex(null)}
+        fullWidth
+        maxWidth="xs"
+        sx={dialogSx}
+      >
+        <DialogTitle>Confirmar eliminacion</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: TEXT_PRIMARY }}>
+            Esta accion quitara la deduccion de la lista. ¿Deseas continuar?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeletingDeductionIndex(null)} sx={outlinedButtonSx}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmDeleteDeduction}
+            variant="contained"
+            sx={{
+              backgroundColor: "#b91c1c",
+              color: TEXT_PRIMARY,
+              "&:hover": { backgroundColor: "#991b1b" },
+            }}
+          >
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>

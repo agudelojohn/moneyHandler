@@ -20,6 +20,9 @@ export const managementSchema = z.object({
             error: "El monto es obligatorio"
         })
             .int("Usa números enteros"),
+        isCredit: z.boolean({
+            error: "El indicador de credito es obligatorio"
+        }),
     })),
 });
 
