@@ -42,7 +42,7 @@ function doRangesOverlap(
 
 export async function POST(request: Request) {
     const { userId, errorResponse } = getUserIdFromRequest(request);
-    if (errorResponse || !userId) {
+    if (errorResponse) {
         return errorResponse;
     }
 
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
     const { userId, errorResponse } = getUserIdFromRequest(request);
-    if (errorResponse || !userId) {
+    if (errorResponse) {
         return errorResponse;
     }
 
@@ -166,7 +166,7 @@ export async function GET(request: Request) {
 export async function DELETE(request: Request) {
     try {
         const { userId, errorResponse } = getUserIdFromRequest(request);
-        if (errorResponse || !userId) {
+        if (errorResponse) {
             return errorResponse;
         }
 
@@ -219,7 +219,7 @@ export async function DELETE(request: Request) {
 export async function PUT(request: Request) {
     try {
         const { userId, errorResponse } = getUserIdFromRequest(request);
-        if (errorResponse || !userId) {
+        if (errorResponse) {
             return errorResponse;
         }
 
