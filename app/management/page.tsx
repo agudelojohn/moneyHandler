@@ -9,20 +9,20 @@ import {
   Typography
 } from "@mui/material";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDateAsYyyyMmDd, formatDateWithMonthName, getDateFromDateString, getElapsedDaysInRange, getInclusiveDaysBetween, isValidDateString } from "../common/utils/dateHelpers";
 import { useI18n } from "../i18n/I18nProvider";
 import { COLORS } from "../theme";
 import { DeductionModal } from "./components/DeductionModal";
 import { ListDeductionsModal } from "./components/ListDeductionsModal";
-import { appendDeductionToManagementRecord } from "./services/managementApi";
 import * as Sx from "./styles";
 import type { Deduction, ManagementRecord } from "./types";
 import { CreateManagementModal } from "./components/CreateManagementModal";
+import { useUserSession, withUserIdHeader } from "../common/userSession";
 
 // Cambia este valor para emular la fecha de las peticiones en desarrollo.
 // Usa formato YYYY-MM-DD. Ejemplo: "2026-01-15"
-const DEV_INITIAL_REQUEST_DATE = "2026-02-15";
+const DEV_INITIAL_REQUEST_DATE = "";
 
 const DateTypography = ({ labelText, date }: { labelText: string, date: string }) => {
   return (
@@ -47,6 +47,7 @@ const ItemValueTypography = ({ labelText, value }: { labelText: string, value: s
 
 export default function ManagementPage() {
   const { t } = useI18n();
+  const { activeUser } = useUserSession();
   const isDevelopment = process.env.NODE_ENV === "development";
   const currencyFormatter = useMemo(
     () =>
@@ -59,13 +60,11 @@ export default function ManagementPage() {
   );
 
   const [records, setRecords] = useState<ManagementRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openDeductionModal, setOpenDeductionModal] = useState(false);
   const [managementRecord, setSelectedRecord] = useState<ManagementRecord | null>(null);
-  const [deductionError, setDeductionError] = useState<string | null>(null);
-  const [isSubmittingDeduction, setIsSubmittingDeduction] = useState(false);
   const [openViewDeductionsModal, setOpenViewDeductionsModal] = useState(false);
   const [deductionsCollection, setDeductionsCollection] = useState<Deduction[]>([]);
   const [deletingDeductionIndex, setDeletingDeductionIndex] = useState<number | null>(null);
@@ -77,12 +76,22 @@ export default function ManagementPage() {
     return formatDateAsYyyyMmDd(new Date());
   }, [isDevelopment]);
 
-  const fetchRecordsByDate = async (dateString: string) => {
+  const fetchRecordsByDate = useCallback(async (dateString: string) => {
+    if (!activeUser) {
+      setIsLoading(false);
+      setLoadError("Debes seleccionar un usuario en la pantalla principal.");
+      setRecords([]);
+      setOpenCreateModal(false);
+      return;
+    }
+
     setIsLoading(true);
     setLoadError(null);
 
     try {
-      const response = await fetch(`/api/management?date=${dateString}`);
+      const response = await fetch(`/api/management?date=${dateString}`, {
+        headers: withUserIdHeader(activeUser.userId),
+      });
       const data: ManagementRecord[] | { error?: string } = await response.json();
 
       if (!response.ok) {
@@ -109,9 +118,11 @@ export default function ManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeUser]);
 
   useEffect(() => {
+    if (!activeUser) return;
+
     const timeoutId = window.setTimeout(() => {
       void fetchRecordsByDate(baseRequestDate);
     }, 0);
@@ -119,11 +130,10 @@ export default function ManagementPage() {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [baseRequestDate]);
+  }, [activeUser, baseRequestDate, fetchRecordsByDate]);
 
   const handleOpenAddDeductionModal = (record: ManagementRecord) => {
     setSelectedRecord(record);
-    setDeductionError(null);
     setOpenDeductionModal(true);
   };
 
@@ -162,44 +172,19 @@ export default function ManagementPage() {
     );
   };
 
-  const handleCreateDeduction = async ({ deductionDescription, deductionAmount, deductionIsCredit }: { deductionDescription: string, deductionAmount: string, deductionIsCredit: boolean }) => {
-    if (!managementRecord) {
-      setDeductionError("No se encontro el registro para agregar la deduccion.");
-      return;
-    }
-
-    const amount = Number(deductionAmount);
-    if (deductionDescription.trim().length < 3 || deductionDescription.trim().length > 50) {
-      setDeductionError("La descripcion debe tener entre 3 y 50 caracteres.");
-      return;
-    }
-
-    if (!Number.isInteger(amount)) {
-      setDeductionError("El monto de la deduccion debe ser un numero entero.");
-      return;
-    }
-
-    setIsSubmittingDeduction(true);
-    setDeductionError(null);
-
-    try {
-      const deductionObject = { description: deductionDescription, amount, isCredit: deductionIsCredit };
-      const managementObject = {
-        id: managementRecord.id,
-        creationDate: managementRecord.creationDate,
-        deductions: managementRecord.deductions,
-      };
-      await appendDeductionToManagementRecord(managementObject, deductionObject);
-      setOpenDeductionModal(false);
-      setSelectedRecord(null);
-      await fetchRecordsByDate(baseRequestDate);
-    } catch (error) {
-      setDeductionError("No se pudo crear la deduccion.");
-      // TODO: Log error internally
-    } finally {
-      setIsSubmittingDeduction(false);
-    }
-  };
+  if (!activeUser) {
+    return (
+      <Stack spacing={3} sx={Sx.mainStackSx}>
+        <Typography variant="h2" sx={Sx.titleSx}>{t.management.title}</Typography>
+        <Alert severity="info">Debes seleccionar un usuario en la pantalla principal.</Alert>
+        <Link href="/" style={{ textDecoration: "none" }}>
+          <Button variant="contained" size="large" sx={Sx.backButtonSx}>
+            {t.common.backToHome}
+          </Button>
+        </Link>
+      </Stack>
+    );
+  }
 
   return (
     <Stack spacing={4} sx={Sx.mainStackSx}>
@@ -257,7 +242,7 @@ export default function ManagementPage() {
                     <ItemValueTypography labelText={t.management.deductions} value={currencyFormatter.format(deductionTotal)} />
                     <ItemValueTypography labelText={t.management.rangeDays} value={totalDaysInRange.toString()} />
                     <ItemValueTypography labelText={t.management.elapsedDays} value={elapsedDays.toString()} />
-                    <ItemValueTypography labelText={t.management.dailyAvailable} value={currencyFormatter.format(availableBeforeDeductions)} />
+                    <ItemValueTypography labelText={t.management.dailyAvailable} value={currencyFormatter.format(dailyAvailableAmount)} />
                     <ItemValueTypography labelText={t.management.expectedPocket} value={currencyFormatter.format(record.initialAmount - deductionTotal)} />
                   </Stack>
 
@@ -289,12 +274,15 @@ export default function ManagementPage() {
 
       <DeductionModal openDeductionModal={openDeductionModal}
         setOpenDeductionModal={setOpenDeductionModal}
-        deductionError={deductionError}
-        isSubmittingDeduction={isSubmittingDeduction}
-        handleCreateDeduction={handleCreateDeduction} />
+        managementRecord={managementRecord}
+        setSelectedRecord={setSelectedRecord}
+        fetchRecordsByDate={fetchRecordsByDate}
+        baseRequestDate={baseRequestDate}
+        activeUserId={activeUser?.userId ?? ""}
+      />
 
       <ListDeductionsModal
-        managementRecord={managementRecord!}
+        managementRecord={managementRecord}
         openViewDeductionsModal={openViewDeductionsModal}
         setOpenViewDeductionsModal={setOpenViewDeductionsModal}
         deductionsCollection={deductionsCollection}
@@ -306,6 +294,7 @@ export default function ManagementPage() {
         setDeletingDeductionIndex={setDeletingDeductionIndex}
         deletingDeductionIndex={deletingDeductionIndex}
         setDeductionsCollection={setDeductionsCollection}
+        activeUserId={activeUser?.userId ?? ""}
       />
 
       <CreateManagementModal
@@ -313,6 +302,7 @@ export default function ManagementPage() {
         setOpenCreateModal={setOpenCreateModal}
         fetchRecordsByDate={fetchRecordsByDate}
         baseRequestDate={baseRequestDate}
+        activeUserId={activeUser?.userId ?? ""}
       />
 
     </Stack>

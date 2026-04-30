@@ -1,7 +1,12 @@
 import type { ManagementObject, Deduction, ManagementRecordCreate } from "../types";
+import { withUserIdHeader } from "@/app/common/userSession";
 
 
-export async function appendDeductionToManagementRecord(managementObject: ManagementObject, deductionObject: Deduction) {
+export async function appendDeductionToManagementRecord(
+    managementObject: ManagementObject,
+    deductionObject: Deduction,
+    userId: string
+) {
 
     const { description, amount, isCredit } = deductionObject;
 
@@ -16,7 +21,7 @@ export async function appendDeductionToManagementRecord(managementObject: Manage
 
     const response = await fetch("/api/management", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
         body: JSON.stringify({
             id: managementObject.id,
             date: managementObject.creationDate,
@@ -31,10 +36,14 @@ export async function appendDeductionToManagementRecord(managementObject: Manage
     return response.json();
 }
 
-export async function updateDeductionsInManagementRecord(managementObject: ManagementObject, deductionsCollection: Deduction[]) {
+export async function updateDeductionsInManagementRecord(
+    managementObject: ManagementObject,
+    deductionsCollection: Deduction[],
+    userId: string
+) {
     const response = await fetch("/api/management", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
         body: JSON.stringify({
             id: managementObject.id,
             date: managementObject.creationDate,
@@ -53,11 +62,11 @@ export async function updateDeductionsInManagementRecord(managementObject: Manag
     return response.json();
 }
 
-export async function createManagementRecord(managementObject: ManagementRecordCreate) {
+export async function createManagementRecord(managementObject: ManagementRecordCreate, userId: string) {
     const { initialAmount, creationDate, startDate, endDate } = managementObject;
     const response = await fetch("/api/management", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
         body: JSON.stringify({
             initialAmount,
             creationDate,

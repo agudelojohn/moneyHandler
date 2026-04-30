@@ -5,10 +5,9 @@ import { db, TABLE_NAME } from "../../../lib/aws/dynamo";
 import { expenseSchema, getExpenseSchema, deleteExpenseSchema, updateExpenseSchema } from "../../../lib/aws/schemas";
 import { randomBytes } from "node:crypto";
 import { parseDatePreservingCalendarDay } from "../common/utils";
+import { getUserIdFromRequest } from "../common/userId";
 
-const USER_ID = process.env.NODE_ENV === "development" ? "123-DEV" : "123"; // Aquí usarás tu auth
-
-const buildPK = (year: number) => `USER#${USER_ID}#${year}`;
+const buildPK = (userId: string, year: number) => `USER#${userId}#${year}`;
 const buildSK = (date?: Date | null) => `EXPENSE#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
 
@@ -27,6 +26,11 @@ function buildDateForSK (date: Date): Date {
 
 export async function POST(request: Request) {
   try {
+    const { userId, errorResponse } = getUserIdFromRequest(request);
+    if (errorResponse || !userId) {
+      return errorResponse;
+    }
+
     const body = await request.json();
     // 1. Validar la data
     const result = expenseSchema.safeParse(body);
@@ -46,7 +50,7 @@ export async function POST(request: Request) {
     const normalizedDate = setDateToStartOfDay(dateObject);
     const dateForSK = buildDateForSK(normalizedDate);
     const item = {
-      PK: buildPK(year),
+      PK: buildPK(userId, year),
       SK: buildSK(dateForSK),
       id: buildUniqueID(),
       amount,
@@ -71,6 +75,11 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const { userId, errorResponse } = getUserIdFromRequest(request);
+    if (errorResponse || !userId) {
+      return errorResponse;
+    }
+
     const { searchParams } = new URL(request.url);
     const rawStartDate = searchParams.get("startDate");
     const rawEndDate = searchParams.get("endDate");
@@ -92,7 +101,7 @@ export async function GET(request: Request) {
     const result = await db.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
-      ExpressionAttributeValues: { ":pk": buildPK(year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
+      ExpressionAttributeValues: { ":pk": buildPK(userId, year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
     }));
     // debugger;
     if (category) {
@@ -106,6 +115,11 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const { userId, errorResponse } = getUserIdFromRequest(request);
+    if (errorResponse || !userId) {
+      return errorResponse;
+    }
+
     const { searchParams } = new URL(request.url);
     const rawDate = searchParams.get("date");
     const id = searchParams.get("id");
@@ -123,7 +137,7 @@ export async function DELETE(request: Request) {
     const result = await db.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
-      ExpressionAttributeValues: { ":pk": buildPK(year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
+      ExpressionAttributeValues: { ":pk": buildPK(userId, year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
     }));
 
     const item = result.Items?.find(item => item.id === id);
@@ -148,6 +162,11 @@ export async function DELETE(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const { userId, errorResponse } = getUserIdFromRequest(request);
+    if (errorResponse || !userId) {
+      return errorResponse;
+    }
+
     const body = await request.json();
     const result = updateExpenseSchema.safeParse(body);
 
@@ -157,6 +176,10 @@ export async function PUT(request: Request) {
         { status: 400 }
       );
     }
+    if (typeof result.data.PK !== "string" || !result.data.PK.startsWith(`USER#${userId}#`)) {
+      return NextResponse.json({ error: "Registro no pertenece al usuario activo" }, { status: 403 });
+    }
+
     await db.send(new PutCommand({
       TableName: TABLE_NAME,
       Item: result.data,

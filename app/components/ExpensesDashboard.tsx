@@ -42,6 +42,7 @@ import {
 import { useI18n } from "../i18n/I18nProvider";
 import { type CategoryKey } from "../i18n/translations";
 import { formatDateAsYyyyMmDd } from "../common/utils/dateHelpers";
+import { useUserSession, withUserIdHeader } from "../common/userSession";
 
 type Category = (typeof CATEGORIES)[number];
 
@@ -213,6 +214,7 @@ function EvolutionChart({
 
 export default function ExpensesDashboard() {
   const { t, dateLocale } = useI18n();
+  const { activeUser } = useUserSession();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { startDate: initialChartStartDate, endDate: initialChartEndDate } =
@@ -293,12 +295,20 @@ export default function ExpensesDashboard() {
   }, [chartEndDate, chartStartDate, t.expenses.invalidChartRange]);
 
   const loadExpenses = useCallback(async (category: Category) => {
+    if (!activeUser) {
+      setItems([]);
+      setError("Debes seleccionar un usuario en la pantalla principal.");
+      setSuccessMessage(null);
+      return;
+    }
+
     setError(null);
     setSuccessMessage(null);
     const { startDate, endDate } = yearlyRangeIso();
     const params = new URLSearchParams({ startDate, endDate, category });
     const response = await fetch(`/api/expenses?${params.toString()}`, {
       cache: "no-store",
+      headers: withUserIdHeader(activeUser.userId),
     });
     if (!response.ok) {
       throw new Error(t.expenses.loadError);
@@ -307,7 +317,7 @@ export default function ExpensesDashboard() {
     setItems(
       [...payload].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     );
-  }, [t.expenses.loadError]);
+  }, [activeUser, t.expenses.loadError]);
 
   const handleCategoryChange = async (category: Category) => {
     setSelectedCategory(category);
@@ -334,6 +344,11 @@ export default function ExpensesDashboard() {
   };
 
   const saveExpense = async () => {
+    if (!activeUser) {
+      setError("Debes seleccionar un usuario en la pantalla principal.");
+      return;
+    }
+
     setError(null);
     setSuccessMessage(null);
     const amount = Number(form.amount);
@@ -362,7 +377,7 @@ export default function ExpensesDashboard() {
 
         const response = await fetch("/api/expenses", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: withUserIdHeader(activeUser?.userId, { "Content-Type": "application/json" }),
           body: JSON.stringify(payload),
         });
         if (!response.ok) throw new Error(t.expenses.updateError);
@@ -377,7 +392,7 @@ export default function ExpensesDashboard() {
         };
         const response = await fetch("/api/expenses", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: withUserIdHeader(activeUser?.userId, { "Content-Type": "application/json" }),
           body: JSON.stringify(payload),
         });
         if (!response.ok) throw new Error(t.expenses.createError);
@@ -394,6 +409,11 @@ export default function ExpensesDashboard() {
   };
 
   const deleteExpense = async (item: ExpenseItem) => {
+    if (!activeUser) {
+      setError("Debes seleccionar un usuario en la pantalla principal.");
+      return;
+    }
+
     const shouldDelete = window.confirm(t.expenses.deleteConfirm);
     if (!shouldDelete) return;
     setError(null);
@@ -403,6 +423,7 @@ export default function ExpensesDashboard() {
       const params = new URLSearchParams({ date: item.date, id: item.id });
       const response = await fetch(`/api/expenses?${params.toString()}`, {
         method: "DELETE",
+        headers: withUserIdHeader(activeUser?.userId),
       });
       if (!response.ok) throw new Error(t.expenses.deleteError);
       await loadExpenses(selectedCategory);
@@ -416,6 +437,8 @@ export default function ExpensesDashboard() {
   };
 
   useEffect(() => {
+    if (!activeUser) return;
+
     const run = async () => {
       try {
         await loadExpenses(selectedCategory);
@@ -424,7 +447,27 @@ export default function ExpensesDashboard() {
       }
     };
     void run();
-  }, [loadExpenses, selectedCategory, t.expenses.unexpectedError]);
+  }, [activeUser, loadExpenses, selectedCategory, t.expenses.unexpectedError]);
+
+  if (!activeUser) {
+    return (
+      <Stack
+        spacing={2}
+        sx={{
+          minHeight: "100vh",
+          py: { xs: 8 },
+          px: { xs: 6, sm: 15 },
+          backgroundColor: DARK_BG,
+          color: TEXT_PRIMARY,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 800, color: TEXT_PRIMARY }}>
+          {t.expenses.pageTitle}
+        </Typography>
+        <Alert severity="info">Debes seleccionar un usuario en la pantalla principal.</Alert>
+      </Stack>
+    );
+  }
 
   return (
     <Stack

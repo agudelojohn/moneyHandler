@@ -9,10 +9,9 @@ import {
     managementSchema,
     updateManagementSchema
 } from "../../../lib/aws/schemas";
+import { getUserIdFromRequest } from "../common/userId";
 
-const USER_ID = process.env.NODE_ENV === "development" ? "123-DEV" : "123"; // Aquí usarás tu auth
-
-const buildPK = (year: number) => `MANAGEMENT#${USER_ID}#${year}`;
+const buildPK = (userId: string, year: number) => `MANAGEMENT#${userId}#${year}`;
 const buildSK = (date?: Date | null) => `ADDITION#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
 
@@ -42,6 +41,11 @@ function doRangesOverlap(
 }
 
 export async function POST(request: Request) {
+    const { userId, errorResponse } = getUserIdFromRequest(request);
+    if (errorResponse || !userId) {
+        return errorResponse;
+    }
+
     const body = await request.json();
     const result = managementSchema.safeParse(body);
     if (!result.success) {
@@ -65,7 +69,7 @@ export async function POST(request: Request) {
             TableName: TABLE_NAME,
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
-                ":pk": buildPK(yearToCheck),
+                ":pk": buildPK(userId, yearToCheck),
                 ":sk": buildSK(startOfYear),
                 ":sk2": buildSK(endOfYear),
             }
@@ -94,7 +98,7 @@ export async function POST(request: Request) {
 
     const year = creationDate.getFullYear();
     const item = {
-        PK: buildPK(year),
+        PK: buildPK(userId, year),
         SK: buildSK(creationDate),
         id: buildUniqueID(),
         initialAmount,
@@ -111,6 +115,11 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+    const { userId, errorResponse } = getUserIdFromRequest(request);
+    if (errorResponse || !userId) {
+        return errorResponse;
+    }
+
     const { searchParams } = new URL(request.url);
     const dateRaw = searchParams.get("date");
     const parsed = getManagementSchema.safeParse({ date: dateRaw });
@@ -130,7 +139,7 @@ export async function GET(request: Request) {
     const result = await db.send(new QueryCommand({
         TableName: TABLE_NAME,
         KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
-        ExpressionAttributeValues: { ":pk": buildPK(year), ":sk": buildSK(startOfYear), ":sk2": buildSK(endOfYear) }
+        ExpressionAttributeValues: { ":pk": buildPK(userId, year), ":sk": buildSK(startOfYear), ":sk2": buildSK(endOfYear) }
     }));
 
     const filteredItems = (result.Items ?? [])
@@ -156,6 +165,11 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: Request) {
     try {
+        const { userId, errorResponse } = getUserIdFromRequest(request);
+        if (errorResponse || !userId) {
+            return errorResponse;
+        }
+
         const { searchParams } = new URL(request.url);
         const rawDate = searchParams.get("date");
         const id = searchParams.get("id");
@@ -176,7 +190,7 @@ export async function DELETE(request: Request) {
             TableName: TABLE_NAME,
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
-                ":pk": buildPK(year),
+                ":pk": buildPK(userId, year),
                 ":sk": buildSK(normalizedDate),
                 ":sk2": buildSK(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999)),
             }
@@ -204,6 +218,11 @@ export async function DELETE(request: Request) {
 
 export async function PUT(request: Request) {
     try {
+        const { userId, errorResponse } = getUserIdFromRequest(request);
+        if (errorResponse || !userId) {
+            return errorResponse;
+        }
+
         const body = await request.json();
         const parsed = updateManagementSchema.safeParse(body);
 
@@ -222,7 +241,7 @@ export async function PUT(request: Request) {
             TableName: TABLE_NAME,
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
-                ":pk": buildPK(year),
+                ":pk": buildPK(userId, year),
                 ":sk": buildSK(normalizedDate),
                 ":sk2": buildSK(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999)),
             }

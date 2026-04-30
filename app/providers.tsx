@@ -3,6 +3,7 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import type { ReactNode } from "react";
+import { UserSessionProvider } from "./common/userSession";
 import theme from "./theme";
 
 type ProvidersProps = {
@@ -14,7 +15,7 @@ export default function Providers({ children }: ProvidersProps) {
     <AppRouterCacheProvider options={{ key: "css" }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        {children}
+        <UserSessionProvider>{children}</UserSessionProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

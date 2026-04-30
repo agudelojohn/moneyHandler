@@ -22,9 +22,16 @@ interface CreateManagementModalProps {
     setOpenCreateModal: (open: boolean) => void;
     fetchRecordsByDate: (dateString: string) => Promise<void>;
     baseRequestDate: string;
+    activeUserId: string;
 }
 
-export const CreateManagementModal = ({ openCreateModal, setOpenCreateModal, fetchRecordsByDate, baseRequestDate }: CreateManagementModalProps) => {
+export const CreateManagementModal = ({
+    openCreateModal,
+    setOpenCreateModal,
+    fetchRecordsByDate,
+    baseRequestDate,
+    activeUserId
+}: CreateManagementModalProps) => {
     const { t } = useI18n();
 
     const [initialAmount, setInitialAmount] = useState("");
@@ -59,7 +66,7 @@ export const CreateManagementModal = ({ openCreateModal, setOpenCreateModal, fet
                 endDate: rangeEndDate,
                 deductions: [],
             };
-            await createManagementRecord(managementRecord);
+            await createManagementRecord(managementRecord, activeUserId);
 
             setOpenCreateModal(false);
             await fetchRecordsByDate(baseRequestDate);

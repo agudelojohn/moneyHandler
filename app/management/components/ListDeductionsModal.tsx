@@ -22,7 +22,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { updateDeductionsInManagementRecord } from "../services/managementApi";
 
 interface ListDeductionsModalProps {
-    managementRecord: ManagementRecord;
+    managementRecord: ManagementRecord | null;
     openViewDeductionsModal: boolean;
     setOpenViewDeductionsModal: (open: boolean) => void;
     deductionsCollection: Deduction[];
@@ -34,6 +34,7 @@ interface ListDeductionsModalProps {
     setDeletingDeductionIndex: (index: number | null) => void;
     deletingDeductionIndex: number | null;
     setDeductionsCollection: (deductions: (previous: Deduction[]) => Deduction[]) => void;
+    activeUserId: string;
 }
 
 export const ListDeductionsModal = ({
@@ -48,7 +49,8 @@ export const ListDeductionsModal = ({
     baseRequestDate,
     setDeletingDeductionIndex,
     deletingDeductionIndex,
-    setDeductionsCollection
+    setDeductionsCollection,
+    activeUserId
 }: ListDeductionsModalProps) => {
     const { t } = useI18n();
 
@@ -93,7 +95,7 @@ export const ListDeductionsModal = ({
         setViewDeductionsError(null);
 
         try {
-            await updateDeductionsInManagementRecord(managementRecord, deductionsCollection);
+            await updateDeductionsInManagementRecord(managementRecord, deductionsCollection, activeUserId);
             setOpenViewDeductionsModal(false);
             setSelectedRecord(null);
             await fetchRecordsByDate(baseRequestDate);
