@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hello World - Next.js + MUI",
-  description: "Proyecto base con Next.js, TypeScript y Material UI",
+  title: "Money Handler",
+  description: "Money Handler is a tool to help you manage your money.",
 };
 
 export default function RootLayout({
