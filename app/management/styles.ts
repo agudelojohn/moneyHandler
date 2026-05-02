@@ -40,6 +40,7 @@ export const textFieldSx = {
 };
 
 export const outlinedButtonSx = {
+    width: {xs: "100%", md: "auto"},
     color: TEXT_PRIMARY,
     borderColor: "#334155",
     "&:hover": {
@@ -123,12 +124,23 @@ export const deductionItemCardSx = (isCredit: boolean) => ({
     borderRadius: 2,
     p: 2,
     backgroundColor: isCredit ? COLORS.DEDUCTION_CREDIT_BG : SURFACE_BG,
+    display: "flex",
+    flexDirection: {xs: "column", md: "row"},
 });
 
 export const deductionItemGridSx = {
-    display: "grid",
-    gridTemplateColumns: "minmax(220px, 1fr) minmax(160px, 220px) auto auto auto",
+    width: "100%",
+    display: "flex",
+    flexDirection: {xs: "column", md: "row"},
     gap: 1.5,
+    alignItems: "center",
+    justifyContent: {xs: "center", md: "space-between"},
+};
+
+export const deductionItemButtonsSx = {
+    display: "flex",
+    flexDirection: "row",
+    gap: {xs: 4, md: 1.5},
     alignItems: "center",
 };
 

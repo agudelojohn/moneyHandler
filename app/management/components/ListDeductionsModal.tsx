@@ -205,6 +205,7 @@ export const ListDeductionsModal = ({
                                                 label={t.management.credit}
                                                 sx={Sx.deductionCreditLabelSx}
                                             />}
+                                            <Box sx={Sx.deductionItemButtonsSx}>
                                             <Button
                                                 variant="outlined"
                                                 sx={Sx.outlinedButtonSx}
@@ -232,6 +233,7 @@ export const ListDeductionsModal = ({
                                                     🗑
                                                 </Typography>
                                             </IconButton>
+                                            </Box>
                                         </Box>
                                     </Box>
                                 );
