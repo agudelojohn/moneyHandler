@@ -51,6 +51,15 @@ export function getDateFromDateString(value: string): Date {
   return new Date(`${value}T00:00:00`);
 }
 
+/** Fecha de calendario `yyyy-mm-dd` (medianoche local) o ISO 8601 desde API/almacenamiento. */
+export function parseStoredDateValue(value: string): Date {
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return getDateFromDateString(trimmed);
+  }
+  return new Date(trimmed);
+}
+
 export function normalizeDateOnly(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }

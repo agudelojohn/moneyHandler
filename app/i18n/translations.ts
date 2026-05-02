@@ -1,14 +1,8 @@
+import type { ExpenseCategory } from "@/lib/aws/schemas/common";
+
 export type Locale = "es" | "en";
 
-export const CATEGORY_KEYS = [
-  "Comida",
-  "Transporte",
-  "Vivienda",
-  "Ocio",
-  "Otros",
-] as const;
-
-export type CategoryKey = (typeof CATEGORY_KEYS)[number];
+export type CategoryKey = ExpenseCategory;
 
 type TranslationSchema = {
   common: {
@@ -61,6 +55,8 @@ type TranslationSchema = {
     updateDeductionsError: string;
     invalidEditedDeductionError: string;
     createManagementTitle: string;
+    suggestedRangeDate: string;
+    useSuggestedRange: string;
     rangeStartDate: string;
     rangeEndDate: string;
     creatingRecord: string;
@@ -68,6 +64,8 @@ type TranslationSchema = {
     invalidRangeDatesError: string;
     invalidRangeOrderError: string;
     createRecordError: string;
+    selectCategoryTitle: string;
+    selectCategorySubtitle: string;
   };
   expenses: {
     pageTitle: string;
@@ -105,6 +103,9 @@ type TranslationSchema = {
     noResultsCurrentYear: string;
     value: string;
     actions: string;
+    selectCategoryTitle: string;
+    selectCategorySubtitle: string;
+    changeCategory: string;
   };
   dataViewer: {
     title: string;
@@ -131,7 +132,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       title: "Bienvenido!",
       subtitle: "Selecciona el modulo que quieres abrir.",
       managementButton: "Gestion de dinero",
-      expensesButton: "Control de gastos",
+      expensesButton: "Historial de precios",
     },
     management: {
       title: "Management",
@@ -174,6 +175,8 @@ export const translations: Record<Locale, TranslationSchema> = {
       invalidEditedDeductionError:
         "La deduccion editada no es valida. Revisa descripcion y monto.",
       createManagementTitle: "Crear registro de management",
+      suggestedRangeDate: "Rango sugerido",
+      useSuggestedRange: "¿Usar?",
       rangeStartDate: "Fecha inicial del rango",
       rangeEndDate: "Fecha final del rango",
       creatingRecord: "Creando...",
@@ -182,9 +185,12 @@ export const translations: Record<Locale, TranslationSchema> = {
       invalidRangeOrderError:
         "La fecha inicial del rango no puede ser mayor a la fecha final.",
       createRecordError: "No se pudo crear el registro.",
+      selectCategoryTitle: "Elige una categoria",
+      selectCategorySubtitle:
+        "Debes elegir una categoria para continuar con la gestion de dinero.",
     },
     expenses: {
-      pageTitle: "Control de gastos",
+      pageTitle: "Historial de precios",
       pageSubtitle:
         "Visualiza la evolucion anual por categoria, crea nuevos registros y gestiona los existentes desde una sola vista.",
       chartEmpty: "Sin datos para mostrar en el grafico.",
@@ -221,6 +227,10 @@ export const translations: Record<Locale, TranslationSchema> = {
       noResultsCurrentYear: "No hay resultados para esta categoria en el anio actual.",
       value: "Valor",
       actions: "Acciones",
+      selectCategoryTitle: "Elige una categoria",
+      selectCategorySubtitle:
+        "Veras el historial y registrar gastos segun la categoria que elijas.",
+      changeCategory: "Cambiar categoria",
     },
     dataViewer: {
       title: "Visor de datos",
@@ -232,11 +242,11 @@ export const translations: Record<Locale, TranslationSchema> = {
       minusOneDay: "-1 dia",
     },
     categories: {
-      Comida: "Comida",
-      Transporte: "Transporte",
-      Vivienda: "Vivienda",
-      Ocio: "Ocio",
+      Gastos: "Gastos",
+      Gatitos: "Gatitos",
+      Mercado: "Mercado",
       Otros: "Otros",
+      Servicios: "Servicios",
     },
   },
   en: {
@@ -251,7 +261,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       title: "Welcome!",
       subtitle: "Select the module you want to open.",
       managementButton: "Money management",
-      expensesButton: "Expense control",
+      expensesButton: "Price history",
     },
     management: {
       title: "Management",
@@ -294,6 +304,8 @@ export const translations: Record<Locale, TranslationSchema> = {
       invalidEditedDeductionError:
         "The edited deduction is invalid. Check description and amount.",
       createManagementTitle: "Create management record",
+      suggestedRangeDate: "Suggested range",
+      useSuggestedRange: "Use?",
       rangeStartDate: "Range start date",
       rangeEndDate: "Range end date",
       creatingRecord: "Creating...",
@@ -303,9 +315,12 @@ export const translations: Record<Locale, TranslationSchema> = {
       invalidRangeOrderError:
         "The range start date cannot be later than the end date.",
       createRecordError: "The record could not be created.",
+      selectCategoryTitle: "Choose a category",
+      selectCategorySubtitle:
+        "Pick a category to continue with money management.",
     },
     expenses: {
-      pageTitle: "Expenses Control",
+      pageTitle: "Price history",
       pageSubtitle:
         "Review yearly evolution by category, create new records, and manage existing ones from a single view.",
       chartEmpty: "No data available for this chart.",
@@ -342,6 +357,10 @@ export const translations: Record<Locale, TranslationSchema> = {
       noResultsCurrentYear: "No results for this category in the current year.",
       value: "Value",
       actions: "Actions",
+      selectCategoryTitle: "Choose a category",
+      selectCategorySubtitle:
+        "You will view history and record expenses for the category you pick.",
+      changeCategory: "Change category",
     },
     dataViewer: {
       title: "Data Viewer",
@@ -353,11 +372,11 @@ export const translations: Record<Locale, TranslationSchema> = {
       minusOneDay: "-1 Day",
     },
     categories: {
-      Comida: "Food",
-      Transporte: "Transport",
-      Vivienda: "Housing",
-      Ocio: "Leisure",
+      Gastos: "General expenses",
+      Gatitos: "Cats",
+      Mercado: "Groceries",
       Otros: "Other",
+      Servicios: "Services",
     },
   },
 };

@@ -103,7 +103,6 @@ export async function GET(request: Request) {
       KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
       ExpressionAttributeValues: { ":pk": buildPK(userId, year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
     }));
-    // debugger;
     if (category) {
       result.Items = result.Items?.filter(item => item.category === category);
     }

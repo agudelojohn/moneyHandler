@@ -1,7 +1,16 @@
-
 import { COLORS } from "../theme";
 
-const { SURFACE_BG, TEXT_PRIMARY, TEXT_SECONDARY, BORDER_COLOR, BLUE_DEEP, DARK_BG } = COLORS;
+const {
+  SURFACE_BG,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  BORDER_COLOR,
+  BLUE_DEEP,
+  DARK_BG,
+  DARK_SURFACE,
+  DARK_BORDER,
+  BLUE_ACCENT,
+} = COLORS;
 
 export const dialogSx = {
     "& .MuiPaper-root": {
@@ -95,12 +104,17 @@ export const itemLabelSx = { color: TEXT_SECONDARY, fontSize: 15 }
 
 export const itemValueSx = { color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }
 
-export const backButtonSx = {
+/** Botón primario sin margen (top bar, category gate, etc.) */
+export const primaryContainedButtonSx = {
     backgroundColor: BLUE_DEEP,
     color: TEXT_PRIMARY,
     "&:hover": { backgroundColor: "#1e40af" },
-    mb: 5
-}
+};
+
+export const backButtonSx = {
+    ...primaryContainedButtonSx,
+    mb: 5,
+};
 
 export const listDeductionsStackSx = { mt: 1 };
 
@@ -157,7 +171,149 @@ export const confirmDeleteButtonSx = {
 export const createDeductionStackSx = { mt: 1 };
 
 export const createManagementRecordButtonSx = {
+    ...primaryContainedButtonSx,
+};
+
+export const managementLoadingStackSx = {
+    minHeight: "100vh",
+    backgroundColor: DARK_BG,
+    alignItems: "center",
+    justifyContent: "center",
+};
+
+export const managementLoadingProgressSx = {
+    color: BLUE_ACCENT,
+};
+
+export const categoryGateRootSx = {
+    minHeight: "100vh",
+    px: 2,
+    py: 4,
+    backgroundColor: DARK_BG,
+    color: TEXT_PRIMARY,
+    alignItems: "center",
+    justifyContent: "center",
+};
+
+export const categoryGateContentSx = {
+    width: "100%",
+    maxWidth: 420,
+    textAlign: "center",
+};
+
+export const categoryGateTitleSx = {
+    fontWeight: 700,
+    color: TEXT_PRIMARY,
+};
+
+export const categoryGateSubtitleSx = {
+    color: TEXT_SECONDARY,
+};
+
+export const categoryGatePillsRowSx = {
+    pt: 1,
+    flexDirection: "column",
+    flexWrap: "nowrap",
+    gap: 1.5,
+    justifyContent: "flex-start",
+    alignItems: "flex-start"
+};
+
+export const categoryGatePillButtonSx = {
+    width: "100%",
+    borderRadius: 999,
+    px: 2.5,
+    textTransform: "none",
+    fontWeight: 600,
+    borderColor: DARK_BORDER,
+    color: TEXT_PRIMARY,
+    backgroundColor: DARK_SURFACE,
+    "&:hover": {
+        borderColor: BLUE_ACCENT,
+        backgroundColor: "#0b1220",
+    },
+};
+
+export const categoryGateHomeRowSx = {
+    pt: 2,
+    alignItems: "center",
+};
+
+export const managementTopBarContainerSx = {
+    width: "100%",
+    position: "fixed",
+    top: 0,
+    left: 0,
+    zIndex: 10,
+    p: 2,
+    backgroundColor: DARK_BG,
+};
+
+export const managementTopBarStackSx = {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 1,
+    alignItems: "center",
+};
+
+export const managementTopBarOutlinedButtonSx = {
+    borderColor: DARK_BORDER,
+    color: BLUE_ACCENT,
+    backgroundColor: DARK_SURFACE,
+    "&:hover": {
+        borderColor: BLUE_ACCENT,
+        backgroundColor: "#0b1220",
+    },
+};
+
+export const managementTopBarCategoryChipSx = {
     backgroundColor: BLUE_DEEP,
     color: TEXT_PRIMARY,
+    fontWeight: 700,
+};
+
+export const dateTypographyLabelSx = {
+    color: TEXT_SECONDARY,
+    mt: 2,
+    mb: 1,
+};
+
+export const managementWorkspaceContentStackSx = {
+    ...mainStackSx,
+    pt: { xs: 14, sm: 12 },
+};
+
+export const managementDevAlertSx = {
+    width: "100%",
+    maxWidth: 760,
+};
+
+export const managementRecordsColumnSx = {
+    width: "100%",
+    maxWidth: 760,
+};
+
+export const managementMainLoadingProgressSx = {
+    color: BLUE_DEEP,
+};
+
+export const managementRecordBodyStackSx = {
+    mt: 2,
+    width: "100%",
+    mb: 3,
+};
+
+export const managementAddDeductionButtonSx = {
+    ...outlinedButtonSx,
+    mt: 1,
+    width: { xs: "100%" },
+    backgroundColor: "#0b1b42",
     "&:hover": { backgroundColor: "#1e40af" },
+};
+
+export const managementViewDeductionsButtonSx = {
+    ...outlinedButtonSx,
+    mt: 2,
+    mb: 1,
+    width: { xs: "100%" },
 };

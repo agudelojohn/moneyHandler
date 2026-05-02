@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { expenseCategorySchema } from "./common";
 
 export const managementSchema = z.object({
+    category: expenseCategorySchema,
     initialAmount: z.number({
         error: "El monto es obligatorio"
     })

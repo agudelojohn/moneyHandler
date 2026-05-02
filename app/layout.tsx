@@ -18,10 +18,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Money Handler",
   description: "Money Handler is a tool to help you manage your money.",
+  manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/icon-192x192.png",
+    apple: "/apple-touch-icon.png",
   },
 };
 

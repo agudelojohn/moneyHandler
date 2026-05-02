@@ -12,7 +12,7 @@ import {
 import { getUserIdFromRequest } from "../common/userId";
 
 const buildPK = (userId: string, year: number) => `MANAGEMENT#${userId}#${year}`;
-const buildSK = (date?: Date | null) => `ADDITION#${date ? date.toISOString() : new Date().toISOString()}`;
+const buildSK = (date?: Date | null, category?: string) => `ADDITION#${(category ?? "OTROS").toUpperCase()}#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
 
 function normalizeDate(date: Date): Date {
@@ -51,7 +51,14 @@ export async function POST(request: Request) {
     if (!result.success) {
         return NextResponse.json({ errors: result.error.flatten().fieldErrors }, { status: 400 });
     }
-    const { initialAmount, creationDate: creationDateRaw, startDate: startDateRaw, endDate: endDateRaw, deductions } = result.data;
+    const {
+        category,
+        initialAmount,
+        creationDate: creationDateRaw,
+        startDate: startDateRaw,
+        endDate: endDateRaw,
+        deductions,
+    } = result.data;
     const creationDate = creationDateRaw ? parseDatePreservingCalendarDay(creationDateRaw) : new Date();
     const startDate = parseDatePreservingCalendarDay(startDateRaw);
     const endDate = parseDatePreservingCalendarDay(endDateRaw);
@@ -70,8 +77,8 @@ export async function POST(request: Request) {
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
                 ":pk": buildPK(userId, yearToCheck),
-                ":sk": buildSK(startOfYear),
-                ":sk2": buildSK(endOfYear),
+                ":sk": buildSK(startOfYear, category),
+                ":sk2": buildSK(endOfYear, category),
             }
         }));
 
@@ -99,8 +106,9 @@ export async function POST(request: Request) {
     const year = creationDate.getFullYear();
     const item = {
         PK: buildPK(userId, year),
-        SK: buildSK(creationDate),
+        SK: buildSK(creationDate, category),
         id: buildUniqueID(),
+        category,
         initialAmount,
         creationDate: creationDate.toISOString(),
         startDate: startDate.toISOString(),
@@ -122,7 +130,8 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const dateRaw = searchParams.get("date");
-    const parsed = getManagementSchema.safeParse({ date: dateRaw });
+    const categoryRaw = searchParams.get("category");
+    const parsed = getManagementSchema.safeParse({ date: dateRaw, category: categoryRaw });
 
     if (!parsed.success) {
         return NextResponse.json(
@@ -132,6 +141,7 @@ export async function GET(request: Request) {
     }
 
     const requestedDate = parseDatePreservingCalendarDay(parsed.data.date);
+    const { category } = parsed.data;
     const year = requestedDate.getFullYear();
     const startOfYear = new Date(year, 0, 1);
     const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
@@ -139,7 +149,11 @@ export async function GET(request: Request) {
     const result = await db.send(new QueryCommand({
         TableName: TABLE_NAME,
         KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
-        ExpressionAttributeValues: { ":pk": buildPK(userId, year), ":sk": buildSK(startOfYear), ":sk2": buildSK(endOfYear) }
+        ExpressionAttributeValues: {
+            ":pk": buildPK(userId, year),
+            ":sk": buildSK(startOfYear, category),
+            ":sk2": buildSK(endOfYear, category),
+        },
     }));
 
     const filteredItems = (result.Items ?? [])
@@ -173,7 +187,8 @@ export async function DELETE(request: Request) {
         const { searchParams } = new URL(request.url);
         const rawDate = searchParams.get("date");
         const id = searchParams.get("id");
-        const parsed = deleteManagementSchema.safeParse({ date: rawDate, id });
+        const rawCategory = searchParams.get("category");
+        const parsed = deleteManagementSchema.safeParse({ date: rawDate, id, category: rawCategory });
 
         if (!parsed.success) {
             return NextResponse.json(
@@ -185,14 +200,15 @@ export async function DELETE(request: Request) {
         const parsedDate = parseDatePreservingCalendarDay(parsed.data.date);
         const normalizedDate = normalizeDate(parsedDate);
         const year = normalizedDate.getFullYear();
+        const { category } = parsed.data;
 
         const result = await db.send(new QueryCommand({
             TableName: TABLE_NAME,
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
                 ":pk": buildPK(userId, year),
-                ":sk": buildSK(normalizedDate),
-                ":sk2": buildSK(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999)),
+                ":sk": buildSK(normalizedDate, category),
+                ":sk2": buildSK(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999), category),
             }
         }));
 
@@ -236,14 +252,15 @@ export async function PUT(request: Request) {
         const parsedDate = parseDatePreservingCalendarDay(parsed.data.date);
         const normalizedDate = normalizeDate(parsedDate);
         const year = normalizedDate.getFullYear();
+        const { category } = parsed.data;
 
         const result = await db.send(new QueryCommand({
             TableName: TABLE_NAME,
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
                 ":pk": buildPK(userId, year),
-                ":sk": buildSK(normalizedDate),
-                ":sk2": buildSK(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999)),
+                ":sk": buildSK(normalizedDate, category),
+                ":sk2": buildSK(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999), category),
             }
         }));
 
@@ -255,6 +272,7 @@ export async function PUT(request: Request) {
 
         const updatedItem = {
             ...originalItem,
+            category,
             deductions: parsed.data.deductions,
         };
 

@@ -8,14 +8,24 @@ import {
     DialogContent,
     DialogTitle,
     Stack,
-    TextField
+    TextField,
+    Typography,
+    Checkbox,
+    FormControlLabel,
 } from "@mui/material";
 import { useState } from "react";
-import { formatDateAsYyyyMmDd, getDateFromDateString, isValidDateString } from "../../common/utils/dateHelpers";
+import {
+    formatDateAsYyyyMmDd,
+    formatDateWithMonthName,
+    getDateFromDateString,
+    isValidDateString,
+    parseStoredDateValue,
+} from "../../common/utils/dateHelpers";
 import { useI18n } from "../../i18n/I18nProvider";
 import { createManagementRecord } from "../services/managementApi";
 import * as Sx from "../styles";
 import { ManagementRecordCreate } from "../types";
+import { CategoryKey } from "@/app/i18n/translations";
 
 interface CreateManagementModalProps {
     openCreateModal: boolean;
@@ -23,6 +33,8 @@ interface CreateManagementModalProps {
     fetchRecordsByDate: (dateString: string) => Promise<void>;
     baseRequestDate: string;
     activeUserId: string;
+    category: string;
+    suggestedRangeDate: { startDate: string; endDate: string } | null;
 }
 
 export const CreateManagementModal = ({
@@ -30,7 +42,9 @@ export const CreateManagementModal = ({
     setOpenCreateModal,
     fetchRecordsByDate,
     baseRequestDate,
-    activeUserId
+    activeUserId,
+    category,
+    suggestedRangeDate,
 }: CreateManagementModalProps) => {
     const { t } = useI18n();
 
@@ -39,7 +53,7 @@ export const CreateManagementModal = ({
     const [rangeEndDate, setRangeEndDate] = useState(() => formatDateAsYyyyMmDd(new Date()));
     const [createError, setCreateError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
+    const [useSuggestedRange, setUseSuggestedRange] = useState(false);
     const handleCreateRecord = async () => {
         const amount = Number(initialAmount);
         if (!Number.isInteger(amount) || amount <= 0) {
@@ -60,6 +74,7 @@ export const CreateManagementModal = ({
 
         try {
             const managementRecord: ManagementRecordCreate = {
+                category,
                 initialAmount: amount,
                 creationDate: new Date().toISOString(),
                 startDate: rangeStartDate,
@@ -77,6 +92,20 @@ export const CreateManagementModal = ({
         }
     };
 
+    function handleUseSuggestedRange() {
+        setUseSuggestedRange(prev => {
+            const newUseSuggestedRange = !prev;
+            if (newUseSuggestedRange) {
+                setRangeStartDate(formatDateAsYyyyMmDd(new Date(suggestedRangeDate?.startDate || "")));
+                setRangeEndDate(formatDateAsYyyyMmDd(new Date(suggestedRangeDate?.endDate || "")));
+            } else {
+                setRangeStartDate(formatDateAsYyyyMmDd(new Date()));
+                setRangeEndDate(formatDateAsYyyyMmDd(new Date()));
+            }
+            return newUseSuggestedRange;
+        });
+    }
+
 
     return (
         <>
@@ -87,7 +116,7 @@ export const CreateManagementModal = ({
                 maxWidth="sm"
                 sx={Sx.dialogSx}
             >
-                <DialogTitle>{t.management.createManagementTitle}</DialogTitle>
+                <DialogTitle>{t.management.createManagementTitle}: {t.categories[category as CategoryKey]}</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={Sx.createDeductionStackSx}>
                         <TextField
@@ -98,6 +127,23 @@ export const CreateManagementModal = ({
                             fullWidth
                             sx={Sx.textFieldSx}
                         />
+                        {suggestedRangeDate ? (
+                            <div style={{ display: "flex", justifyContent: "space-between", paddingLeft: 16 }}>
+                                <div style={{ display: "flex", alignItems: "start", flexDirection: "column", gap: 6 }}>
+                                    <Typography variant="h6" color="text.secondary">
+                                        {t.management.suggestedRangeDate}:{" "}
+                                    </Typography>
+                                    <Typography variant="subtitle1" color="text.secondary">
+                                        {`${formatDateWithMonthName(parseStoredDateValue(suggestedRangeDate.startDate))} - ${formatDateWithMonthName(parseStoredDateValue(suggestedRangeDate.endDate))}`}
+                                    </Typography>
+                                </div>
+                                <FormControlLabel
+                                    control={<Checkbox checked={useSuggestedRange} onChange={handleUseSuggestedRange} />}
+                                    label={t.management.useSuggestedRange}
+                                    sx={{ m: 0, ml: -5 }}
+                                />
+                            </div>
+                        ) : null}
                         <TextField
                             label={t.management.rangeStartDate}
                             type="date"

@@ -5,6 +5,7 @@ export type Deduction = {
 };
 
 export type ManagementRecordCreate = {
+    category: string;
     initialAmount: number;
     creationDate: string;
     startDate: string;
@@ -14,6 +15,7 @@ export type ManagementRecordCreate = {
 
 export type ManagementRecord = {
     id: string;
+    category?: string;
     initialAmount: number;
     creationDate: string;
     startDate?: string;

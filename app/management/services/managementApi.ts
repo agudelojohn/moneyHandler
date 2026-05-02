@@ -1,13 +1,13 @@
 import type { ManagementObject, Deduction, ManagementRecordCreate } from "../types";
+import type { ExpenseCategory } from "@/lib/aws/schemas/common";
 import { withUserIdHeader } from "@/app/common/userSession";
-
 
 export async function appendDeductionToManagementRecord(
     managementObject: ManagementObject,
     deductionObject: Deduction,
-    userId: string
+    userId: string,
+    category: ExpenseCategory
 ) {
-
     const { description, amount, isCredit } = deductionObject;
 
     const updatedDeductions = [
@@ -25,6 +25,7 @@ export async function appendDeductionToManagementRecord(
         body: JSON.stringify({
             id: managementObject.id,
             date: managementObject.creationDate,
+            category,
             deductions: updatedDeductions,
         }),
     });
@@ -39,7 +40,8 @@ export async function appendDeductionToManagementRecord(
 export async function updateDeductionsInManagementRecord(
     managementObject: ManagementObject,
     deductionsCollection: Deduction[],
-    userId: string
+    userId: string,
+    category: ExpenseCategory
 ) {
     const response = await fetch("/api/management", {
         method: "PUT",
@@ -47,6 +49,7 @@ export async function updateDeductionsInManagementRecord(
         body: JSON.stringify({
             id: managementObject.id,
             date: managementObject.creationDate,
+            category,
             deductions: deductionsCollection.map((item) => ({
                 description: item.description.trim(),
                 amount: item.amount,
@@ -62,12 +65,16 @@ export async function updateDeductionsInManagementRecord(
     return response.json();
 }
 
-export async function createManagementRecord(managementObject: ManagementRecordCreate, userId: string) {
-    const { initialAmount, creationDate, startDate, endDate } = managementObject;
+export async function createManagementRecord(
+    managementObject: ManagementRecordCreate,
+    userId: string
+) {
+    const { category, initialAmount, creationDate, startDate, endDate } = managementObject;
     const response = await fetch("/api/management", {
         method: "POST",
         headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
         body: JSON.stringify({
+            category,
             initialAmount,
             creationDate,
             startDate: `${startDate}T00:00:00.000Z`,

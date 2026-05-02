@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { expenseCategorySchema } from "./common";
 
 export const deleteManagementSchema = z.object({
+    category: expenseCategorySchema,
     date: z.iso.datetime({
         message: "Formato de fecha inválido (debe ser ISO 8601)",
     }),

@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import * as Sx from "../styles";
 import { useMemo, useState } from "react";
+import type { ExpenseCategory } from "@/lib/aws/schemas/common";
 import type { Deduction, ManagementRecord } from "../types";
 import { useI18n } from "../../i18n/I18nProvider";
 import { updateDeductionsInManagementRecord } from "../services/managementApi";
@@ -35,6 +36,7 @@ interface ListDeductionsModalProps {
     deletingDeductionIndex: number | null;
     setDeductionsCollection: (deductions: (previous: Deduction[]) => Deduction[]) => void;
     activeUserId: string;
+    category: ExpenseCategory;
 }
 
 export const ListDeductionsModal = ({
@@ -50,7 +52,8 @@ export const ListDeductionsModal = ({
     setDeletingDeductionIndex,
     deletingDeductionIndex,
     setDeductionsCollection,
-    activeUserId
+    activeUserId,
+    category,
 }: ListDeductionsModalProps) => {
     const { t } = useI18n();
 
@@ -95,7 +98,12 @@ export const ListDeductionsModal = ({
         setViewDeductionsError(null);
 
         try {
-            await updateDeductionsInManagementRecord(managementRecord, deductionsCollection, activeUserId);
+            await updateDeductionsInManagementRecord(
+                managementRecord,
+                deductionsCollection,
+                activeUserId,
+                category
+            );
             setOpenViewDeductionsModal(false);
             setSelectedRecord(null);
             await fetchRecordsByDate(baseRequestDate);
