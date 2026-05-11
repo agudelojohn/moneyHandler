@@ -1,5 +1,7 @@
 "use client";
 
+
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   Alert,
   Box,
@@ -25,6 +27,7 @@ import { useI18n } from "../i18n/I18nProvider";
 import type { CategoryKey } from "../i18n/translations";
 import { DeductionModal } from "./components/DeductionModal";
 import { ListDeductionsModal } from "./components/ListDeductionsModal";
+import { ListStaticPaymentsModal } from "./components/ListStaticPaymentsModal";
 import * as Sx from "./styles";
 import type { Deduction, ManagementRecord } from "./types";
 import { CreateManagementModal } from "./components/CreateManagementModal";
@@ -33,7 +36,7 @@ import { CATEGORIES, type ExpenseCategory, isExpenseCategory } from "@/lib/aws/s
 
 // Cambia este valor para emular la fecha de las peticiones en desarrollo.
 // Usa formato YYYY-MM-DD. Ejemplo: "2026-01-15"
-const DEV_INITIAL_REQUEST_DATE = "";
+const DEV_INITIAL_REQUEST_DATE = "2026-11-11";
 
 const DateTypography = ({ labelText, date }: { labelText: string; date: string }) => {
   return (
@@ -153,6 +156,8 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
   const [openDeductionModal, setOpenDeductionModal] = useState(false);
   const [managementRecord, setSelectedRecord] = useState<ManagementRecord | null>(null);
   const [openViewDeductionsModal, setOpenViewDeductionsModal] = useState(false);
+  const [openStaticPaymentsModal, setOpenStaticPaymentsModal] = useState(false);
+  const [staticPaymentsModalRecordId, setStaticPaymentsModalRecordId] = useState<string | null>(null);
   const [deductionsCollection, setDeductionsCollection] = useState<Deduction[]>([]);
   const [deletingDeductionIndex, setDeletingDeductionIndex] = useState<number | null>(null);
   const [suggestedRangeDate, setSuggestedRangeDate] = useState<{ startDate: string; endDate: string } | null>(null);
@@ -217,6 +222,14 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
               ? record.deductions.map((deduction) => ({
                 ...deduction,
                 isCredit: Boolean(deduction.isCredit),
+                isPayed: Boolean(deduction.isPayed),
+              }))
+              : [],
+            staticPayments: Array.isArray(record.staticPayments)
+              ? record.staticPayments.map((staticPayment) => ({
+                ...staticPayment,
+                isCredit: Boolean(staticPayment.isCredit),
+                isPayed: Boolean(staticPayment.isPayed),
               }))
               : [],
           }))
@@ -237,6 +250,13 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
   useEffect(() => {
     setIsExpensesCategory(selectedCategory === CATEGORIES[0]);
   }, [selectedCategory]);
+
+  const staticPaymentsModalRecord = useMemo(() => {
+    if (!staticPaymentsModalRecordId) {
+      return null;
+    }
+    return records.find((r) => r.id === staticPaymentsModalRecordId) ?? null;
+  }, [records, staticPaymentsModalRecordId]);
 
   useEffect(() => {
     if (!activeUser) return;
@@ -265,6 +285,18 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
     );
     setOpenViewDeductionsModal(true);
   };
+
+  const handleOpenStaticPaymentsModal = (record: ManagementRecord) => {
+    setStaticPaymentsModalRecordId(record.id);
+    setOpenStaticPaymentsModal(true);
+  };
+
+  const handleStaticPaymentsModalOpenChange = useCallback((open: boolean) => {
+    setOpenStaticPaymentsModal(open);
+    if (!open) {
+      setStaticPaymentsModalRecordId(null);
+    }
+  }, []);
 
   const handleDraftDeductionChange = (
     index: number,
@@ -335,15 +367,19 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
               </Alert>
             ) : (
               records.map((record) => {
+                const staticPaymentsTotal = record.staticPayments.length > 0 ? record.staticPayments.reduce((sum, item) => sum + item.amount, 0) : 0;
                 const deductionTotal = record.deductions.reduce((sum, item) => sum + item.amount, 0);
                 const referenceDate = getDateFromDateString(baseRequestDate);
                 const startDate = new Date(record.startDate ?? record.creationDate);
                 const endDate = new Date(record.endDate ?? record.creationDate);
                 const totalDaysInRange = getInclusiveDaysBetween(startDate, endDate);
                 const elapsedDays = getElapsedDaysInRange(referenceDate, startDate, endDate);
-                const dailyAvailableAmount = record.initialAmount / totalDaysInRange;
+                const dailyAvailableAmount = (record.initialAmount - staticPaymentsTotal) / totalDaysInRange;
                 const availableBeforeDeductions = dailyAvailableAmount * elapsedDays;
-                const availableAmount = availableBeforeDeductions - deductionTotal;
+
+                const availableLessDeductions = (availableBeforeDeductions - staticPaymentsTotal) - deductionTotal;
+                const initialLessDeductions = (record.initialAmount - staticPaymentsTotal) - deductionTotal;
+                const availableAmount = isExpensesCategory ? availableLessDeductions : initialLessDeductions;
 
                 return (
                   <Box key={record.id} sx={Sx.containerSx}>
@@ -363,9 +399,25 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
                           {t.management.available}
                         </Typography>
                         <Typography sx={Sx.mainValueTypographySx(availableAmount)}>
-                          {isExpensesCategory ? currencyFormatter.format(availableAmount) : currencyFormatter.format(record.initialAmount - deductionTotal)}
+                          {currencyFormatter.format(availableAmount)}
                         </Typography>
                       </Box>
+                      <hr />
+                      <Stack sx={Sx.staticPaymentsSummaryGridSx}>
+                        <ItemValueTypography
+                          labelText={t.management.staticPayments}
+                          value={currencyFormatter.format(record.staticPayments.reduce((sum, item) => sum + item.amount, 0))}
+                        />
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          sx={Sx.staticPaymentsViewButtonSx}
+                          onClick={() => handleOpenStaticPaymentsModal(record)}
+                          aria-label={t.management.viewStaticPaymentsAria}
+                        >
+                          <VisibilityIcon />
+                        </Button>
+                      </Stack>
                       <hr />
 
                       <ItemValueTypography
@@ -459,6 +511,17 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
           activeUserId={activeUser?.userId ?? ""}
           category={selectedCategory}
           suggestedRangeDate={suggestedRangeDate}
+        />
+
+        <ListStaticPaymentsModal
+          managementRecord={staticPaymentsModalRecord}
+          openStaticPaymentsModal={openStaticPaymentsModal}
+          setOpenStaticPaymentsModal={handleStaticPaymentsModalOpenChange}
+          currencyFormatter={currencyFormatter}
+          fetchRecordsByDate={fetchRecordsByDate}
+          baseRequestDate={baseRequestDate}
+          activeUserId={activeUser?.userId ?? ""}
+          category={selectedCategory}
         />
       </Stack>
     </>

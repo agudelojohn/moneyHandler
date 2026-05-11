@@ -1,0 +1,29 @@
+---
+description: En cualquier cambio en TSX, el copy visible va a translations.ts y se usa con useI18n
+globs:
+  - "**/*.tsx"
+  - "app/i18n/translations.ts"
+alwaysApply: false
+---
+
+# Etiquetas y copy en la UI
+
+En **cualquier modificación** de archivos `.tsx` (archivos nuevos, refactors, pequeños cambios en JSX, props de MUI, etc.), **ningún texto que vea el usuario** debe introducirse ni dejarse como literal en JSX si no cumple el flujo de i18n: títulos, subtítulos, botones, labels de formulario, `placeholder`, `aria-label`, `title`, mensajes de error o vacío mostrados en pantalla, etc.
+
+Si tocas una pantalla o componente y el usuario vería un texto nuevo o distinto, ese texto debe pasar por `translations` (no basta con “solo en componentes nuevos”).
+
+## Flujo obligatorio
+
+1. **Definir la clave en el tipo** `TranslationSchema` en `app/i18n/translations.ts` (agrupar por sección lógica: `common`, `home`, `management`, `expenses`, `dataViewer`, etc.; si no encaja, añadir un subobjeto coherente en el esquema).
+2. **Rellenar ambos idiomas** en el objeto `translations`: mismas claves en `es` y en `en`, sin omitir ninguna.
+3. **En el componente**: `const { t } = useI18n()` desde `app/i18n/I18nProvider.tsx` y usar `t.seccion.clave` (no importar el objeto `translations` directamente en la UI salvo casos ya establecidos en el proyecto).
+
+## Comprobación
+
+- Tras añadir claves, TypeScript debe compilar: si falta una clave en `es` o `en`, o en el tipo, el compilador lo marcará.
+- No dupliques sin necesidad: reutiliza claves existentes en la misma sección si el texto es idéntico.
+
+## Excepciones (no van a i18n)
+
+- Nombres de clases CSS, rutas, IDs técnicos, valores de formulario sin significado para el usuario.
+- Formateo ya localizado con `Intl` / `dateLocale` del mismo `useI18n()`.

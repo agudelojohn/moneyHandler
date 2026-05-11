@@ -95,6 +95,7 @@ export const DeductionModal = ({
                 id: managementRecord.id,
                 creationDate: managementRecord.creationDate,
                 deductions: managementRecord.deductions,
+                staticPayments: managementRecord.staticPayments ?? [],
             };
             await appendDeductionToManagementRecord(
                 managementObject,

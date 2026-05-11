@@ -5,6 +5,10 @@ export type Deduction = {
     isPayed: boolean;
 };
 
+export type StaticPayment = Deduction & {
+    paymentDay: string | null;
+};
+
 export type ManagementRecordCreate = {
     category: string;
     initialAmount: number;
@@ -12,6 +16,7 @@ export type ManagementRecordCreate = {
     startDate: string;
     endDate: string;
     deductions: Deduction[];
+    staticPayments: StaticPayment[];
 };
 
 export type ManagementRecord = {
@@ -22,10 +27,12 @@ export type ManagementRecord = {
     startDate?: string;
     endDate?: string;
     deductions: Deduction[];
+    staticPayments: StaticPayment[];
 };
 
 export type ManagementObject = {
     id: string;
     creationDate: string;
     deductions: Deduction[];
+    staticPayments: StaticPayment[];
 };

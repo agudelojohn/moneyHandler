@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         startDate: startDateRaw,
         endDate: endDateRaw,
         deductions,
+        staticPayments,
     } = result.data;
     const creationDate = creationDateRaw ? parseDatePreservingCalendarDay(creationDateRaw) : new Date();
     const startDate = parseDatePreservingCalendarDay(startDateRaw);
@@ -114,6 +115,7 @@ export async function POST(request: Request) {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         deductions,
+        staticPayments,
     };
     await db.send(new PutCommand({
         TableName: TABLE_NAME,
@@ -171,6 +173,13 @@ export async function GET(request: Request) {
                     ...deduction,
                     isCredit: Boolean(deduction.isCredit),
                     isPayed: Boolean(deduction.isPayed),
+                }))
+                : [],
+            staticPayments: Array.isArray(item.staticPayments)
+                ? item.staticPayments.map((staticPayment) => ({
+                    ...staticPayment,
+                    isCredit: Boolean(staticPayment.isCredit),
+                    isPayed: Boolean(staticPayment.isPayed),
                 }))
                 : [],
         }));
@@ -271,10 +280,18 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: "Registro de gestión no encontrado" }, { status: 404 });
         }
 
+        const staticPayments =
+            parsed.data.staticPayments !== undefined
+                ? parsed.data.staticPayments
+                : Array.isArray(originalItem.staticPayments)
+                    ? originalItem.staticPayments
+                    : [];
+
         const updatedItem = {
             ...originalItem,
             category,
             deductions: parsed.data.deductions,
+            staticPayments,
         };
 
         await db.send(new PutCommand({

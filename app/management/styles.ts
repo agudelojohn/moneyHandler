@@ -31,24 +31,19 @@ export const dialogSx = {
     },
 };
 
-export const textFieldSx = {
-    "& .MuiInputBase-input": { color: TEXT_PRIMARY },
-    "& .MuiInputBase-input.Mui-disabled": {
-        color: TEXT_PRIMARY,
-        WebkitTextFillColor: TEXT_PRIMARY,
-        opacity: 1,
-    },
-    "& .MuiInputLabel-root": { color: TEXT_SECONDARY },
-    "& .MuiInputLabel-root.Mui-disabled": { color: TEXT_SECONDARY },
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: BORDER_COLOR },
-    "& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline": {
-        borderColor: BORDER_COLOR,
-    },
-    "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#334155" },
-    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
-        borderColor: BLUE_DEEP,
-    },
-};
+export { textFieldSx } from "../components/styles";
+
+export const StaticPaymentsStackSx = {
+    border: '2px solid rgb(120 116 116)',
+    borderRadius: 1,
+    minHeight: 100,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+    py:2
+}
 
 export const outlinedButtonSx = {
     width: { xs: "100%", md: "auto" },
@@ -329,8 +324,8 @@ export const managementRecordBodyStackSx = {
 export const managementAddDeductionButtonSx = {
     ...outlinedButtonSx,
     mt: 1,
-    width: { xs: "100%" },
     backgroundColor: "#0b1b42",
+    width: { xs: "100%" },
     "&:hover": { backgroundColor: "#1e40af" },
 };
 
@@ -339,4 +334,90 @@ export const managementViewDeductionsButtonSx = {
     mt: 2,
     mb: 1,
     width: { xs: "100%" },
+};
+
+export const staticPaymentsSummaryGridSx = {
+    display: "grid",
+    gridTemplateColumns: "5fr 1fr",
+    alignItems: "center",
+    justifyItems: "center",
+    gap: 2,
+};
+
+export const staticPaymentsViewButtonSx = {
+    ...outlinedButtonSx,
+    width: "100%",
+};
+
+export const listStaticPaymentsStackSx = { mt: 1 };
+
+export const staticPaymentsModalAddButtonSx = {
+    ...outlinedButtonSx,
+    width: { xs: "100%", sm: "auto" },
+    alignSelf: "flex-start",
+};
+
+export const staticPaymentRowStackSx = {
+    width: "100%",
+    flexDirection: { xs: "column", sm: "row" },
+    gap: 2,
+    alignItems: { xs: "stretch", sm: "flex-start" },
+    justifyContent: "space-between",
+};
+
+export const staticPaymentFieldsStackSx = {
+    flex: 1,
+    gap: 1,
+    minWidth: 0,
+};
+
+export const staticPaymentDescriptionSx = {
+    color: TEXT_PRIMARY,
+    fontWeight: 600,
+    wordBreak: "break-word",
+};
+
+export const staticPaymentAmountLabelSx = {
+    color: TEXT_SECONDARY,
+    fontSize: 14,
+};
+
+export const staticPaymentAmountValueSx = {
+    color: TEXT_PRIMARY,
+    fontWeight: 700,
+};
+
+export const staticPaymentChipsRowSx = {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 1,
+    alignItems: "center",
+};
+
+export const staticPaymentCreditChipSx = {
+    backgroundColor: "#14532d",
+    color: "#bbf7d0",
+};
+
+export const staticPaymentStatusChipSx = (isPayed: boolean) => ({
+    backgroundColor: isPayed ? "#14532d" : "#713f12",
+    color: isPayed ? "#bbf7d0" : "#fde68a",
+});
+
+export const staticPaymentPaymentDaySx = {
+    color: TEXT_SECONDARY,
+    fontSize: 13,
+};
+
+export const staticPaymentUnpaidActionsStackSx = {
+    flexShrink: 0,
+    alignSelf: { xs: "stretch", sm: "flex-start" },
+    gap: 1.5,
+    alignItems: { xs: "stretch", sm: "flex-end" },
+};
+
+export const staticPaymentPayButtonSx = {
+    ...primaryContainedButtonSx,
+    minWidth: { xs: "100%", sm: 120 },
 };

@@ -19,6 +19,8 @@ type TranslationSchema = {
     expensesButton: string;
   };
   management: {
+    staticPayments: string;
+    addStaticPayment: string;
     title: string;
     subtitle: string;
     available: string;
@@ -67,6 +69,17 @@ type TranslationSchema = {
     createRecordError: string;
     selectCategoryTitle: string;
     selectCategorySubtitle: string;
+    listStaticPaymentsTitle: string;
+    noStaticPayments: string;
+    payStaticPaymentButton: string;
+    payingStaticPayment: string;
+    updateStaticPaymentsError: string;
+    staticPaymentPaymentDay: string;
+    staticPaymentPaidStatus: string;
+    staticPaymentUnpaidStatus: string;
+    viewStaticPaymentsAria: string;
+    staticPaymentDeleteAria: string;
+    staticPaymentDeleteConfirmMessage: string;
   };
   expenses: {
     pageTitle: string;
@@ -136,6 +149,8 @@ export const translations: Record<Locale, TranslationSchema> = {
       expensesButton: "Historial de precios",
     },
     management: {
+      staticPayments: "Pagos fijos",
+      addStaticPayment: "Agregar pago fijo",
       title: "Management",
       subtitle: "Esta seccion usa la misma paleta del dashboard.",
       available: "Disponible",
@@ -190,6 +205,18 @@ export const translations: Record<Locale, TranslationSchema> = {
       selectCategoryTitle: "Elige una categoria",
       selectCategorySubtitle:
         "Debes elegir una categoria para continuar con la gestion de dinero.",
+      listStaticPaymentsTitle: "Pagos fijos del registro",
+      noStaticPayments: "Este registro no tiene pagos fijos.",
+      payStaticPaymentButton: "Pagar",
+      payingStaticPayment: "Registrando...",
+      updateStaticPaymentsError: "No se pudo registrar el pago.",
+      staticPaymentPaymentDay: "Fecha de pago",
+      staticPaymentPaidStatus: "Pagado",
+      staticPaymentUnpaidStatus: "Pendiente",
+      viewStaticPaymentsAria: "Ver y registrar pagos fijos",
+      staticPaymentDeleteAria: "Eliminar pago fijo",
+      staticPaymentDeleteConfirmMessage:
+        "Esta accion quitara el pago fijo de la lista. ¿Deseas continuar?",
     },
     expenses: {
       pageTitle: "Historial de precios",
@@ -266,6 +293,8 @@ export const translations: Record<Locale, TranslationSchema> = {
       expensesButton: "Price history",
     },
     management: {
+      staticPayments: "Static payments",
+      addStaticPayment: "Add static payment",
       title: "Management",
       subtitle: "This section uses the same dashboard color palette.",
       available: "Available",
@@ -321,6 +350,18 @@ export const translations: Record<Locale, TranslationSchema> = {
       selectCategoryTitle: "Choose a category",
       selectCategorySubtitle:
         "Pick a category to continue with money management.",
+      listStaticPaymentsTitle: "Static payments for this record",
+      noStaticPayments: "This record has no static payments.",
+      payStaticPaymentButton: "Pay",
+      payingStaticPayment: "Saving...",
+      updateStaticPaymentsError: "The payment could not be recorded.",
+      staticPaymentPaymentDay: "Payment date",
+      staticPaymentPaidStatus: "Paid",
+      staticPaymentUnpaidStatus: "Pending",
+      viewStaticPaymentsAria: "View and record static payments",
+      staticPaymentDeleteAria: "Delete static payment",
+      staticPaymentDeleteConfirmMessage:
+        "This action will remove the static payment from the list. Do you want to continue?",
     },
     expenses: {
       pageTitle: "Price history",

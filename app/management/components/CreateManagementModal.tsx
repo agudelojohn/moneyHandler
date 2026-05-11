@@ -1,5 +1,6 @@
 "use client";
 
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import {
     Alert,
     Button,
@@ -24,8 +25,9 @@ import {
 import { useI18n } from "../../i18n/I18nProvider";
 import { createManagementRecord } from "../services/managementApi";
 import * as Sx from "../styles";
-import { ManagementRecordCreate } from "../types";
+import { ManagementRecordCreate, StaticPayment } from "../types";
 import { CategoryKey } from "@/app/i18n/translations";
+import StaticPaymentField from "@/app/components/StaticPaymentField";
 
 interface CreateManagementModalProps {
     openCreateModal: boolean;
@@ -54,6 +56,18 @@ export const CreateManagementModal = ({
     const [createError, setCreateError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [useSuggestedRange, setUseSuggestedRange] = useState(false);
+    const [staticPayments, setStaticPayments] = useState<StaticPayment[]>([]);
+
+    function updateStaticPaymentAt(index: number, patch: Partial<StaticPayment>) {
+        setStaticPayments((prev) =>
+            prev.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+        );
+    }
+
+    function handleDeleteStaticPaymentAt(index: number) {
+        setStaticPayments((prev) => prev.filter((_, i) => i !== index));
+    }
+
     const handleCreateRecord = async () => {
         const amount = Number(initialAmount);
         if (!Number.isInteger(amount) || amount <= 0) {
@@ -80,6 +94,7 @@ export const CreateManagementModal = ({
                 startDate: rangeStartDate,
                 endDate: rangeEndDate,
                 deductions: [],
+                staticPayments,
             };
             await createManagementRecord(managementRecord, activeUserId);
 
@@ -162,6 +177,40 @@ export const CreateManagementModal = ({
                             sx={Sx.textFieldSx}
                             slotProps={{ inputLabel: { shrink: true } }}
                         />
+                        <Stack sx={Sx.StaticPaymentsStackSx}>
+                            <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                                {t.management.staticPayments}
+                            </Typography>
+                            <hr style={{ width: '100%', borderColor: 'rgb(120 116 116)', borderWidth: 1 }} />
+                            {staticPayments.map((payment, index) => (
+                                <StaticPaymentField
+                                    key={index}
+                                    payment={payment}
+                                    onChange={(patch) => updateStaticPaymentAt(index, patch)}
+                                    onDelete={() => handleDeleteStaticPaymentAt(index)}
+                                />
+                            ))}
+                            <Button
+                                type="button"
+                                variant="outlined"
+                                startIcon={<AddRoundedIcon />}
+                                onClick={() =>
+                                    setStaticPayments((prev) => [
+                                        ...prev,
+                                        {
+                                            paymentDay: null,
+                                            description: "",
+                                            amount: 0,
+                                            isCredit: false,
+                                            isPayed: false,
+                                        },
+                                    ])
+                                }
+                                sx={Sx.managementAddDeductionButtonSx}
+                            >
+                                {t.management.addStaticPayment}
+                            </Button>
+                        </Stack>
                         {createError ? <Alert severity="error">{createError}</Alert> : null}
                     </Stack>
                 </DialogContent>

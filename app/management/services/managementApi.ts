@@ -1,4 +1,10 @@
-import type { ManagementObject, Deduction, ManagementRecordCreate } from "../types";
+import type {
+    ManagementObject,
+    Deduction,
+    ManagementRecordCreate,
+    ManagementRecord,
+    StaticPayment,
+} from "../types";
 import type { ExpenseCategory } from "@/lib/aws/schemas/common";
 import { withUserIdHeader } from "@/app/common/userSession";
 
@@ -28,6 +34,7 @@ export async function appendDeductionToManagementRecord(
             date: managementObject.creationDate,
             category,
             deductions: updatedDeductions,
+            staticPayments: managementObject.staticPayments,
         }),
     });
 
@@ -57,6 +64,7 @@ export async function updateDeductionsInManagementRecord(
                 isCredit: item.isCredit,
                 isPayed: item.isPayed,
             })),
+            staticPayments: managementObject.staticPayments,
         }),
     });
 
@@ -67,11 +75,47 @@ export async function updateDeductionsInManagementRecord(
     return response.json();
 }
 
+export async function updateStaticPaymentsInManagementRecord(
+    managementRecord: Pick<ManagementRecord, "id" | "creationDate" | "deductions">,
+    nextStaticPayments: StaticPayment[],
+    userId: string,
+    category: ExpenseCategory
+) {
+    const response = await fetch("/api/management", {
+        method: "PUT",
+        headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
+        body: JSON.stringify({
+            id: managementRecord.id,
+            date: managementRecord.creationDate,
+            category,
+            deductions: managementRecord.deductions.map((item) => ({
+                description: item.description.trim(),
+                amount: item.amount,
+                isCredit: item.isCredit,
+                isPayed: item.isPayed,
+            })),
+            staticPayments: nextStaticPayments.map((item) => ({
+                description: item.description.trim(),
+                amount: item.amount,
+                isCredit: item.isCredit,
+                isPayed: item.isPayed,
+                paymentDay: item.paymentDay,
+            })),
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error("No se pudo actualizar pagos fijos");
+    }
+
+    return response.json();
+}
+
 export async function createManagementRecord(
     managementObject: ManagementRecordCreate,
     userId: string
 ) {
-    const { category, initialAmount, creationDate, startDate, endDate } = managementObject;
+    const { category, initialAmount, creationDate, startDate, endDate, staticPayments } = managementObject;
     const response = await fetch("/api/management", {
         method: "POST",
         headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
@@ -82,6 +126,7 @@ export async function createManagementRecord(
             startDate: `${startDate}T00:00:00.000Z`,
             endDate: `${endDate}T00:00:00.000Z`,
             deductions: [],
+            staticPayments,
         }),
     });
 

@@ -1,0 +1,28 @@
+---
+description: Estilos MUI (sx) en styles.ts del módulo; import como Sx.nombreSx — sin objetos inline en TSX
+globs:
+  - "**/*.tsx"
+  - "**/styles.ts"
+alwaysApply: false
+---
+
+# Estilos MUI centralizados en `styles.ts`
+
+En **cualquier cambio** en `.tsx` (componente nuevo, edición o revisión), los estilos que afecten la UI deben seguir el patrón de la app: **definidos en un `styles.ts` del módulo** y **referenciados desde el componente**, no escritos como objeto literal en el JSX.
+
+Referencia: `sx={Sx.managementAddDeductionButtonSx}` en `app/management/components/CreateManagementModal.tsx` importando `import * as Sx from "../styles"` y tokens exportados en `app/management/styles.ts`.
+
+## Ubicación del archivo
+
+- **Ruta o feature** (ej. `app/management/`): un `styles.ts` compartido por la página y sus subcarpetas (`components/`, etc.), con imports relativos (`./styles`, `../styles`) según la profundidad.
+- **Componentes compartidos** bajo `app/components/`: si necesitan estilos propios, usar `app/components/styles.ts` (crearlo si no existe); si son específicos de un dominio ya cubierto, puede reutilizarse el `styles.ts` de ese dominio cuando el proyecto ya lo haga así.
+
+## Convenciones
+
+1. En `styles.ts`: objetos compatibles con la prop `sx` de MUI, exportados como **constantes nombradas** (sufijo `Sx`, ej. `outlinedButtonSx`, `dialogSx`). Usar tokens de color desde `app/theme` (`COLORS`) como en `app/management/styles.ts`.
+2. En componentes: **`import * as Sx from "<ruta>/styles"`** (o imports nombrados puntuales si el archivo ya exporta un solo token reutilizable) y **`sx={Sx.nombreDelToken}`**.
+3. **No** añadir `sx={{ ... }}` con reglas visuales sustantivas en el TSX. Excepciones mínimas: valores triviales de layout ya aceptados en el archivo (ej. un solo prop sin diseño de marca) — si dudas, muévelo a `styles.ts`.
+
+## Al modificar estilos existentes
+
+Si encuentras `sx={{ ... }}` inline en un archivo que tocas, **extrae** el objeto a una exportación en el `styles.ts` correspondiente y sustituye por `Sx.…`.
