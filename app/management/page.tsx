@@ -36,7 +36,7 @@ import { CATEGORIES, type ExpenseCategory, isExpenseCategory } from "@/lib/aws/s
 
 // Cambia este valor para emular la fecha de las peticiones en desarrollo.
 // Usa formato YYYY-MM-DD. Ejemplo: "2026-01-15"
-const DEV_INITIAL_REQUEST_DATE = "2026-11-11";
+const DEV_INITIAL_REQUEST_DATE = "";
 
 const DateTypography = ({ labelText, date }: { labelText: string; date: string }) => {
   return (

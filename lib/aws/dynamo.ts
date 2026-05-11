@@ -20,4 +20,4 @@ export const db = DynamoDBDocumentClient.from(client, {
   marshallOptions: { removeUndefinedValues: true },
 });
 
-export const TABLE_NAME = env.AWS_TABLE_NAME;
+export const TABLE_NAME = env.NEXT_PUBLIC_APP_ENV === "production" ? env.AWS_TABLE_NAME : env.AWS_TABLE_NAME_DEV;
