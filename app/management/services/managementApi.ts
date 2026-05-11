@@ -8,7 +8,7 @@ export async function appendDeductionToManagementRecord(
     userId: string,
     category: ExpenseCategory
 ) {
-    const { description, amount, isCredit } = deductionObject;
+    const { description, amount, isCredit, isPayed } = deductionObject;
 
     const updatedDeductions = [
         ...managementObject.deductions,
@@ -16,6 +16,7 @@ export async function appendDeductionToManagementRecord(
             description: description.trim(),
             amount,
             isCredit,
+            isPayed,
         },
     ];
 
@@ -54,6 +55,7 @@ export async function updateDeductionsInManagementRecord(
                 description: item.description.trim(),
                 amount: item.amount,
                 isCredit: item.isCredit,
+                isPayed: item.isPayed,
             })),
         }),
     });

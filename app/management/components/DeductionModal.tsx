@@ -85,7 +85,12 @@ export const DeductionModal = ({
         setDeductionError(null);
 
         try {
-            const deductionObject = { description: deductionDescription, amount, isCredit: deductionIsCredit };
+            const deductionObject = {
+                description: deductionDescription,
+                amount,
+                isCredit: deductionIsCredit,
+                isPayed: false,
+            };
             const managementObject = {
                 id: managementRecord.id,
                 creationDate: managementRecord.creationDate,

@@ -16,7 +16,7 @@ import {
     Typography
 } from "@mui/material";
 import * as Sx from "../styles";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ExpenseCategory } from "@/lib/aws/schemas/common";
 import type { Deduction, ManagementRecord } from "../types";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -60,6 +60,8 @@ export const ListDeductionsModal = ({
     const [editingDeductionIndex, setEditingDeductionIndex] = useState<number | null>(null);
     const [viewDeductionsError, setViewDeductionsError] = useState<string | null>(null);
     const [isUpdatingDeductions, setIsUpdatingDeductions] = useState(false);
+    const [registerCreditPayments, setRegisterCreditPayments] = useState(false);
+    const [dataCollection, setDataCollection] = useState<Deduction[]>([]);
 
 
     const creditDeductionsTotal = useMemo(
@@ -107,13 +109,46 @@ export const ListDeductionsModal = ({
             setOpenViewDeductionsModal(false);
             setSelectedRecord(null);
             await fetchRecordsByDate(baseRequestDate);
-        } catch(error) {
+        } catch (error) {
             setViewDeductionsError(t.management.updateDeductionsError);
             // TODO: handle error internally
         } finally {
             setIsUpdatingDeductions(false);
         }
     };
+
+    const handleUpdateCreditPayments = async () => {
+        if (!managementRecord) {
+            setViewDeductionsError(t.management.updateRecordNotFoundError);
+            return;
+        }
+
+        const creditPaymentsCollection = deductionsCollection.map(item => {
+            if(!item.isCredit || item.isPayed) {
+                return item;
+            }
+
+            return { ...item, isPayed: true };
+        });
+
+        try {
+            await updateDeductionsInManagementRecord(
+                managementRecord,
+                creditPaymentsCollection,
+                activeUserId,
+                category
+            );
+            setOpenViewDeductionsModal(false);
+            setSelectedRecord(null);
+            await fetchRecordsByDate(baseRequestDate);
+        } catch (error) {
+            setViewDeductionsError(t.management.updateDeductionsError);
+            // TODO: handle error internally
+        } finally {
+            setIsUpdatingDeductions(false);
+            setRegisterCreditPayments(false);
+        }
+    }
 
     const handleRequestDeleteDeduction = (index: number) => {
         setDeletingDeductionIndex(index);
@@ -146,6 +181,14 @@ export const ListDeductionsModal = ({
         setDeletingDeductionIndex(null);
     };
 
+    useEffect(() => {
+        if (registerCreditPayments) {
+            setDataCollection(deductionsCollection.filter(item => item.isCredit && !item.isPayed));
+        } else {
+            setDataCollection(deductionsCollection);
+        }
+    }, [deductionsCollection, registerCreditPayments])
+
     return (
         <>
             <Dialog
@@ -157,17 +200,35 @@ export const ListDeductionsModal = ({
             >
                 <DialogTitle>{t.management.listDeductionsTitle}</DialogTitle>
                 <DialogContent>
+
+                    <Stack sx={Sx.actionButtonsStackSx}>
+                        {registerCreditPayments && <p>
+                            Total de créditos: {deductionsCollection.reduce((sum, item) => (item.isCredit && !item.isPayed ? sum + item.amount : sum), 0)}
+                        </p>}
+                        {/* {dataCollection.some(item => item.isCredit && !item.isPayed) && ( */}
+                            <Button
+                                variant="outlined"
+                                sx={Sx.outlinedButtonSx}
+                                onClick={() => setRegisterCreditPayments(prev => !prev)}
+                            >
+                                {t.management.registerCreditPayments}
+                                <Checkbox
+                                    checked={registerCreditPayments}
+                                />
+                            </Button>
+                        {/* // )} */}
+                    </Stack>
                     <Stack spacing={2} sx={Sx.listDeductionsStackSx}>
-                        {deductionsCollection.length === 0 ? (
+                        {dataCollection.length === 0 ? (
                             <Alert severity="info">{t.management.noDeductions}</Alert>
                         ) : (
-                            deductionsCollection.map((deduction, index) => {
+                            dataCollection.map((deduction, index) => {
                                 const isEditing = editingDeductionIndex === index;
 
                                 return (
                                     <Box
                                         key={`${deduction.description}-${index}`}
-                                        sx={Sx.deductionItemCardSx(deduction.isCredit)}
+                                        sx={Sx.deductionItemCardSx(deduction.isCredit, deduction.isPayed)}
                                     >
                                         <Box sx={Sx.deductionItemGridSx}>
                                             <TextField
@@ -205,35 +266,38 @@ export const ListDeductionsModal = ({
                                                 label={t.management.credit}
                                                 sx={Sx.deductionCreditLabelSx}
                                             />}
-                                            <Box sx={Sx.deductionItemButtonsSx}>
-                                            <Button
-                                                variant="outlined"
-                                                sx={Sx.outlinedButtonSx}
-                                                onClick={() => {
-                                                    if (isEditing && !validateDeduction(deduction)) {
-                                                        setViewDeductionsError(
-                                                            t.management.invalidEditedDeductionError
-                                                        );
-                                                        return;
-                                                    }
+                                            {!registerCreditPayments && <>
+                                                <Box sx={Sx.deductionItemButtonsSx}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        sx={Sx.outlinedButtonSx}
+                                                        onClick={() => {
+                                                            if (isEditing && !validateDeduction(deduction)) {
+                                                                setViewDeductionsError(
+                                                                    t.management.invalidEditedDeductionError
+                                                                );
+                                                                return;
+                                                            }
 
-                                                    setViewDeductionsError(null);
-                                                    setEditingDeductionIndex(isEditing ? null : index);
-                                                }}
-                                            >
-                                                {isEditing ? t.management.save : t.management.edit}
-                                            </Button>
-                                            <IconButton
-                                                aria-label={t.management.deleteDeductionAria}
-                                                onClick={() => handleRequestDeleteDeduction(index)}
-                                                disabled={isUpdatingDeductions}
-                                                sx={Sx.deleteDeductionButtonSx}
-                                            >
-                                                <Typography component="span" sx={Sx.deleteDeductionIconSx}>
-                                                    🗑
-                                                </Typography>
-                                            </IconButton>
-                                            </Box>
+                                                            setViewDeductionsError(null);
+                                                            setEditingDeductionIndex(isEditing ? null : index);
+                                                        }}
+                                                    >
+                                                        {isEditing ? t.management.save : t.management.edit}
+                                                    </Button>
+                                                    <IconButton
+                                                        aria-label={t.management.deleteDeductionAria}
+                                                        onClick={() => handleRequestDeleteDeduction(index)}
+                                                        disabled={isUpdatingDeductions}
+                                                        sx={Sx.deleteDeductionButtonSx}
+                                                    >
+                                                        <Typography component="span" sx={Sx.deleteDeductionIconSx}>
+                                                            🗑
+                                                        </Typography>
+                                                    </IconButton>
+                                                </Box>
+                                            </>}
+
                                         </Box>
                                     </Box>
                                 );
@@ -255,7 +319,7 @@ export const ListDeductionsModal = ({
                         {t.management.close}
                     </Button>
                     <Button
-                        onClick={handleUpdateDeductions}
+                        onClick={() => registerCreditPayments ? handleUpdateCreditPayments() : handleUpdateDeductions()}
                         variant="contained"
                         disabled={isUpdatingDeductions || editingDeductionIndex !== null}
                         sx={Sx.updateDeductionsButtonSx}

@@ -34,6 +34,7 @@ const TEXT_SECONDARY = "#94a3b8";
 const SURFACE_BG = "#0f172a";
 const BORDER_COLOR = "#1e293b";
 const DEDUCTION_CREDIT_BG = "#052e16";
+const DEDUCTION_CREDIT_BG_PAYED = "#bd2828";
 
 
 export const COLORS = {
@@ -47,6 +48,7 @@ export const COLORS = {
   SURFACE_BG,
   BORDER_COLOR,
   DEDUCTION_CREDIT_BG,
+  DEDUCTION_CREDIT_BG_PAYED,
 }
 
 export default theme;

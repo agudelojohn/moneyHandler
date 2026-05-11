@@ -29,6 +29,7 @@ type TranslationSchema = {
     dailyAvailable: string;
     expectedPocket: string;
     addDeduction: string;
+    registerCreditPayments: string;
     viewDeductions: string;
     deductionModalTitle: string;
     deductionDescription: string;
@@ -145,6 +146,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       dailyAvailable: "Disponible diariamente",
       expectedPocket: "Bolsillo esperado",
       addDeduction: "Agregar deduccion",
+      registerCreditPayments: "Pagar creditos",
       viewDeductions: "Ver deducciones",
       deductionModalTitle: "Agregar deduccion",
       deductionDescription: "Descripcion",
@@ -274,6 +276,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       dailyAvailable: "Daily available",
       expectedPocket: "Expected pocket",
       addDeduction: "Add deduction",
+      registerCreditPayments: "Pay credits",
       viewDeductions: "View deductions",
       deductionModalTitle: "Add deduction",
       deductionDescription: "Description",

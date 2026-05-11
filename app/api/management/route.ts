@@ -12,7 +12,7 @@ import {
 import { getUserIdFromRequest } from "../common/userId";
 
 const buildPK = (userId: string, year: number) => `MANAGEMENT#${userId}#${year}`;
-const buildSK = (date?: Date | null, category?: string) => `ADDITION#${(category ?? "OTROS").toUpperCase()}#${date ? date.toISOString() : new Date().toISOString()}`;
+const buildSK = (date?: Date | null, category?: string) => `${process.env.NEXT_PUBLIC_APP_ENV === "production" ? "" : "DEV#"}ADDITION#${(category ?? "OTROS").toUpperCase()}#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
 
 function normalizeDate(date: Date): Date {
@@ -170,6 +170,7 @@ export async function GET(request: Request) {
                 ? item.deductions.map((deduction) => ({
                     ...deduction,
                     isCredit: Boolean(deduction.isCredit),
+                    isPayed: Boolean(deduction.isPayed),
                 }))
                 : [],
         }));

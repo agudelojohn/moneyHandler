@@ -25,6 +25,9 @@ export const managementSchema = z.object({
         isCredit: z.boolean({
             error: "El indicador de credito es obligatorio"
         }),
+        isPayed: z.boolean({
+            error: "El indicador de pagado es obligatorio"
+        }),
     })),
 });
 

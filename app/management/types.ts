@@ -2,6 +2,7 @@ export type Deduction = {
     description: string;
     amount: number;
     isCredit: boolean;
+    isPayed: boolean;
 };
 
 export type ManagementRecordCreate = {

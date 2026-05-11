@@ -1,16 +1,27 @@
 import { COLORS } from "../theme";
 
 const {
-  SURFACE_BG,
-  TEXT_PRIMARY,
-  TEXT_SECONDARY,
-  BORDER_COLOR,
-  BLUE_DEEP,
-  DARK_BG,
-  DARK_SURFACE,
-  DARK_BORDER,
-  BLUE_ACCENT,
+    SURFACE_BG,
+    TEXT_PRIMARY,
+    TEXT_SECONDARY,
+    BORDER_COLOR,
+    BLUE_DEEP,
+    DARK_BG,
+    DARK_SURFACE,
+    DARK_BORDER,
+    BLUE_ACCENT,
 } = COLORS;
+
+export const actionButtonsStackSx = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    mb: 2,
+    gap: 3,
+    textAlign: 'center',
+    alignContent: 'center',
+}
 
 export const dialogSx = {
     "& .MuiPaper-root": {
@@ -40,7 +51,7 @@ export const textFieldSx = {
 };
 
 export const outlinedButtonSx = {
-    width: {xs: "100%", md: "auto"},
+    width: { xs: "100%", md: "auto" },
     color: TEXT_PRIMARY,
     borderColor: "#334155",
     "&:hover": {
@@ -119,28 +130,28 @@ export const backButtonSx = {
 
 export const listDeductionsStackSx = { mt: 1 };
 
-export const deductionItemCardSx = (isCredit: boolean) => ({
+export const deductionItemCardSx = (isCredit: boolean, isPayed: boolean) => ({
     border: `1px solid ${BORDER_COLOR}`,
     borderRadius: 2,
     p: 2,
-    backgroundColor: isCredit ? COLORS.DEDUCTION_CREDIT_BG : SURFACE_BG,
+    backgroundColor: isCredit ? isPayed ? COLORS.DEDUCTION_CREDIT_BG : COLORS.DEDUCTION_CREDIT_BG_PAYED : SURFACE_BG,
     display: "flex",
-    flexDirection: {xs: "column", md: "row"},
+    flexDirection: { xs: "column", md: "row" },
 });
 
 export const deductionItemGridSx = {
     width: "100%",
     display: "flex",
-    flexDirection: {xs: "column", md: "row"},
+    flexDirection: { xs: "column", md: "row" },
     gap: 1.5,
     alignItems: "center",
-    justifyContent: {xs: "center", md: "space-between"},
+    justifyContent: { xs: "center", md: "space-between" },
 };
 
 export const deductionItemButtonsSx = {
     display: "flex",
     flexDirection: "row",
-    gap: {xs: 4, md: 1.5},
+    gap: { xs: 4, md: 1.5 },
     alignItems: "center",
 };
 
