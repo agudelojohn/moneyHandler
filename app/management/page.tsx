@@ -445,7 +445,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
 
                       <ItemValueTypography
                         labelText={t.management.expectedPocket}
-                        value={currencyFormatter.format(record.initialAmount - deductionTotal)}
+                        value={currencyFormatter.format(record.initialAmount - deductionTotal-staticPaymentsTotal)}
                       />
                     </Stack>
 
