@@ -377,7 +377,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
                 const dailyAvailableAmount = (record.initialAmount - staticPaymentsTotal) / totalDaysInRange;
                 const availableBeforeDeductions = dailyAvailableAmount * elapsedDays;
 
-                const availableLessDeductions = (availableBeforeDeductions - staticPaymentsTotal) - deductionTotal;
+                const availableLessDeductions = (availableBeforeDeductions) - deductionTotal;
                 const initialLessDeductions = (record.initialAmount - staticPaymentsTotal) - deductionTotal;
                 const availableAmount = isExpensesCategory ? availableLessDeductions : initialLessDeductions;
 
@@ -445,7 +445,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
 
                       <ItemValueTypography
                         labelText={t.management.expectedPocket}
-                        value={currencyFormatter.format(record.initialAmount - deductionTotal-staticPaymentsTotal)}
+                        value={currencyFormatter.format(record.initialAmount - deductionTotal - staticPaymentsTotal)}
                       />
                     </Stack>
 
