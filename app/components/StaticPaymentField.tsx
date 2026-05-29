@@ -24,27 +24,30 @@ const StaticPaymentField = ({ payment, onChange, onDelete }: StaticPaymentFieldP
                     onChange({ description: e.target.value });
                 }}
                 fullWidth
-                sx={Sx.textFieldSx}
+                sx={Sx.staticPaymentDescriptionTextFieldSx}
             />
-            <TextField
-                type="number"
-                label={t.management.deductionAmount}
-                value={payment.amount}
-                onChange={(e) => {
-                    const raw = e.target.value;
-                    onChange({ amount: raw === "" ? 0 : Number(raw) });
-                }}
-                sx={Sx.staticPaymentAmountTextFieldSx}
-            />
-            <IconButton
-                aria-label={t.management.deleteDeductionAria}
-                onClick={() => onDelete()}
-                sx={{ color: "#f87171" }}
-            >
-                <Typography component="span" >
-                    🗑
-                </Typography>
-            </IconButton>
+            <Stack sx={Sx.staticPaymentFieldActionsSx}>
+                <TextField
+                    type="number"
+                    label={t.management.deductionAmount}
+                    value={payment.amount}
+                    onChange={(e) => {
+                        const raw = e.target.value;
+                        onChange({ amount: raw === "" ? 0 : Number(raw) });
+                    }}
+                    fullWidth
+                    sx={Sx.staticPaymentAmountTextFieldSx}
+                />
+                <IconButton
+                    aria-label={t.management.deleteDeductionAria}
+                    onClick={() => onDelete()}
+                    sx={Sx.staticPaymentDeleteButtonSx}
+                >
+                    <Typography component="span">
+                        🗑
+                    </Typography>
+                </IconButton>
+            </Stack>
         </Stack>
     );
 };

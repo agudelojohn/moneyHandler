@@ -34,16 +34,19 @@ export const dialogSx = {
 export { textFieldSx } from "../components/styles";
 
 export const StaticPaymentsStackSx = {
-    border: '2px solid rgb(120 116 116)',
+    border: "2px solid rgb(120 116 116)",
     borderRadius: 1,
     minHeight: 100,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: { xs: "stretch", sm: "center" },
     gap: 2,
-    py:2
-}
+    py: 2,
+    px: { xs: 1, sm: 2 },
+    width: "100%",
+    boxSizing: "border-box",
+};
 
 export const outlinedButtonSx = {
     width: { xs: "100%", md: "auto" },

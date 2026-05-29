@@ -23,12 +23,33 @@ export const textFieldSx = {
 
 export const staticPaymentFieldRowSx = {
     width: "100%",
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 2,
-    px: 3,
+    flexDirection: { xs: "column", sm: "row" },
+    gap: { xs: 1.5, sm: 2 },
+    alignItems: { xs: "stretch", sm: "center" },
+    px: { xs: 1, sm: 2 },
 };
 
-export const staticPaymentAmountTextFieldSx = [textFieldSx, { minWidth: 120 }] as const;
+export const staticPaymentFieldActionsSx = {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 1,
+    width: { xs: "100%", sm: "auto" },
+    flexShrink: 0,
+};
+
+export const staticPaymentDescriptionTextFieldSx = {
+    ...textFieldSx,
+    flex: { sm: 1 },
+    minWidth: { sm: 0 },
+};
+
+export const staticPaymentAmountTextFieldSx = {
+    ...textFieldSx,
+    flex: { xs: 1, sm: "0 0 auto" },
+    minWidth: { sm: 120 },
+};
+
+export const staticPaymentDeleteButtonSx = {
+    color: "#f87171",
+    flexShrink: 0,
+};
