@@ -41,7 +41,11 @@ import {
 } from "recharts";
 import { useI18n } from "../i18n/I18nProvider";
 import { type CategoryKey } from "../i18n/translations";
-import { formatDateAsYyyyMmDd } from "../common/utils/dateHelpers";
+import {
+  formatDateAsYyyyMmDd,
+  localCalendarDayToUtcIso,
+  utcIsoToLocalCalendarDay,
+} from "../common/utils/dateHelpers";
 import { useUserSession, withUserIdHeader } from "../common/userSession";
 
 type Category = (typeof CATEGORIES)[number];
@@ -74,15 +78,8 @@ const formatCurrency = (amount: number, locale = "es-CO") =>
 
 const toLocalDateInputValue = (date: Date) => formatDateAsYyyyMmDd(date);
 
-const buildIsoFromInputDate = (dateInput: string) =>
-  new Date(dateInput).toISOString();
-const dateInputToUtcMillis = (dateInput: string, endOfDay = false) => {
-  const [year, month, day] = dateInput.split("-").map(Number);
-  if (!year || !month || !day) return Number.NaN;
-  return endOfDay
-    ? Date.UTC(year, month - 1, day, 23, 59, 59, 999)
-    : Date.UTC(year, month - 1, day, 0, 0, 0, 0);
-};
+const dateInputToUtcMillis = (dateInput: string, endOfDay = false) =>
+  new Date(localCalendarDayToUtcIso(dateInput, endOfDay)).getTime();
 const normalizeDescriptionKey = (value: string) =>
   value.toLowerCase().replaceAll(" ", "");
 
@@ -104,9 +101,10 @@ const TEXT_SECONDARY = "#94a3b8";
 
 const yearlyRangeIso = () => {
   const year = new Date().getFullYear();
-  const startDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0)).toISOString();
-  const endDate = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999)).toISOString();
-  return { startDate, endDate };
+  return {
+    startDate: localCalendarDayToUtcIso(`${year}-01-01`),
+    endDate: localCalendarDayToUtcIso(`${year}-12-31`, true),
+  };
 };
 
 const yearlyDateInputRange = () => {
@@ -331,7 +329,7 @@ export default function ExpensesDashboard() {
     setForm({
       amount: String(item.amount),
       description: item.description,
-      date: toLocalDateInputValue(new Date(item.date)),
+      date: utcIsoToLocalCalendarDay(item.date),
       category: item.category,
     });
     setSuccessMessage(null);
@@ -370,7 +368,7 @@ export default function ExpensesDashboard() {
           SK: selectedItem.SK,
           amount,
           description: form.description.trim(),
-          date: buildIsoFromInputDate(form.date),
+          date: localCalendarDayToUtcIso(form.date),
           category: form.category,
           userId: selectedItem.userId ?? null,
         };
@@ -386,7 +384,7 @@ export default function ExpensesDashboard() {
         const payload = {
           amount,
           description: form.description.trim(),
-          date: buildIsoFromInputDate(form.date),
+          date: localCalendarDayToUtcIso(form.date),
           category: form.category,
           userId: null,
         };

@@ -2,7 +2,9 @@ import { z } from "zod";
 import { expenseCategorySchema } from "./common";
 
 export const getManagementSchema = z.object({
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener formato YYYY-MM-DD"),
+    date: z.iso.datetime({
+        message: "Formato de fecha inválido (debe ser ISO 8601 UTC)",
+    }),
     category: expenseCategorySchema,
 });
 

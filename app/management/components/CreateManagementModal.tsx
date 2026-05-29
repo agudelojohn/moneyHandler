@@ -21,6 +21,7 @@ import {
     getDateFromDateString,
     isValidDateString,
     parseStoredDateValue,
+    utcIsoToLocalCalendarDay,
 } from "../../common/utils/dateHelpers";
 import { useI18n } from "../../i18n/I18nProvider";
 import { createManagementRecord } from "../services/managementApi";
@@ -111,8 +112,8 @@ export const CreateManagementModal = ({
         setUseSuggestedRange(prev => {
             const newUseSuggestedRange = !prev;
             if (newUseSuggestedRange) {
-                setRangeStartDate(formatDateAsYyyyMmDd(new Date(suggestedRangeDate?.startDate || "")));
-                setRangeEndDate(formatDateAsYyyyMmDd(new Date(suggestedRangeDate?.endDate || "")));
+                setRangeStartDate(utcIsoToLocalCalendarDay(suggestedRangeDate?.startDate || ""));
+                setRangeEndDate(utcIsoToLocalCalendarDay(suggestedRangeDate?.endDate || ""));
             } else {
                 setRangeStartDate(formatDateAsYyyyMmDd(new Date()));
                 setRangeEndDate(formatDateAsYyyyMmDd(new Date()));

@@ -1,5 +1,4 @@
-import { setDateToEndOfDay, setDateToStartOfDay } from "@/app/common/utils/dateHelpers";
-import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { NextResponse } from "next/server";
 import { db, TABLE_NAME } from "../../../lib/aws/dynamo";
 import { expenseSchema, getExpenseSchema, deleteExpenseSchema, updateExpenseSchema } from "../../../lib/aws/schemas";
@@ -11,17 +10,17 @@ const buildPK = (userId: string, year: number) => `USER#${userId}#${year}`;
 const buildSK = (date?: Date | null) => `EXPENSE#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
 
-function buildDateForSK (date: Date): Date {
+function buildDateForSK(date: Date): Date {
   const now = new Date();
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    now.getHours(),
-    now.getMinutes(),
-    now.getSeconds(),
-    now.getMilliseconds()
-  );
+  return new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    now.getUTCHours(),
+    now.getUTCMinutes(),
+    now.getUTCSeconds(),
+    now.getUTCMilliseconds()
+  ));
 }
 
 export async function POST(request: Request) {
@@ -44,18 +43,17 @@ export async function POST(request: Request) {
 
     const { amount, description, date, category } = result.data;
     const dateObject = date ? parseDatePreservingCalendarDay(date) : new Date();
-    const year = dateObject.getFullYear();
+    const year = dateObject.getUTCFullYear();
 
     // 2. Construir el Item para DynamoDB
-    const normalizedDate = setDateToStartOfDay(dateObject);
-    const dateForSK = buildDateForSK(normalizedDate);
+    const dateForSK = buildDateForSK(dateObject);
     const item = {
       PK: buildPK(userId, year),
       SK: buildSK(dateForSK),
       id: buildUniqueID(),
       amount,
       description,
-      date: normalizedDate.toISOString(),
+      date: dateObject.toISOString(),
       category,
       type: "EXPENSE" // Útil para filtrar luego
     };
@@ -92,16 +90,18 @@ export async function GET(request: Request) {
       );
     }
     const parsedStartDate = parseDatePreservingCalendarDay(parsed.data.startDate!);
-    const year = parsedStartDate.getFullYear();
-    const normalizedStartDate = setDateToStartOfDay(parsedStartDate);
+    const year = parsedStartDate.getUTCFullYear();
     const parsedEndDate = parsed.data.endDate
       ? parseDatePreservingCalendarDay(parsed.data.endDate)
       : parsedStartDate;
-    const normalizedEndDate = setDateToEndOfDay(parsedEndDate);
     const result = await db.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
-      ExpressionAttributeValues: { ":pk": buildPK(userId, year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
+      ExpressionAttributeValues: {
+        ":pk": buildPK(userId, year),
+        ":sk": buildSK(parsedStartDate),
+        ":sk2": buildSK(parsedEndDate),
+      }
     }));
     if (category) {
       result.Items = result.Items?.filter(item => item.category === category);
@@ -130,13 +130,15 @@ export async function DELETE(request: Request) {
       );
     }
     const parsedDate = parseDatePreservingCalendarDay(rawDate!);
-    const normalizedStartDate = setDateToStartOfDay(parsedDate);
-    const normalizedEndDate = setDateToEndOfDay(parsedDate);
-    const year = parsedDate.getFullYear();
+    const year = parsedDate.getUTCFullYear();
     const result = await db.send(new QueryCommand({
       TableName: TABLE_NAME,
       KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
-      ExpressionAttributeValues: { ":pk": buildPK(userId, year), ":sk": buildSK(normalizedStartDate), ":sk2": buildSK(normalizedEndDate) }
+      ExpressionAttributeValues: {
+        ":pk": buildPK(userId, year),
+        ":sk": buildSK(parsedDate),
+        ":sk2": buildSK(parsedDate),
+      }
     }));
 
     const item = result.Items?.find(item => item.id === id);

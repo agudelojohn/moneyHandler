@@ -19,6 +19,7 @@ import {
   formatDateAsYyyyMmDd,
   formatDateWithMonthName,
   getDateFromDateString,
+  localCalendarDayToUtcIso,
   getElapsedDaysInRange,
   getInclusiveDaysBetween,
   isValidDateString,
@@ -184,15 +185,16 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
       setLoadError(null);
 
       try {
+        const requestDateIso = localCalendarDayToUtcIso(dateString);
         const response = await fetch(
-          `/api/management?date=${encodeURIComponent(dateString)}&category=${encodeURIComponent(selectedCategory)}`,
+          `/api/management?date=${encodeURIComponent(requestDateIso)}&category=${encodeURIComponent(selectedCategory)}`,
           {
             headers: withUserIdHeader(activeUser.userId),
           }
         );
         const allCategoriesData = await Promise.all(CATEGORIES.map(async (category) => {
           const response = await fetch(
-            `/api/management?date=${encodeURIComponent(dateString)}&category=${encodeURIComponent(category)}`,
+            `/api/management?date=${encodeURIComponent(requestDateIso)}&category=${encodeURIComponent(category)}`,
             {
               headers: withUserIdHeader(activeUser.userId),
             }
@@ -349,11 +351,13 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
           {t.management.title}
         </Typography>
 
-        {isDevelopment && isValidDateString(DEV_INITIAL_REQUEST_DATE) ? (
-          <Alert severity="info" sx={Sx.managementDevAlertSx}>
-            Fecha de emulación activa para desarrollo: {DEV_INITIAL_REQUEST_DATE}
-          </Alert>
-        ) : null}
+        {isDevelopment && <>
+          <Alert severity="info" sx={Sx.managementDevAlertSx}>DEVELOPMENT MODE</Alert>
+          {isValidDateString(DEV_INITIAL_REQUEST_DATE) && (
+            <Alert severity="info" sx={Sx.managementDevAlertSx}>
+              Fecha de emulación activa para desarrollo: {DEV_INITIAL_REQUEST_DATE}
+            </Alert>)}
+        </>}
 
         {isLoading ? (
           <CircularProgress sx={Sx.managementMainLoadingProgressSx} />

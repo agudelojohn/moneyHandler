@@ -6,6 +6,7 @@ import type {
     StaticPayment,
 } from "../types";
 import type { ExpenseCategory } from "@/lib/aws/schemas/common";
+import { localCalendarDayToUtcIso } from "@/app/common/utils/dateHelpers";
 import { withUserIdHeader } from "@/app/common/userSession";
 
 export async function appendDeductionToManagementRecord(
@@ -123,8 +124,8 @@ export async function createManagementRecord(
             category,
             initialAmount,
             creationDate,
-            startDate: `${startDate}T00:00:00.000Z`,
-            endDate: `${endDate}T00:00:00.000Z`,
+            startDate: localCalendarDayToUtcIso(startDate),
+            endDate: localCalendarDayToUtcIso(endDate),
             deductions: [],
             staticPayments,
         }),

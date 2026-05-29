@@ -1,5 +1,9 @@
 import { randomBytes } from "node:crypto";
-import { parseDatePreservingCalendarDay } from "../common/utils";
+import {
+    parseDatePreservingCalendarDay,
+    toUtcEndOfCalendarDay,
+    toUtcStartOfCalendarDay,
+} from "../common/utils";
 import { DeleteCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { db, TABLE_NAME } from "../../../lib/aws/dynamo";
 import { NextResponse } from "next/server";
@@ -15,15 +19,9 @@ const buildPK = (userId: string, year: number) => `MANAGEMENT#${userId}#${year}`
 const buildSK = (date?: Date | null, category?: string) => `${process.env.NEXT_PUBLIC_APP_ENV === "production" ? "" : "DEV#"}ADDITION#${(category ?? "OTROS").toUpperCase()}#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
 
-function normalizeDate(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
 function isDateInRange(date: Date, startDate: Date, endDate: Date): boolean {
-    const normalizedDate = normalizeDate(date).getTime();
-    const normalizedStartDate = normalizeDate(startDate).getTime();
-    const normalizedEndDate = normalizeDate(endDate).getTime();
-    return normalizedDate >= normalizedStartDate && normalizedDate <= normalizedEndDate;
+    const instant = date.getTime();
+    return instant >= startDate.getTime() && instant <= endDate.getTime();
 }
 
 function doRangesOverlap(
@@ -32,12 +30,7 @@ function doRangesOverlap(
     startDateB: Date,
     endDateB: Date
 ): boolean {
-    const normalizedStartA = normalizeDate(startDateA).getTime();
-    const normalizedEndA = normalizeDate(endDateA).getTime();
-    const normalizedStartB = normalizeDate(startDateB).getTime();
-    const normalizedEndB = normalizeDate(endDateB).getTime();
-
-    return normalizedStartA <= normalizedEndB && normalizedStartB <= normalizedEndA;
+    return startDateA.getTime() <= endDateB.getTime() && startDateB.getTime() <= endDateA.getTime();
 }
 
 export async function POST(request: Request) {
@@ -64,15 +57,15 @@ export async function POST(request: Request) {
     const startDate = parseDatePreservingCalendarDay(startDateRaw);
     const endDate = parseDatePreservingCalendarDay(endDateRaw);
 
-    if (normalizeDate(startDate).getTime() > normalizeDate(endDate).getTime()) {
+    if (startDate.getTime() > endDate.getTime()) {
         return NextResponse.json({ error: "La fecha inicial no puede ser mayor a la fecha final" }, { status: 400 });
     }
 
-    const startYear = startDate.getFullYear();
-    const endYear = endDate.getFullYear();
+    const startYear = startDate.getUTCFullYear();
+    const endYear = endDate.getUTCFullYear();
     for (let yearToCheck = startYear; yearToCheck <= endYear; yearToCheck += 1) {
-        const startOfYear = new Date(yearToCheck, 0, 1);
-        const endOfYear = new Date(yearToCheck, 11, 31, 23, 59, 59, 999);
+        const startOfYear = new Date(Date.UTC(yearToCheck, 0, 1));
+        const endOfYear = new Date(Date.UTC(yearToCheck, 11, 31, 23, 59, 59, 999));
         const queryResult = await db.send(new QueryCommand({
             TableName: TABLE_NAME,
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
@@ -104,7 +97,7 @@ export async function POST(request: Request) {
         }
     }
 
-    const year = creationDate.getFullYear();
+    const year = creationDate.getUTCFullYear();
     const item = {
         PK: buildPK(userId, year),
         SK: buildSK(creationDate, category),
@@ -144,9 +137,9 @@ export async function GET(request: Request) {
 
     const requestedDate = parseDatePreservingCalendarDay(parsed.data.date);
     const { category } = parsed.data;
-    const year = requestedDate.getFullYear();
-    const startOfYear = new Date(year, 0, 1);
-    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+    const year = requestedDate.getUTCFullYear();
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
 
     const result = await db.send(new QueryCommand({
         TableName: TABLE_NAME,
@@ -208,8 +201,9 @@ export async function DELETE(request: Request) {
         }
 
         const parsedDate = parseDatePreservingCalendarDay(parsed.data.date);
-        const normalizedDate = normalizeDate(parsedDate);
-        const year = normalizedDate.getFullYear();
+        const dayStart = toUtcStartOfCalendarDay(parsedDate);
+        const dayEnd = toUtcEndOfCalendarDay(parsedDate);
+        const year = dayStart.getUTCFullYear();
         const { category } = parsed.data;
 
         const result = await db.send(new QueryCommand({
@@ -217,8 +211,8 @@ export async function DELETE(request: Request) {
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
                 ":pk": buildPK(userId, year),
-                ":sk": buildSK(normalizedDate, category),
-                ":sk2": buildSK(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999), category),
+                ":sk": buildSK(dayStart, category),
+                ":sk2": buildSK(dayEnd, category),
             }
         }));
 
@@ -260,8 +254,9 @@ export async function PUT(request: Request) {
         }
 
         const parsedDate = parseDatePreservingCalendarDay(parsed.data.date);
-        const normalizedDate = normalizeDate(parsedDate);
-        const year = normalizedDate.getFullYear();
+        const dayStart = toUtcStartOfCalendarDay(parsedDate);
+        const dayEnd = toUtcEndOfCalendarDay(parsedDate);
+        const year = dayStart.getUTCFullYear();
         const { category } = parsed.data;
 
         const result = await db.send(new QueryCommand({
@@ -269,8 +264,8 @@ export async function PUT(request: Request) {
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
                 ":pk": buildPK(userId, year),
-                ":sk": buildSK(normalizedDate, category),
-                ":sk2": buildSK(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), normalizedDate.getDate(), 23, 59, 59, 999), category),
+                ":sk": buildSK(dayStart, category),
+                ":sk2": buildSK(dayEnd, category),
             }
         }));
 

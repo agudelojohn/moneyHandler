@@ -1,11 +1,16 @@
+import { parseUtcIsoDate } from "@/app/common/utils/dateHelpers";
+
+/** @deprecated Usar `parseUtcIsoDate`; se mantiene por compatibilidad en rutas API. */
 export function parseDatePreservingCalendarDay(date: string): Date {
-    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(date);
-    const isUtcMidnightIso = /^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/.test(date);
+    return parseUtcIsoDate(date);
+}
 
-    if (isDateOnly || isUtcMidnightIso) {
-        const [year, month, day] = date.slice(0, 10).split("-").map(Number);
-        return new Date(year, month - 1, day);
-    }
+export function toUtcStartOfCalendarDay(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
 
-    return new Date(date);
+export function toUtcEndOfCalendarDay(date: Date): Date {
+    return new Date(
+        Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999)
+    );
 }

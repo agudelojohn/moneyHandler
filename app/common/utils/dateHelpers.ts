@@ -43,21 +43,52 @@ export function isValidDateString(value: string): boolean {
     return false;
   }
 
-  const date = new Date(`${value}T00:00:00`);
+  const date = getDateFromDateString(value);
   return !Number.isNaN(date.getTime());
 }
 
+/** Medianoche local del día `yyyy-mm-dd` en el dispositivo. */
 export function getDateFromDateString(value: string): Date {
   return new Date(`${value}T00:00:00`);
 }
 
-/** Fecha de calendario `yyyy-mm-dd` (medianoche local) o ISO 8601 desde API/almacenamiento. */
+/**
+ * Convierte un día de calendario local (`yyyy-mm-dd`) a ISO UTC para persistencia.
+ * Opcionalmente usa el final del día local (23:59:59.999).
+ */
+export function localCalendarDayToUtcIso(dateOnly: string, endOfDay = false): string {
+  const date = getDateFromDateString(dateOnly);
+  if (endOfDay) {
+    date.setHours(23, 59, 59, 999);
+  }
+  return date.toISOString();
+}
+
+/** Convierte un instante UTC almacenado a `yyyy-mm-dd` en la zona horaria del dispositivo. */
+export function utcIsoToLocalCalendarDay(iso: string): string {
+  return formatDateAsYyyyMmDd(new Date(iso));
+}
+
+/** Parsea ISO UTC (o `yyyy-mm-dd` como día local) a `Date` para mostrar en el dispositivo. */
 export function parseStoredDateValue(value: string): Date {
   const trimmed = value.trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
     return getDateFromDateString(trimmed);
   }
   return new Date(trimmed);
+}
+
+/** Parsea entradas ISO UTC desde la API; lanza si la fecha es inválida. */
+export function parseUtcIsoDate(value: string): Date {
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return getDateFromDateString(trimmed);
+  }
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new RangeError(`Invalid date: ${value}`);
+  }
+  return parsed;
 }
 
 export function normalizeDateOnly(date: Date): Date {
