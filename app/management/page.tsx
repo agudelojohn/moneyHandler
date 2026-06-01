@@ -372,6 +372,10 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
             ) : (
               records.map((record) => {
                 const staticPaymentsTotal = record.staticPayments.length > 0 ? record.staticPayments.reduce((sum, item) => sum + item.amount, 0) : 0;
+                const staticPaymentsPaidTotal = record.staticPayments.reduce(
+                  (sum, item) => (item.isPayed ? sum + item.amount : sum),
+                  0
+                );
                 const deductionTotal = record.deductions.reduce((sum, item) => sum + item.amount, 0);
                 const referenceDate = getDateFromDateString(baseRequestDate);
                 const startDate = new Date(record.startDate ?? record.creationDate);
@@ -449,7 +453,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
 
                       <ItemValueTypography
                         labelText={t.management.expectedPocket}
-                        value={currencyFormatter.format(record.initialAmount - deductionTotal - staticPaymentsTotal)}
+                        value={currencyFormatter.format(record.initialAmount - deductionTotal - staticPaymentsPaidTotal)}
                       />
                     </Stack>
 
