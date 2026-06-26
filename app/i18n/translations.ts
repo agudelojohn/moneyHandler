@@ -80,6 +80,10 @@ type TranslationSchema = {
     viewStaticPaymentsAria: string;
     staticPaymentDeleteAria: string;
     staticPaymentDeleteConfirmMessage: string;
+    rangeLabel: string;
+    editRangeAria: string;
+    editRangeTitle: string;
+    updateRangeError: string;
   };
   expenses: {
     pageTitle: string;
@@ -200,7 +204,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       initialAmountValidationError: "El monto debe ser un numero entero positivo.",
       invalidRangeDatesError: "Las fechas del rango son invalidas.",
       invalidRangeOrderError:
-        "La fecha inicial del rango no puede ser mayor a la fecha final.",
+        "La fecha final no puede ser anterior a la fecha inicial.",
       createRecordError: "No se pudo crear el registro.",
       selectCategoryTitle: "Elige una categoria",
       selectCategorySubtitle:
@@ -217,6 +221,10 @@ export const translations: Record<Locale, TranslationSchema> = {
       staticPaymentDeleteAria: "Eliminar pago fijo",
       staticPaymentDeleteConfirmMessage:
         "Esta accion quitara el pago fijo de la lista. ¿Deseas continuar?",
+      rangeLabel: "Rango",
+      editRangeAria: "Editar rango de fechas",
+      editRangeTitle: "Editar rango de fechas",
+      updateRangeError: "No se pudo actualizar el rango de fechas.",
     },
     expenses: {
       pageTitle: "Historial de precios",
@@ -345,7 +353,7 @@ export const translations: Record<Locale, TranslationSchema> = {
         "Initial amount must be a positive whole number.",
       invalidRangeDatesError: "Range dates are invalid.",
       invalidRangeOrderError:
-        "The range start date cannot be later than the end date.",
+        "The range end date cannot be earlier than the start date.",
       createRecordError: "The record could not be created.",
       selectCategoryTitle: "Choose a category",
       selectCategorySubtitle:
@@ -362,6 +370,10 @@ export const translations: Record<Locale, TranslationSchema> = {
       staticPaymentDeleteAria: "Delete static payment",
       staticPaymentDeleteConfirmMessage:
         "This action will remove the static payment from the list. Do you want to continue?",
+      rangeLabel: "Range",
+      editRangeAria: "Edit date range",
+      editRangeTitle: "Edit date range",
+      updateRangeError: "The date range could not be updated.",
     },
     expenses: {
       pageTitle: "Price history",

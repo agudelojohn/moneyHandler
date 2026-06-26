@@ -23,22 +23,30 @@ export const staticPaymentEntrySchema = deductionEntrySchema.extend({
     paymentDay: isoDatetimeField.nullable(),
 });
 
-export const managementSchema = z.object({
-    category: expenseCategorySchema,
-    initialAmount: z.number({
-        error: "El monto es obligatorio"
+export const managementSchema = z
+    .object({
+        category: expenseCategorySchema,
+        initialAmount: z.number({
+            error: "El monto es obligatorio"
+        })
+            .int("Usa números enteros"),
+        creationDate: isoDatetimeField,
+        startDate: z.iso.datetime({
+            message: "Formato de fecha inicial inválido (debe ser ISO 8601)",
+        }),
+        endDate: z.iso.datetime({
+            message: "Formato de fecha final inválido (debe ser ISO 8601)",
+        }),
+        deductions: z.array(deductionEntrySchema),
+        staticPayments: z.array(staticPaymentEntrySchema),
     })
-        .int("Usa números enteros"),
-    creationDate: isoDatetimeField,
-    startDate: z.iso.datetime({
-        message: "Formato de fecha inicial inválido (debe ser ISO 8601)",
-    }),
-    endDate: z.iso.datetime({
-        message: "Formato de fecha final inválido (debe ser ISO 8601)",
-    }),
-    deductions: z.array(deductionEntrySchema),
-    staticPayments: z.array(staticPaymentEntrySchema),
-});
+    .refine(
+        (data) => new Date(data.startDate).getTime() <= new Date(data.endDate).getTime(),
+        {
+            message: "La fecha final no puede ser anterior a la fecha inicial",
+            path: ["endDate"],
+        }
+    );
 
 // Extraemos el tipo de TypeScript para usarlo en tus componentes y APIs
 export type Management = z.infer<typeof managementSchema>;

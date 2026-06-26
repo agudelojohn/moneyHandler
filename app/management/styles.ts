@@ -299,6 +299,29 @@ export const dateTypographyLabelSx = {
     mb: 1,
 };
 
+export const rangeDateRowSx = {
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
+    mt: 2,
+    mb: 1,
+};
+
+export const rangeDateLabelSx = {
+    color: TEXT_SECONDARY,
+    flex: 1,
+};
+
+export const editRangeButtonSx = {
+    color: TEXT_SECONDARY,
+    borderColor: DARK_BORDER,
+    "&:hover": {
+        color: BLUE_ACCENT,
+        borderColor: BLUE_ACCENT,
+        backgroundColor: "#0b1220",
+    },
+};
+
 export const managementWorkspaceContentStackSx = {
     ...mainStackSx,
     pt: { xs: 14, sm: 12 },

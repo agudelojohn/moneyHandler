@@ -112,6 +112,46 @@ export async function updateStaticPaymentsInManagementRecord(
     return response.json();
 }
 
+export async function updateRangeInManagementRecord(
+    managementRecord: ManagementRecord,
+    startDate: string,
+    endDate: string,
+    userId: string,
+    category: ExpenseCategory
+) {
+    const response = await fetch("/api/management", {
+        method: "PUT",
+        headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
+        body: JSON.stringify({
+            id: managementRecord.id,
+            date: managementRecord.creationDate,
+            category,
+            deductions: managementRecord.deductions.map((item) => ({
+                description: item.description.trim(),
+                amount: item.amount,
+                isCredit: item.isCredit,
+                isPayed: item.isPayed,
+            })),
+            staticPayments: managementRecord.staticPayments.map((item) => ({
+                description: item.description.trim(),
+                amount: item.amount,
+                isCredit: item.isCredit,
+                isPayed: item.isPayed,
+                paymentDay: item.paymentDay,
+            })),
+            startDate: localCalendarDayToUtcIso(startDate),
+            endDate: localCalendarDayToUtcIso(endDate),
+        }),
+    });
+
+    if (!response.ok) {
+        const errorData: { error?: string } = await response.json().catch(() => ({}));
+        throw new Error(errorData.error ?? "No se pudo actualizar el rango de fechas");
+    }
+
+    return response.json();
+}
+
 export async function createManagementRecord(
     managementObject: ManagementRecordCreate,
     userId: string

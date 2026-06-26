@@ -4,6 +4,7 @@ import {
     toUtcEndOfCalendarDay,
     toUtcStartOfCalendarDay,
 } from "../common/utils";
+import { isValidDateRangeOrder } from "@/app/common/utils/dateHelpers";
 import { DeleteCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { db, TABLE_NAME } from "../../../lib/aws/dynamo";
 import { NextResponse } from "next/server";
@@ -57,8 +58,11 @@ export async function POST(request: Request) {
     const startDate = parseDatePreservingCalendarDay(startDateRaw);
     const endDate = parseDatePreservingCalendarDay(endDateRaw);
 
-    if (startDate.getTime() > endDate.getTime()) {
-        return NextResponse.json({ error: "La fecha inicial no puede ser mayor a la fecha final" }, { status: 400 });
+    if (!isValidDateRangeOrder(startDateRaw, endDateRaw)) {
+        return NextResponse.json(
+            { error: "La fecha final no puede ser anterior a la fecha inicial" },
+            { status: 400 }
+        );
     }
 
     const startYear = startDate.getUTCFullYear();
@@ -282,11 +286,76 @@ export async function PUT(request: Request) {
                     ? originalItem.staticPayments
                     : [];
 
+        let startDate = parseDatePreservingCalendarDay(
+            typeof originalItem.startDate === "string"
+                ? originalItem.startDate
+                : originalItem.creationDate
+        );
+        let endDate = parseDatePreservingCalendarDay(
+            typeof originalItem.endDate === "string"
+                ? originalItem.endDate
+                : originalItem.creationDate
+        );
+
+        if (parsed.data.startDate !== undefined && parsed.data.endDate !== undefined) {
+            if (!isValidDateRangeOrder(parsed.data.startDate, parsed.data.endDate)) {
+                return NextResponse.json(
+                    { error: "La fecha final no puede ser anterior a la fecha inicial" },
+                    { status: 400 }
+                );
+            }
+
+            startDate = parseDatePreservingCalendarDay(parsed.data.startDate);
+            endDate = parseDatePreservingCalendarDay(parsed.data.endDate);
+
+            const startYear = startDate.getUTCFullYear();
+            const endYear = endDate.getUTCFullYear();
+            for (let yearToCheck = startYear; yearToCheck <= endYear; yearToCheck += 1) {
+                const startOfYear = new Date(Date.UTC(yearToCheck, 0, 1));
+                const endOfYear = new Date(Date.UTC(yearToCheck, 11, 31, 23, 59, 59, 999));
+                const queryResult = await db.send(new QueryCommand({
+                    TableName: TABLE_NAME,
+                    KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
+                    ExpressionAttributeValues: {
+                        ":pk": buildPK(userId, yearToCheck),
+                        ":sk": buildSK(startOfYear, category),
+                        ":sk2": buildSK(endOfYear, category),
+                    }
+                }));
+
+                const hasOverlap = (queryResult.Items ?? []).some((existingItem) => {
+                    if (existingItem.id === parsed.data.id) {
+                        return false;
+                    }
+
+                    const existingStartDateRaw = typeof existingItem.startDate === "string"
+                        ? existingItem.startDate
+                        : existingItem.creationDate;
+                    const existingEndDateRaw = typeof existingItem.endDate === "string"
+                        ? existingItem.endDate
+                        : existingItem.creationDate;
+                    const existingStartDate = parseDatePreservingCalendarDay(existingStartDateRaw);
+                    const existingEndDate = parseDatePreservingCalendarDay(existingEndDateRaw);
+
+                    return doRangesOverlap(startDate, endDate, existingStartDate, existingEndDate);
+                });
+
+                if (hasOverlap) {
+                    return NextResponse.json(
+                        { error: "El rango de fechas se solapa con un registro existente" },
+                        { status: 409 }
+                    );
+                }
+            }
+        }
+
         const updatedItem = {
             ...originalItem,
             category,
             deductions: parsed.data.deductions,
             staticPayments,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
         };
 
         await db.send(new PutCommand({

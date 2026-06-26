@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getDateFromDateString,
+  isValidDateRangeOrder,
   localCalendarDayToUtcIso,
   parseStoredDateValue,
   parseUtcIsoDate,
@@ -35,5 +36,11 @@ describe("dateHelpers UTC/local", () => {
     expect(fromIso.getDate()).toBe(15);
     const fromDateOnly = parseUtcIsoDate("2026-01-15");
     expect(fromDateOnly.getDate()).toBe(15);
+  });
+
+  it("valida que la fecha final no sea anterior a la inicial", () => {
+    expect(isValidDateRangeOrder("2026-01-01", "2026-01-31")).toBe(true);
+    expect(isValidDateRangeOrder("2026-01-15", "2026-01-15")).toBe(true);
+    expect(isValidDateRangeOrder("2026-01-31", "2026-01-01")).toBe(false);
   });
 });

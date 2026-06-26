@@ -2,6 +2,7 @@
 
 
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
 import {
   Alert,
   Box,
@@ -9,6 +10,7 @@ import {
   Chip,
   CircularProgress,
   Container,
+  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
@@ -32,6 +34,7 @@ import { ListStaticPaymentsModal } from "./components/ListStaticPaymentsModal";
 import * as Sx from "./styles";
 import type { Deduction, ManagementRecord } from "./types";
 import { CreateManagementModal } from "./components/CreateManagementModal";
+import { EditRangeModal } from "./components/EditRangeModal";
 import { useUserSession, withUserIdHeader } from "../common/userSession";
 import { CATEGORIES, type ExpenseCategory, isExpenseCategory } from "@/lib/aws/schemas/common";
 
@@ -154,6 +157,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openEditRangeModal, setOpenEditRangeModal] = useState(false);
   const [openDeductionModal, setOpenDeductionModal] = useState(false);
   const [managementRecord, setSelectedRecord] = useState<ManagementRecord | null>(null);
   const [openViewDeductionsModal, setOpenViewDeductionsModal] = useState(false);
@@ -271,6 +275,11 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
       window.clearTimeout(timeoutId);
     };
   }, [activeUser, baseRequestDate, fetchRecordsByDate]);
+
+  const handleOpenEditRangeModal = (record: ManagementRecord) => {
+    setSelectedRecord(record);
+    setOpenEditRangeModal(true);
+  };
 
   const handleOpenAddDeductionModal = (record: ManagementRecord) => {
     setSelectedRecord(record);
@@ -395,10 +404,20 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
                       labelText="Fecha de creación"
                       date={formatDateWithMonthName(new Date(record.creationDate))}
                     />
-                    <DateTypography
-                      labelText="Rango"
-                      date={`${formatDateWithMonthName(startDate)} - ${formatDateWithMonthName(endDate)}`}
-                    />
+                    <Box sx={Sx.rangeDateRowSx}>
+                      <Typography sx={Sx.rangeDateLabelSx}>
+                        {t.management.rangeLabel}: {`${formatDateWithMonthName(startDate)} - ${formatDateWithMonthName(endDate)}`}
+                      </Typography>
+                      <IconButton
+                        type="button"
+                        size="small"
+                        onClick={() => handleOpenEditRangeModal(record)}
+                        aria-label={t.management.editRangeAria}
+                        sx={Sx.editRangeButtonSx}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
 
                     <Stack spacing={3} sx={Sx.managementRecordBodyStackSx}>
                       <hr />
@@ -482,6 +501,17 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
             {t.common.backToHome}
           </Button>
         </Link>
+
+        <EditRangeModal
+          openEditRangeModal={openEditRangeModal}
+          setOpenEditRangeModal={setOpenEditRangeModal}
+          managementRecord={managementRecord}
+          setSelectedRecord={setSelectedRecord}
+          fetchRecordsByDate={fetchRecordsByDate}
+          baseRequestDate={baseRequestDate}
+          activeUserId={activeUser?.userId ?? ""}
+          category={selectedCategory}
+        />
 
         <DeductionModal
           openDeductionModal={openDeductionModal}

@@ -18,7 +18,7 @@ import { useState } from "react";
 import {
     formatDateAsYyyyMmDd,
     formatDateWithMonthName,
-    getDateFromDateString,
+    isValidDateRangeOrder,
     isValidDateString,
     parseStoredDateValue,
     utcIsoToLocalCalendarDay,
@@ -69,17 +69,20 @@ export const CreateManagementModal = ({
         setStaticPayments((prev) => prev.filter((_, i) => i !== index));
     }
 
+    const hasValidRangeDates = isValidDateString(rangeStartDate) && isValidDateString(rangeEndDate);
+    const hasInvalidRangeOrder = hasValidRangeDates && !isValidDateRangeOrder(rangeStartDate, rangeEndDate);
+
     const handleCreateRecord = async () => {
         const amount = Number(initialAmount);
         if (!Number.isInteger(amount) || amount <= 0) {
             setCreateError(t.management.initialAmountValidationError);
             return;
         }
-        if (!isValidDateString(rangeStartDate) || !isValidDateString(rangeEndDate)) {
+        if (!hasValidRangeDates) {
             setCreateError(t.management.invalidRangeDatesError);
             return;
         }
-        if (getDateFromDateString(rangeStartDate).getTime() > getDateFromDateString(rangeEndDate).getTime()) {
+        if (hasInvalidRangeOrder) {
             setCreateError(t.management.invalidRangeOrderError);
             return;
         }
@@ -121,7 +124,6 @@ export const CreateManagementModal = ({
             return newUseSuggestedRange;
         });
     }
-
 
     return (
         <>
@@ -167,7 +169,12 @@ export const CreateManagementModal = ({
                             onChange={(event) => setRangeStartDate(event.target.value)}
                             fullWidth
                             sx={Sx.textFieldSx}
-                            slotProps={{ inputLabel: { shrink: true } }}
+                            error={hasInvalidRangeOrder}
+                            helperText={hasInvalidRangeOrder ? t.management.invalidRangeOrderError : undefined}
+                            slotProps={{
+                                inputLabel: { shrink: true },
+                                htmlInput: { max: hasValidRangeDates ? rangeEndDate : undefined },
+                            }}
                         />
                         <TextField
                             label={t.management.rangeEndDate}
@@ -176,7 +183,12 @@ export const CreateManagementModal = ({
                             onChange={(event) => setRangeEndDate(event.target.value)}
                             fullWidth
                             sx={Sx.textFieldSx}
-                            slotProps={{ inputLabel: { shrink: true } }}
+                            error={hasInvalidRangeOrder}
+                            helperText={hasInvalidRangeOrder ? t.management.invalidRangeOrderError : undefined}
+                            slotProps={{
+                                inputLabel: { shrink: true },
+                                htmlInput: { min: hasValidRangeDates ? rangeStartDate : undefined },
+                            }}
                         />
                         <Stack sx={Sx.StaticPaymentsStackSx}>
                             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
@@ -222,7 +234,7 @@ export const CreateManagementModal = ({
                     <Button
                         onClick={handleCreateRecord}
                         variant="contained"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || hasInvalidRangeOrder}
                         sx={Sx.createManagementRecordButtonSx}
                     >
                         {isSubmitting ? t.management.creatingRecord : t.expenses.createRecord}

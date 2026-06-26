@@ -102,6 +102,13 @@ export function getInclusiveDaysBetween(startDate: Date, endDate: Date): number 
   return Math.floor((end - start) / millisecondsPerDay) + 1;
 }
 
+/** `endDate` debe ser el mismo día o posterior a `startDate` (acepta `yyyy-mm-dd` o ISO). */
+export function isValidDateRangeOrder(startDate: string, endDate: string): boolean {
+  const start = normalizeDateOnly(parseStoredDateValue(startDate)).getTime();
+  const end = normalizeDateOnly(parseStoredDateValue(endDate)).getTime();
+  return end >= start;
+}
+
 export function getElapsedDaysInRange(referenceDate: Date, startDate: Date, endDate: Date): number {
   const normalizedReference = normalizeDateOnly(referenceDate);
   const normalizedStart = normalizeDateOnly(startDate);
