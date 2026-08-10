@@ -134,11 +134,21 @@ type TranslationSchema = {
     plusOneDay: string;
     minusOneDay: string;
   };
-  categories: Record<CategoryKey, string>;
+  categoriesManager: {
+    manageCategories: string;
+    manageButton: string;
+  }
+  // Abierto: las categorías por defecto se traducen por su `id`; las
+  // personalizadas no tienen traducción y muestran su nombre crudo.
+  categories: Record<string, string>;
 };
 
 export const translations: Record<Locale, TranslationSchema> = {
   es: {
+    categoriesManager: {
+      manageCategories: "Gestionar categorias",
+      manageButton: "Gestionar categorias",
+    },
     common: {
       language: "Idioma",
       spanish: "Espanol",
@@ -279,14 +289,18 @@ export const translations: Record<Locale, TranslationSchema> = {
       minusOneDay: "-1 dia",
     },
     categories: {
-      Gastos: "Gastos",
-      Gatitos: "Gatitos",
-      Mercado: "Mercado",
-      Otros: "Otros",
-      Servicios: "Servicios",
+      GASTOS: "Gastos",
+      GATITOS: "Gatitos",
+      MERCADO: "Mercado",
+      OTROS: "Otros",
+      SERVICIOS: "Servicios",
     },
   },
   en: {
+    categoriesManager: {
+      manageCategories: "Manage categories",
+      manageButton: "Manage categories",
+    },
     common: {
       language: "Language",
       spanish: "Spanish",
@@ -428,11 +442,24 @@ export const translations: Record<Locale, TranslationSchema> = {
       minusOneDay: "-1 Day",
     },
     categories: {
-      Gastos: "General expenses",
-      Gatitos: "Cats",
-      Mercado: "Groceries",
-      Otros: "Other",
-      Servicios: "Services",
+      GASTOS: "General expenses",
+      GATITOS: "Cats",
+      MERCADO: "Groceries",
+      OTROS: "Other",
+      SERVICIOS: "Services",
     },
   },
 };
+
+export type Translation = (typeof translations)[Locale];
+
+/**
+ * Etiqueta a mostrar para una categoría: usa la traducción por `id` si existe
+ * (categorías por defecto) y cae al nombre crudo para las personalizadas.
+ */
+export function getCategoryLabel(
+  category: { id: string; name: string },
+  t: Translation
+): string {
+  return t.categories[category.id] ?? category.name;
+}

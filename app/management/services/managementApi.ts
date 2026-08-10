@@ -5,7 +5,6 @@ import type {
     ManagementRecord,
     StaticPayment,
 } from "../types";
-import type { ExpenseCategory } from "@/lib/aws/schemas/common";
 import { localCalendarDayToUtcIso } from "@/app/common/utils/dateHelpers";
 import { withUserIdHeader } from "@/app/common/userSession";
 
@@ -13,7 +12,7 @@ export async function appendDeductionToManagementRecord(
     managementObject: ManagementObject,
     deductionObject: Deduction,
     userId: string,
-    category: ExpenseCategory
+    categoryId: string
 ) {
     const { description, amount, isCredit, isPayed } = deductionObject;
 
@@ -33,7 +32,7 @@ export async function appendDeductionToManagementRecord(
         body: JSON.stringify({
             id: managementObject.id,
             date: managementObject.creationDate,
-            category,
+            categoryId,
             deductions: updatedDeductions,
             staticPayments: managementObject.staticPayments,
         }),
@@ -50,7 +49,7 @@ export async function updateDeductionsInManagementRecord(
     managementObject: ManagementObject,
     deductionsCollection: Deduction[],
     userId: string,
-    category: ExpenseCategory
+    categoryId: string
 ) {
     const response = await fetch("/api/management", {
         method: "PUT",
@@ -58,7 +57,7 @@ export async function updateDeductionsInManagementRecord(
         body: JSON.stringify({
             id: managementObject.id,
             date: managementObject.creationDate,
-            category,
+            categoryId,
             deductions: deductionsCollection.map((item) => ({
                 description: item.description.trim(),
                 amount: item.amount,
@@ -80,7 +79,7 @@ export async function updateStaticPaymentsInManagementRecord(
     managementRecord: Pick<ManagementRecord, "id" | "creationDate" | "deductions">,
     nextStaticPayments: StaticPayment[],
     userId: string,
-    category: ExpenseCategory
+    categoryId: string
 ) {
     const response = await fetch("/api/management", {
         method: "PUT",
@@ -88,7 +87,7 @@ export async function updateStaticPaymentsInManagementRecord(
         body: JSON.stringify({
             id: managementRecord.id,
             date: managementRecord.creationDate,
-            category,
+            categoryId,
             deductions: managementRecord.deductions.map((item) => ({
                 description: item.description.trim(),
                 amount: item.amount,
@@ -117,7 +116,7 @@ export async function updateRangeInManagementRecord(
     startDate: string,
     endDate: string,
     userId: string,
-    category: ExpenseCategory
+    categoryId: string
 ) {
     const response = await fetch("/api/management", {
         method: "PUT",
@@ -125,7 +124,7 @@ export async function updateRangeInManagementRecord(
         body: JSON.stringify({
             id: managementRecord.id,
             date: managementRecord.creationDate,
-            category,
+            categoryId,
             deductions: managementRecord.deductions.map((item) => ({
                 description: item.description.trim(),
                 amount: item.amount,
@@ -156,12 +155,12 @@ export async function createManagementRecord(
     managementObject: ManagementRecordCreate,
     userId: string
 ) {
-    const { category, initialAmount, creationDate, startDate, endDate, staticPayments } = managementObject;
+    const { categoryId, initialAmount, creationDate, startDate, endDate, staticPayments } = managementObject;
     const response = await fetch("/api/management", {
         method: "POST",
         headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
         body: JSON.stringify({
-            category,
+            categoryId,
             initialAmount,
             creationDate,
             startDate: localCalendarDayToUtcIso(startDate),

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { expenseCategorySchema } from "./common";
+import { categoryIdSchema } from "./common";
 
 const isoDatetimeField = z.iso.datetime({
     message: "Formato de fecha inválido (debe ser ISO 8601)",
@@ -25,7 +25,7 @@ export const staticPaymentEntrySchema = deductionEntrySchema.extend({
 
 export const managementSchema = z
     .object({
-        category: expenseCategorySchema,
+        categoryId: categoryIdSchema,
         initialAmount: z.number({
             error: "El monto es obligatorio"
         })

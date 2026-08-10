@@ -15,9 +15,13 @@ import {
     updateManagementSchema
 } from "../../../lib/aws/schemas";
 import { getUserIdFromRequest } from "../common/userId";
+import { assertCategoryUsable } from "../../../lib/aws/categories";
 
 const buildPK = (userId: string, year: number) => `MANAGEMENT#${userId}#${year}`;
-const buildSK = (date?: Date | null, category?: string) => `${process.env.NEXT_PUBLIC_APP_ENV === "production" ? "" : "DEV#"}ADDITION#${(category ?? "OTROS").toUpperCase()}#${date ? date.toISOString() : new Date().toISOString()}`;
+// La categoría se referencia por su `id` estable (ya viene canónico, no se
+// re-uppercasea). Para las categorías por defecto el id coincide con el nombre
+// en mayúsculas, preservando la compatibilidad con los SK históricos.
+const buildSK = (date?: Date | null, categoryId?: string) => `${process.env.NEXT_PUBLIC_APP_ENV === "production" ? "" : "DEV#"}ADDITION#${(categoryId ?? "OTROS")}#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
 
 function isDateInRange(date: Date, startDate: Date, endDate: Date): boolean {
@@ -46,7 +50,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ errors: result.error.flatten().fieldErrors }, { status: 400 });
     }
     const {
-        category,
+        categoryId,
         initialAmount,
         creationDate: creationDateRaw,
         startDate: startDateRaw,
@@ -54,6 +58,12 @@ export async function POST(request: Request) {
         deductions,
         staticPayments,
     } = result.data;
+
+    const usableCategory = await assertCategoryUsable(userId, categoryId);
+    if (!usableCategory) {
+        return NextResponse.json({ error: "Categoría inválida" }, { status: 400 });
+    }
+
     const creationDate = creationDateRaw ? parseDatePreservingCalendarDay(creationDateRaw) : new Date();
     const startDate = parseDatePreservingCalendarDay(startDateRaw);
     const endDate = parseDatePreservingCalendarDay(endDateRaw);
@@ -75,8 +85,8 @@ export async function POST(request: Request) {
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
                 ":pk": buildPK(userId, yearToCheck),
-                ":sk": buildSK(startOfYear, category),
-                ":sk2": buildSK(endOfYear, category),
+                ":sk": buildSK(startOfYear, categoryId),
+                ":sk2": buildSK(endOfYear, categoryId),
             }
         }));
 
@@ -104,9 +114,10 @@ export async function POST(request: Request) {
     const year = creationDate.getUTCFullYear();
     const item = {
         PK: buildPK(userId, year),
-        SK: buildSK(creationDate, category),
+        SK: buildSK(creationDate, categoryId),
         id: buildUniqueID(),
-        category,
+        categoryId,
+        category: usableCategory.name,
         initialAmount,
         creationDate: creationDate.toISOString(),
         startDate: startDate.toISOString(),
@@ -129,8 +140,8 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const dateRaw = searchParams.get("date");
-    const categoryRaw = searchParams.get("category");
-    const parsed = getManagementSchema.safeParse({ date: dateRaw, category: categoryRaw });
+    const categoryIdRaw = searchParams.get("categoryId");
+    const parsed = getManagementSchema.safeParse({ date: dateRaw, categoryId: categoryIdRaw });
 
     if (!parsed.success) {
         return NextResponse.json(
@@ -140,7 +151,7 @@ export async function GET(request: Request) {
     }
 
     const requestedDate = parseDatePreservingCalendarDay(parsed.data.date);
-    const { category } = parsed.data;
+    const { categoryId } = parsed.data;
     const year = requestedDate.getUTCFullYear();
     const startOfYear = new Date(Date.UTC(year, 0, 1));
     const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
@@ -150,8 +161,8 @@ export async function GET(request: Request) {
         KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
         ExpressionAttributeValues: {
             ":pk": buildPK(userId, year),
-            ":sk": buildSK(startOfYear, category),
-            ":sk2": buildSK(endOfYear, category),
+            ":sk": buildSK(startOfYear, categoryId),
+            ":sk2": buildSK(endOfYear, categoryId),
         },
     }));
 
@@ -194,8 +205,8 @@ export async function DELETE(request: Request) {
         const { searchParams } = new URL(request.url);
         const rawDate = searchParams.get("date");
         const id = searchParams.get("id");
-        const rawCategory = searchParams.get("category");
-        const parsed = deleteManagementSchema.safeParse({ date: rawDate, id, category: rawCategory });
+        const rawCategoryId = searchParams.get("categoryId");
+        const parsed = deleteManagementSchema.safeParse({ date: rawDate, id, categoryId: rawCategoryId });
 
         if (!parsed.success) {
             return NextResponse.json(
@@ -208,15 +219,15 @@ export async function DELETE(request: Request) {
         const dayStart = toUtcStartOfCalendarDay(parsedDate);
         const dayEnd = toUtcEndOfCalendarDay(parsedDate);
         const year = dayStart.getUTCFullYear();
-        const { category } = parsed.data;
+        const { categoryId } = parsed.data;
 
         const result = await db.send(new QueryCommand({
             TableName: TABLE_NAME,
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
                 ":pk": buildPK(userId, year),
-                ":sk": buildSK(dayStart, category),
-                ":sk2": buildSK(dayEnd, category),
+                ":sk": buildSK(dayStart, categoryId),
+                ":sk2": buildSK(dayEnd, categoryId),
             }
         }));
 
@@ -261,15 +272,15 @@ export async function PUT(request: Request) {
         const dayStart = toUtcStartOfCalendarDay(parsedDate);
         const dayEnd = toUtcEndOfCalendarDay(parsedDate);
         const year = dayStart.getUTCFullYear();
-        const { category } = parsed.data;
+        const { categoryId } = parsed.data;
 
         const result = await db.send(new QueryCommand({
             TableName: TABLE_NAME,
             KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
             ExpressionAttributeValues: {
                 ":pk": buildPK(userId, year),
-                ":sk": buildSK(dayStart, category),
-                ":sk2": buildSK(dayEnd, category),
+                ":sk": buildSK(dayStart, categoryId),
+                ":sk2": buildSK(dayEnd, categoryId),
             }
         }));
 
@@ -318,8 +329,8 @@ export async function PUT(request: Request) {
                     KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
                     ExpressionAttributeValues: {
                         ":pk": buildPK(userId, yearToCheck),
-                        ":sk": buildSK(startOfYear, category),
-                        ":sk2": buildSK(endOfYear, category),
+                        ":sk": buildSK(startOfYear, categoryId),
+                        ":sk2": buildSK(endOfYear, categoryId),
                     }
                 }));
 
@@ -351,7 +362,8 @@ export async function PUT(request: Request) {
 
         const updatedItem = {
             ...originalItem,
-            category,
+            categoryId,
+            category: originalItem.category,
             deductions: parsed.data.deductions,
             staticPayments,
             startDate: startDate.toISOString(),

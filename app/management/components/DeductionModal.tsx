@@ -16,7 +16,6 @@ import { useState } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
 import { COLORS } from "../../theme";
 import * as Sx from "../styles";
-import type { ExpenseCategory } from "@/lib/aws/schemas/common";
 import { ManagementRecord } from "../types";
 import { appendDeductionToManagementRecord } from "../services/managementApi";
 
@@ -28,7 +27,7 @@ type DeductionModalProps = {
     fetchRecordsByDate: (dateString: string) => Promise<void>;
     baseRequestDate: string;
     activeUserId: string;
-    category: ExpenseCategory;
+    categoryId: string;
 };
 
 export const DeductionModal = ({
@@ -39,7 +38,7 @@ export const DeductionModal = ({
     fetchRecordsByDate,
     baseRequestDate,
     activeUserId,
-    category,
+    categoryId,
 }: DeductionModalProps) => {
     const { t } = useI18n();
 
@@ -101,7 +100,7 @@ export const DeductionModal = ({
                 managementObject,
                 deductionObject,
                 activeUserId,
-                category
+                categoryId
             );
             setOpenDeductionModal(false);
             setSelectedRecord(null);

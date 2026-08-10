@@ -27,7 +27,7 @@ import {
   isValidDateString,
 } from "../common/utils/dateHelpers";
 import { useI18n } from "../i18n/I18nProvider";
-import type { CategoryKey } from "../i18n/translations";
+import { getCategoryLabel } from "../i18n/translations";
 import { DeductionModal } from "./components/DeductionModal";
 import { ListDeductionsModal } from "./components/ListDeductionsModal";
 import { ListStaticPaymentsModal } from "./components/ListStaticPaymentsModal";
@@ -36,7 +36,9 @@ import type { Deduction, ManagementRecord } from "./types";
 import { CreateManagementModal } from "./components/CreateManagementModal";
 import { EditRangeModal } from "./components/EditRangeModal";
 import { useUserSession, withUserIdHeader } from "../common/userSession";
-import { CATEGORIES, type ExpenseCategory, isExpenseCategory } from "@/lib/aws/schemas/common";
+import { useCategories } from "../common/categoriesSession";
+import { EXPENSES_CATEGORY_ID } from "@/lib/aws/schemas/common";
+import ManageCategoriesModal from "./components/ManageCategoriesModal";
 
 // Cambia este valor para emular la fecha de las peticiones en desarrollo.
 // Usa formato YYYY-MM-DD. Ejemplo: "2026-01-15"
@@ -72,6 +74,8 @@ function ManagementLoading() {
 function CategoryGate() {
   const { t } = useI18n();
   const router = useRouter();
+  const { categories, isLoading, reload } = useCategories();
+  const [openManageCategories, setOpenManageCategories] = useState(false);
 
   return (
     <Stack sx={Sx.categoryGateRootSx}>
@@ -81,21 +85,33 @@ function CategoryGate() {
         </Typography>
         <Typography sx={Sx.categoryGateSubtitleSx}>{t.management.selectCategorySubtitle}</Typography>
         <Stack sx={Sx.categoryGatePillsRowSx}>
-          {CATEGORIES.map((category) => (
-            <Button
-              key={category}
-              onClick={() =>
-                router.push(`/management?category=${encodeURIComponent(category)}`)
-              }
-              variant="outlined"
-              size="large"
-              sx={Sx.categoryGatePillButtonSx}
-            >
-              {t.categories[category as CategoryKey]}
-            </Button>
-          ))}
+          {isLoading ? (
+            <CircularProgress />
+          ) : (
+            categories.map((category) => (
+              <Button
+                key={category.id}
+                onClick={() =>
+                  router.push(`/management?category=${encodeURIComponent(category.id)}`)
+                }
+                variant="outlined"
+                size="large"
+                sx={Sx.categoryGatePillButtonSx}
+              >
+                {getCategoryLabel(category, t)}
+              </Button>
+            ))
+          )}
         </Stack>
         <Stack sx={Sx.categoryGateHomeRowSx}>
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={() => setOpenManageCategories(true)}
+            sx={Sx.managementTopBarOutlinedButtonSx}
+          >
+            {t.categoriesManager.manageButton}
+          </Button>
           <Link href="/" style={{ textDecoration: "none" }}>
             <Button variant="contained" size="large" sx={Sx.primaryContainedButtonSx}>
               {t.common.backToHome}
@@ -103,13 +119,21 @@ function CategoryGate() {
           </Link>
         </Stack>
       </Stack>
+      <ManageCategoriesModal
+        open={openManageCategories}
+        onClose={() => setOpenManageCategories(false)}
+        // onChanged={reload}
+      />
     </Stack>
   );
 }
 
-function ManagementTopBar({ category }: { category: ExpenseCategory }) {
+function ManagementTopBar({ categoryId }: { categoryId: string }) {
   const { t } = useI18n();
   const router = useRouter();
+  const { categories } = useCategories();
+  const category = categories.find((item) => item.id === categoryId) ?? null;
+  const categoryLabel = category ? getCategoryLabel(category, t) : categoryId;
 
   return (
     <Container maxWidth={false} disableGutters sx={Sx.managementTopBarContainerSx}>
@@ -127,20 +151,21 @@ function ManagementTopBar({ category }: { category: ExpenseCategory }) {
         >
           {t.expenses.changeCategory}
         </Button>
-        <Chip label={t.categories[category as CategoryKey]} sx={Sx.managementTopBarCategoryChipSx} />
+        <Chip label={categoryLabel} sx={Sx.managementTopBarCategoryChipSx} />
       </Stack>
     </Container>
   );
 }
 
-function ManagementWorkspace({ category: initialCategory }: { category: ExpenseCategory }) {
+function ManagementWorkspace({ categoryId: initialCategoryId }: { categoryId: string }) {
   const { t } = useI18n();
   const { activeUser } = useUserSession();
-  const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory>(initialCategory);
+  const { categories } = useCategories();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(initialCategoryId);
 
   useEffect(() => {
-    setSelectedCategory(initialCategory);
-  }, [initialCategory]);
+    setSelectedCategoryId(initialCategoryId);
+  }, [initialCategoryId]);
 
   const isDevelopment = process.env.NODE_ENV === "development";
   const currencyFormatter = useMemo(
@@ -191,14 +216,14 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
       try {
         const requestDateIso = localCalendarDayToUtcIso(dateString);
         const response = await fetch(
-          `/api/management?date=${encodeURIComponent(requestDateIso)}&category=${encodeURIComponent(selectedCategory)}`,
+          `/api/management?date=${encodeURIComponent(requestDateIso)}&categoryId=${encodeURIComponent(selectedCategoryId)}`,
           {
             headers: withUserIdHeader(activeUser.userId),
           }
         );
-        const allCategoriesData = await Promise.all(CATEGORIES.map(async (category) => {
+        const allCategoriesData = await Promise.all(categories.map(async (category) => {
           const response = await fetch(
-            `/api/management?date=${encodeURIComponent(requestDateIso)}&category=${encodeURIComponent(category)}`,
+            `/api/management?date=${encodeURIComponent(requestDateIso)}&categoryId=${encodeURIComponent(category.id)}`,
             {
               headers: withUserIdHeader(activeUser.userId),
             }
@@ -250,12 +275,12 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
         setIsLoading(false);
       }
     },
-    [activeUser, selectedCategory]
+    [activeUser, selectedCategoryId, categories]
   );
 
   useEffect(() => {
-    setIsExpensesCategory(selectedCategory === CATEGORIES[0]);
-  }, [selectedCategory]);
+    setIsExpensesCategory(selectedCategoryId === EXPENSES_CATEGORY_ID);
+  }, [selectedCategoryId]);
 
   const staticPaymentsModalRecord = useMemo(() => {
     if (!staticPaymentsModalRecordId) {
@@ -336,7 +361,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
   if (!activeUser) {
     return (
       <>
-        <ManagementTopBar category={selectedCategory} />
+        <ManagementTopBar categoryId={selectedCategoryId} />
         <Stack spacing={3} sx={Sx.managementWorkspaceContentStackSx}>
           <Typography variant="h2" sx={Sx.titleSx}>
             {t.management.title}
@@ -354,7 +379,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
 
   return (
     <>
-      <ManagementTopBar category={selectedCategory} />
+      <ManagementTopBar categoryId={selectedCategoryId} />
       <Stack spacing={4} sx={Sx.managementWorkspaceContentStackSx}>
         <Typography variant="h2" sx={Sx.titleSx}>
           {t.management.title}
@@ -510,7 +535,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
           fetchRecordsByDate={fetchRecordsByDate}
           baseRequestDate={baseRequestDate}
           activeUserId={activeUser?.userId ?? ""}
-          category={selectedCategory}
+          categoryId={selectedCategoryId}
         />
 
         <DeductionModal
@@ -521,7 +546,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
           fetchRecordsByDate={fetchRecordsByDate}
           baseRequestDate={baseRequestDate}
           activeUserId={activeUser?.userId ?? ""}
-          category={selectedCategory}
+          categoryId={selectedCategoryId}
         />
 
         <ListDeductionsModal
@@ -538,7 +563,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
           deletingDeductionIndex={deletingDeductionIndex}
           setDeductionsCollection={setDeductionsCollection}
           activeUserId={activeUser?.userId ?? ""}
-          category={selectedCategory}
+          categoryId={selectedCategoryId}
         />
 
         <CreateManagementModal
@@ -547,7 +572,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
           fetchRecordsByDate={fetchRecordsByDate}
           baseRequestDate={baseRequestDate}
           activeUserId={activeUser?.userId ?? ""}
-          category={selectedCategory}
+          categoryId={selectedCategoryId}
           suggestedRangeDate={suggestedRangeDate}
         />
 
@@ -559,7 +584,7 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
           fetchRecordsByDate={fetchRecordsByDate}
           baseRequestDate={baseRequestDate}
           activeUserId={activeUser?.userId ?? ""}
-          category={selectedCategory}
+          categoryId={selectedCategoryId}
         />
       </Stack>
     </>
@@ -568,14 +593,19 @@ function ManagementWorkspace({ category: initialCategory }: { category: ExpenseC
 
 function ManagementPageContent() {
   const searchParams = useSearchParams();
+  const { categories, isLoading } = useCategories();
   const raw = searchParams.get("category");
-  const categoryParam = raw && isExpenseCategory(raw) ? raw : null;
+  const validCategoryId = raw && categories.some((category) => category.id === raw) ? raw : null;
 
-  if (!categoryParam) {
+  if (isLoading) {
+    return <ManagementLoading />;
+  }
+
+  if (!validCategoryId) {
     return <CategoryGate />;
   }
 
-  return <ManagementWorkspace category={categoryParam} />;
+  return <ManagementWorkspace categoryId={validCategoryId} />;
 }
 
 export default function ManagementPage() {

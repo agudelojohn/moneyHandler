@@ -21,7 +21,6 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { updateRangeInManagementRecord } from "../services/managementApi";
 import * as Sx from "../styles";
 import type { ManagementRecord } from "../types";
-import type { ExpenseCategory } from "@/lib/aws/schemas/common";
 
 type EditRangeModalProps = {
     openEditRangeModal: boolean;
@@ -31,7 +30,7 @@ type EditRangeModalProps = {
     fetchRecordsByDate: (dateString: string) => Promise<void>;
     baseRequestDate: string;
     activeUserId: string;
-    category: ExpenseCategory;
+    categoryId: string;
 };
 
 export const EditRangeModal = ({
@@ -42,7 +41,7 @@ export const EditRangeModal = ({
     fetchRecordsByDate,
     baseRequestDate,
     activeUserId,
-    category,
+    categoryId,
 }: EditRangeModalProps) => {
     const { t } = useI18n();
     const [rangeStartDate, setRangeStartDate] = useState(() => formatDateAsYyyyMmDd(new Date()));
@@ -95,7 +94,7 @@ export const EditRangeModal = ({
                 rangeStartDate,
                 rangeEndDate,
                 activeUserId,
-                category
+                categoryId
             );
 
             handleClose();

@@ -18,7 +18,6 @@ import {
     Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import type { ExpenseCategory } from "@/lib/aws/schemas/common";
 import type { ManagementRecord, StaticPayment } from "../types";
 import { useI18n } from "../../i18n/I18nProvider";
 import { updateStaticPaymentsInManagementRecord } from "../services/managementApi";
@@ -32,7 +31,7 @@ interface ListStaticPaymentsModalProps {
     fetchRecordsByDate: (dateString: string) => Promise<void>;
     baseRequestDate: string;
     activeUserId: string;
-    category: ExpenseCategory;
+    categoryId: string;
 }
 
 function normalizeStaticPayments(items: StaticPayment[]): StaticPayment[] {
@@ -73,7 +72,7 @@ export const ListStaticPaymentsModal = ({
     fetchRecordsByDate,
     baseRequestDate,
     activeUserId,
-    category,
+    categoryId,
 }: ListStaticPaymentsModalProps) => {
     const { t, dateLocale } = useI18n();
     const [collection, setCollection] = useState<StaticPayment[]>([]);
@@ -119,7 +118,7 @@ export const ListStaticPaymentsModal = ({
                 managementRecord,
                 next,
                 activeUserId,
-                category
+                categoryId
             );
             setCollection(normalizeStaticPayments(next));
             await fetchRecordsByDate(baseRequestDate);
@@ -238,7 +237,7 @@ export const ListStaticPaymentsModal = ({
                 managementRecord,
                 nextCollection,
                 activeUserId,
-                category
+                categoryId
             );
             setCollection(normalizeStaticPayments(nextCollection));
             await fetchRecordsByDate(baseRequestDate);

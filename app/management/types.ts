@@ -10,7 +10,7 @@ export type StaticPayment = Deduction & {
 };
 
 export type ManagementRecordCreate = {
-    category: string;
+    categoryId: string;
     initialAmount: number;
     creationDate: string;
     startDate: string;
@@ -21,6 +21,7 @@ export type ManagementRecordCreate = {
 
 export type ManagementRecord = {
     id: string;
+    categoryId?: string;
     category?: string;
     initialAmount: number;
     creationDate: string;

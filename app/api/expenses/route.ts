@@ -5,6 +5,7 @@ import { expenseSchema, getExpenseSchema, deleteExpenseSchema, updateExpenseSche
 import { randomBytes } from "node:crypto";
 import { parseDatePreservingCalendarDay } from "../common/utils";
 import { getUserIdFromRequest } from "../common/userId";
+import { assertCategoryUsable } from "../../../lib/aws/categories";
 
 const buildPK = (userId: string, year: number) => `USER#${userId}#${year}`;
 const buildSK = (date?: Date | null) => `EXPENSE#${date ? date.toISOString() : new Date().toISOString()}`;
@@ -41,7 +42,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { amount, description, date, category } = result.data;
+    const { amount, description, date, categoryId } = result.data;
+
+    const usableCategory = await assertCategoryUsable(userId, categoryId);
+    if (!usableCategory) {
+      return NextResponse.json({ error: "Categoría inválida" }, { status: 400 });
+    }
+
     const dateObject = date ? parseDatePreservingCalendarDay(date) : new Date();
     const year = dateObject.getUTCFullYear();
 
@@ -54,7 +61,8 @@ export async function POST(request: Request) {
       amount,
       description,
       date: dateObject.toISOString(),
-      category,
+      categoryId,
+      category: usableCategory.name,
       type: "EXPENSE" // Útil para filtrar luego
     };
 
@@ -81,8 +89,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const rawStartDate = searchParams.get("startDate");
     const rawEndDate = searchParams.get("endDate");
-    const category = searchParams.get("category");
-    const parsed = getExpenseSchema.safeParse({ startDate: rawStartDate, endDate: rawEndDate, category });
+    const categoryId = searchParams.get("categoryId");
+    const parsed = getExpenseSchema.safeParse({ startDate: rawStartDate, endDate: rawEndDate, categoryId });
     if (!parsed.success) {
       return NextResponse.json(
         { errors: parsed.error.flatten().fieldErrors },
@@ -103,8 +111,16 @@ export async function GET(request: Request) {
         ":sk2": buildSK(parsedEndDate),
       }
     }));
-    if (category) {
-      result.Items = result.Items?.filter(item => item.category === category);
+    const filterCategoryId = parsed.data.categoryId;
+    if (filterCategoryId) {
+      // Compat legacy: los gastos antiguos guardaban el nombre en `category`
+      // (sin `categoryId`). El id de las categorías por defecto es ese nombre
+      // en MAYÚSCULAS, así que "Gastos".toUpperCase() === "GASTOS".
+      result.Items = result.Items?.filter(
+        (item) =>
+          item.categoryId === filterCategoryId ||
+          (typeof item.category === "string" && item.category.toUpperCase() === filterCategoryId)
+      );
     }
     return NextResponse.json(result.Items ?? [], { status: 200 });
   } catch (error) {

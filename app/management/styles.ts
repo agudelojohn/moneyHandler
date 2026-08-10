@@ -281,6 +281,7 @@ export const managementTopBarOutlinedButtonSx = {
     borderColor: DARK_BORDER,
     color: BLUE_ACCENT,
     backgroundColor: DARK_SURFACE,
+    marginBottom: 4,
     "&:hover": {
         borderColor: BLUE_ACCENT,
         backgroundColor: "#0b1220",

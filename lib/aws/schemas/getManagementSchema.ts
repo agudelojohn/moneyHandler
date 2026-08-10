@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { expenseCategorySchema } from "./common";
+import { categoryIdSchema } from "./common";
 
 export const getManagementSchema = z.object({
     date: z.iso.datetime({
         message: "Formato de fecha inválido (debe ser ISO 8601 UTC)",
     }),
-    category: expenseCategorySchema,
+    categoryId: categoryIdSchema,
 });
 
 export type GetManagementSchema = z.infer<typeof getManagementSchema>;

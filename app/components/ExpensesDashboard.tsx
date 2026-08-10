@@ -1,6 +1,5 @@
 "use client";
 
-import { CATEGORIES } from "@/lib/aws/schemas/common";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -40,15 +39,17 @@ import {
   YAxis,
 } from "recharts";
 import { useI18n } from "../i18n/I18nProvider";
-import { type CategoryKey } from "../i18n/translations";
+import { getCategoryLabel } from "../i18n/translations";
 import {
   formatDateAsYyyyMmDd,
   localCalendarDayToUtcIso,
   utcIsoToLocalCalendarDay,
 } from "../common/utils/dateHelpers";
 import { useUserSession, withUserIdHeader } from "../common/userSession";
+import { useCategories } from "../common/categoriesSession";
 
-type Category = (typeof CATEGORIES)[number];
+// La categoría se identifica por su `id` dinámico (string).
+type Category = string;
 
 type ExpenseItem = {
   PK: string;
@@ -57,7 +58,8 @@ type ExpenseItem = {
   amount: number;
   description: string;
   date: string;
-  category: Category;
+  categoryId?: Category;
+  category?: string;
   userId?: string | null;
   type?: string;
 };
@@ -66,7 +68,7 @@ type ExpenseFormState = {
   amount: string;
   description: string;
   date: string;
-  category: Category;
+  categoryId: Category;
 };
 
 const formatCurrency = (amount: number, locale = "es-CO") =>

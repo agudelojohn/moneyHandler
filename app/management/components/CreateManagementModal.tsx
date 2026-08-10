@@ -27,7 +27,8 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { createManagementRecord } from "../services/managementApi";
 import * as Sx from "../styles";
 import { ManagementRecordCreate, StaticPayment } from "../types";
-import { CategoryKey } from "@/app/i18n/translations";
+import { getCategoryLabel } from "@/app/i18n/translations";
+import { useCategories } from "@/app/common/categoriesSession";
 import StaticPaymentField from "@/app/components/StaticPaymentField";
 
 interface CreateManagementModalProps {
@@ -36,7 +37,7 @@ interface CreateManagementModalProps {
     fetchRecordsByDate: (dateString: string) => Promise<void>;
     baseRequestDate: string;
     activeUserId: string;
-    category: string;
+    categoryId: string;
     suggestedRangeDate: { startDate: string; endDate: string } | null;
 }
 
@@ -46,10 +47,12 @@ export const CreateManagementModal = ({
     fetchRecordsByDate,
     baseRequestDate,
     activeUserId,
-    category,
+    categoryId,
     suggestedRangeDate,
 }: CreateManagementModalProps) => {
     const { t } = useI18n();
+    const { categories } = useCategories();
+    const category = categories.find((item) => item.id === categoryId) ?? null;
 
     const [initialAmount, setInitialAmount] = useState("");
     const [rangeStartDate, setRangeStartDate] = useState(() => formatDateAsYyyyMmDd(new Date()));
@@ -92,7 +95,7 @@ export const CreateManagementModal = ({
 
         try {
             const managementRecord: ManagementRecordCreate = {
-                category,
+                categoryId,
                 initialAmount: amount,
                 creationDate: new Date().toISOString(),
                 startDate: rangeStartDate,
@@ -134,7 +137,7 @@ export const CreateManagementModal = ({
                 maxWidth="sm"
                 sx={Sx.dialogSx}
             >
-                <DialogTitle>{t.management.createManagementTitle}: {t.categories[category as CategoryKey]}</DialogTitle>
+                <DialogTitle>{t.management.createManagementTitle}: {category ? getCategoryLabel(category, t) : ""}</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={Sx.createDeductionStackSx}>
                         <TextField
