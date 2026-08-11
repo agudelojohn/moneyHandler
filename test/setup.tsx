@@ -40,3 +40,13 @@ vi.mock("next/link", () => ({
     </a>
   ),
 }));
+
+// Evita que providers que cargan datos al montar (p. ej. CategoriesProvider)
+// hagan peticiones de red reales en tests que no mockean fetch.
+vi.stubGlobal(
+  "fetch",
+  vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => [],
+  })
+);

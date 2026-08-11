@@ -85,11 +85,11 @@ const dateInputToUtcMillis = (dateInput: string, endOfDay = false) =>
 const normalizeDescriptionKey = (value: string) =>
   value.toLowerCase().replaceAll(" ", "");
 
-const initialForm = (): ExpenseFormState => ({
+const initialForm = (categoryId: Category = ""): ExpenseFormState => ({
   amount: "",
   description: "",
   date: toLocalDateInputValue(new Date()),
-  category: CATEGORIES[0],
+  categoryId,
 });
 const SELECT_DESCRIPTION = "__SELECT_DESCRIPTION__";
 const DARK_BG = "#020617";
@@ -215,11 +215,12 @@ function EvolutionChart({
 export default function ExpensesDashboard() {
   const { t, dateLocale } = useI18n();
   const { activeUser } = useUserSession();
+  const { categories } = useCategories();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { startDate: initialChartStartDate, endDate: initialChartEndDate } =
     yearlyDateInputRange();
-  const [selectedCategory, setSelectedCategory] = useState<Category>(CATEGORIES[0]);
+  const [selectedCategory, setSelectedCategory] = useState<Category>("");
   const [selectedDescription, setSelectedDescription] = useState<string>(SELECT_DESCRIPTION);
   const [chartStartDate, setChartStartDate] = useState(initialChartStartDate);
   const [chartEndDate, setChartEndDate] = useState(initialChartEndDate);
@@ -230,6 +231,14 @@ export default function ExpensesDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const activeCategory = useMemo(
+    () =>
+      categories.some((category) => category.id === selectedCategory)
+        ? selectedCategory
+        : (categories[0]?.id ?? ""),
+    [categories, selectedCategory]
+  );
 
   const selectedItem = useMemo(
     () => items.find((item) => item.id === selectedItemId) ?? null,
@@ -270,7 +279,7 @@ export default function ExpensesDashboard() {
   }, [items]);
 
   const chartItems = useMemo(() => {
-    if (!selectedCategory || selectedDescription === SELECT_DESCRIPTION) return [];
+    if (!activeCategory || selectedDescription === SELECT_DESCRIPTION) return [];
 
     const byDescription = items.filter(
       (item) => normalizeDescriptionKey(item.description) === selectedDescription
@@ -285,7 +294,7 @@ export default function ExpensesDashboard() {
       const itemDate = new Date(item.date).getTime();
       return itemDate >= start && itemDate <= end;
     });
-  }, [items, selectedCategory, selectedDescription, chartStartDate, chartEndDate]);
+  }, [items, activeCategory, selectedDescription, chartStartDate, chartEndDate]);
 
   const rangeError = useMemo(() => {
     if (!chartStartDate || !chartEndDate) return null;
@@ -301,11 +310,16 @@ export default function ExpensesDashboard() {
       setSuccessMessage(null);
       return;
     }
+    if (!category) {
+      setItems([]);
+      setSuccessMessage(null);
+      return;
+    }
 
     setError(null);
     setSuccessMessage(null);
     const { startDate, endDate } = yearlyRangeIso();
-    const params = new URLSearchParams({ startDate, endDate, category });
+    const params = new URLSearchParams({ startDate, endDate, categoryId: category });
     const response = await fetch(`/api/expenses?${params.toString()}`, {
       cache: "no-store",
       headers: withUserIdHeader(activeUser.userId),
@@ -323,7 +337,7 @@ export default function ExpensesDashboard() {
     setSelectedCategory(category);
     setSelectedDescription(SELECT_DESCRIPTION);
     setSelectedItemId(null);
-    setForm(initialForm());
+    setForm(initialForm(category));
   };
 
   const handleSelectItem = (item: ExpenseItem) => {
@@ -332,7 +346,7 @@ export default function ExpensesDashboard() {
       amount: String(item.amount),
       description: item.description,
       date: utcIsoToLocalCalendarDay(item.date),
-      category: item.category,
+      categoryId: item.categoryId ?? item.category ?? "",
     });
     setSuccessMessage(null);
     setError(null);
@@ -371,7 +385,7 @@ export default function ExpensesDashboard() {
           amount,
           description: form.description.trim(),
           date: localCalendarDayToUtcIso(form.date),
-          category: form.category,
+          categoryId: form.categoryId,
           userId: selectedItem.userId ?? null,
         };
 
@@ -387,7 +401,7 @@ export default function ExpensesDashboard() {
           amount,
           description: form.description.trim(),
           date: localCalendarDayToUtcIso(form.date),
-          category: form.category,
+          categoryId: form.categoryId,
           userId: null,
         };
         const response = await fetch("/api/expenses", {
@@ -399,7 +413,7 @@ export default function ExpensesDashboard() {
         setSuccessMessage(t.expenses.createSuccess);
       }
 
-      await loadExpenses(selectedCategory);
+      await loadExpenses(activeCategory);
       resetForm();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : t.expenses.unexpectedError);
@@ -426,7 +440,7 @@ export default function ExpensesDashboard() {
         headers: withUserIdHeader(activeUser?.userId),
       });
       if (!response.ok) throw new Error(t.expenses.deleteError);
-      await loadExpenses(selectedCategory);
+      await loadExpenses(activeCategory);
       if (selectedItemId === item.id) resetForm();
       setSuccessMessage(t.expenses.deleteSuccess);
     } catch (deleteError) {
@@ -441,13 +455,13 @@ export default function ExpensesDashboard() {
 
     const run = async () => {
       try {
-        await loadExpenses(selectedCategory);
+        await loadExpenses(activeCategory);
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : t.expenses.unexpectedError);
       }
     };
     void run();
-  }, [activeUser, loadExpenses, selectedCategory, t.expenses.unexpectedError]);
+  }, [activeUser, loadExpenses, activeCategory, t.expenses.unexpectedError]);
 
   if (!activeUser) {
     return (
@@ -524,7 +538,7 @@ export default function ExpensesDashboard() {
                   <InputLabel id="category-select-label">{t.expenses.category}</InputLabel>
                   <Select
                     labelId="category-select-label"
-                    value={selectedCategory}
+                    value={activeCategory}
                     label={t.expenses.category}
                     sx={{ "& .MuiSelect-select": { color: TEXT_PRIMARY } }}
                     MenuProps={{
@@ -549,9 +563,9 @@ export default function ExpensesDashboard() {
                       void handleCategoryChange(event.target.value as Category)
                     }
                   >
-                    {CATEGORIES.map((category) => (
-                      <MenuItem key={category} value={category}>
-                        {t.categories[category as CategoryKey]}
+                    {categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {getCategoryLabel(category, t)}
                       </MenuItem>
                     ))}
                   </Select>
@@ -684,17 +698,17 @@ export default function ExpensesDashboard() {
                   <Select
                     labelId="category-form-label"
                     label={t.expenses.category}
-                    value={form.category}
+                    value={form.categoryId}
                     onChange={(event) =>
                       setForm((prev) => ({
                         ...prev,
-                        category: event.target.value as Category,
+                        categoryId: event.target.value as Category,
                       }))
                     }
                   >
-                    {CATEGORIES.map((category) => (
-                      <MenuItem key={category} value={category}>
-                        {t.categories[category as CategoryKey]}
+                    {categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {getCategoryLabel(category, t)}
                       </MenuItem>
                     ))}
                   </Select>

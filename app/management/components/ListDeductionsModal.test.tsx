@@ -30,7 +30,7 @@ describe("ListDeductionsModal", () => {
         deletingDeductionIndex={null}
         setDeductionsCollection={vi.fn()}
         activeUserId="6b7b7b40"
-        category="Gastos"
+        categoryId="GASTOS"
       />,
     );
 

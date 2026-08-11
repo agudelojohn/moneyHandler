@@ -137,6 +137,18 @@ type TranslationSchema = {
   categoriesManager: {
     manageCategories: string;
     manageButton: string;
+    newCategoryNameLabel: string;
+    requiredCategoryNameError: string;
+    addCategory: string;
+    creatingCategory: string;
+    renameCategory: string;
+    renameCategoryAria: string;
+    deleteCategory: string;
+    deleteCategoryAria: string;
+    deleteCategoryConfirmMessage: string;
+    duplicateCategoryError: string;
+    noCategories: string;
+    lockedCategory: string;
   }
   // Abierto: las categorías por defecto se traducen por su `id`; las
   // personalizadas no tienen traducción y muestran su nombre crudo.
@@ -148,6 +160,18 @@ export const translations: Record<Locale, TranslationSchema> = {
     categoriesManager: {
       manageCategories: "Gestionar categorias",
       manageButton: "Gestionar categorias",
+      newCategoryNameLabel: "Nombre de la nueva categoria",
+      requiredCategoryNameError: "El nombre es obligatorio",
+      addCategory: "Crear categoria",
+      creatingCategory: "Creando...",
+      renameCategory: "Renombrar",
+      renameCategoryAria: "Renombrar categoria",
+      deleteCategory: "Eliminar",
+      deleteCategoryAria: "Eliminar categoria",
+      deleteCategoryConfirmMessage: "¿Seguro que quieres eliminar esta categoria?",
+      duplicateCategoryError: "Ya existe una categoria con ese nombre",
+      noCategories: "Aun no tienes categorias. Crea la primera.",
+      lockedCategory: "Fija",
     },
     common: {
       language: "Idioma",
@@ -300,6 +324,18 @@ export const translations: Record<Locale, TranslationSchema> = {
     categoriesManager: {
       manageCategories: "Manage categories",
       manageButton: "Manage categories",
+      newCategoryNameLabel: "New category name",
+      requiredCategoryNameError: "The name is required",
+      addCategory: "Add category",
+      creatingCategory: "Creating...",
+      renameCategory: "Rename",
+      renameCategoryAria: "Rename category",
+      deleteCategory: "Delete",
+      deleteCategoryAria: "Delete category",
+      deleteCategoryConfirmMessage: "Are you sure you want to delete this category?",
+      duplicateCategoryError: "A category with that name already exists",
+      noCategories: "You have no categories yet. Create the first one.",
+      lockedCategory: "Locked",
     },
     common: {
       language: "Language",

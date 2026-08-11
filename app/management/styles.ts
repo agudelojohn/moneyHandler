@@ -281,7 +281,6 @@ export const managementTopBarOutlinedButtonSx = {
     borderColor: DARK_BORDER,
     color: BLUE_ACCENT,
     backgroundColor: DARK_SURFACE,
-    marginBottom: 4,
     "&:hover": {
         borderColor: BLUE_ACCENT,
         backgroundColor: "#0b1220",
@@ -447,4 +446,77 @@ export const staticPaymentUnpaidActionsStackSx = {
 export const staticPaymentPayButtonSx = {
     ...primaryContainedButtonSx,
     minWidth: { xs: "100%", sm: 120 },
+};
+
+export const categoriesManagerContentStackSx = { mt: 1 };
+
+export const categoriesManagerCreateRowSx = {
+    alignItems: "center",
+};
+
+export const categoriesManagerCreateButtonSx = {
+    ...primaryContainedButtonSx,
+    height: 56,
+    whiteSpace: "nowrap",
+    paddingX: 10
+};
+
+export const categoriesManagerLoadingProgressSx = {
+    color: BLUE_DEEP,
+};
+
+export const categoriesManagerEmptySx = {
+    color: TEXT_SECONDARY,
+    textAlign: "center",
+    py: 2,
+};
+
+export const categoriesManagerCategoryRowSx = {
+    alignItems: "center",
+    gap: 1,
+    border: `1px solid ${BORDER_COLOR}`,
+    borderRadius: 2,
+    p: 1.5,
+    backgroundColor: DARK_SURFACE,
+};
+
+export const categoriesManagerCategoryNameSx = {
+    color: TEXT_PRIMARY,
+    fontWeight: 600,
+    flex: 1,
+    wordBreak: "break-word",
+};
+
+export const categoriesManagerRowActionsSx = {
+    flexDirection: "row",
+};
+
+export const categoriesManagerIconButtonSx = {
+    color: TEXT_SECONDARY,
+    "&:hover": { color: BLUE_ACCENT },
+};
+
+export const categoriesManagerDeleteButtonSx = {
+    color: "#f87171",
+    "&:hover": { color: "#fca5a5" },
+};
+
+export const categoriesManagerSaveButtonSx = {
+    color: "#86efac",
+};
+
+export const categoriesManagerCancelButtonSx = {
+    color: TEXT_SECONDARY,
+};
+
+export const categoriesManagerDeleteConfirmTextSx = {
+    color: TEXT_PRIMARY,
+    flex: 1,
+};
+
+export const categoriesManagerLockedChipSx = {
+    backgroundColor: DARK_SURFACE,
+    color: TEXT_SECONDARY,
+    border: `1px solid ${DARK_BORDER}`,
+    fontSize: 12,
 };

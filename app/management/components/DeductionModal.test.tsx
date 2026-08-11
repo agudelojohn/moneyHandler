@@ -37,7 +37,7 @@ describe("DeductionModal", () => {
         fetchRecordsByDate={fetchRecordsByDate}
         baseRequestDate="2026-01-01"
         activeUserId="6b7b7b40"
-        category="Gastos"
+        categoryId="GASTOS"
       />,
     );
 

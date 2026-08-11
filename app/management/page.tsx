@@ -74,7 +74,7 @@ function ManagementLoading() {
 function CategoryGate() {
   const { t } = useI18n();
   const router = useRouter();
-  const { categories, isLoading, reload } = useCategories();
+  const { categories, isLoading } = useCategories();
   const [openManageCategories, setOpenManageCategories] = useState(false);
 
   return (
@@ -108,7 +108,7 @@ function CategoryGate() {
             variant="outlined"
             size="large"
             onClick={() => setOpenManageCategories(true)}
-            sx={Sx.managementTopBarOutlinedButtonSx}
+            sx={{...Sx.managementTopBarOutlinedButtonSx, marginBottom: 2}}
           >
             {t.categoriesManager.manageButton}
           </Button>
@@ -122,7 +122,6 @@ function CategoryGate() {
       <ManageCategoriesModal
         open={openManageCategories}
         onClose={() => setOpenManageCategories(false)}
-        // onChanged={reload}
       />
     </Stack>
   );
