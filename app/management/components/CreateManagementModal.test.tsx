@@ -35,4 +35,33 @@ describe("CreateManagementModal", () => {
     expect(screen.getByText(translations.es.management.initialAmountValidationError)).toBeInTheDocument();
     expect(managementApi.createManagementRecord).not.toHaveBeenCalled();
   });
+
+  it("guarda el monto inicial como entero aunque se vea en pesos", async () => {
+    const user = userEvent.setup();
+    const setOpenCreateModal = vi.fn();
+    const fetchRecordsByDate = vi.fn().mockResolvedValue(undefined);
+
+    renderWithProviders(
+      <CreateManagementModal
+        openCreateModal
+        setOpenCreateModal={setOpenCreateModal}
+        fetchRecordsByDate={fetchRecordsByDate}
+        baseRequestDate="2026-01-01"
+        activeUserId="6b7b7b40"
+        categoryId="GASTOS"
+        suggestedRangeDate={null}
+      />,
+    );
+
+    const amountInput = screen.getByLabelText(translations.es.management.initialAmount);
+    await user.type(amountInput, "500000");
+    expect(amountInput).toHaveValue("$500.000");
+
+    await user.click(screen.getByRole("button", { name: translations.es.expenses.createRecord }));
+
+    expect(managementApi.createManagementRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ initialAmount: 500000, categoryId: "GASTOS" }),
+      "6b7b7b40",
+    );
+  });
 });

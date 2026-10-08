@@ -47,6 +47,7 @@ import {
 } from "../common/utils/dateHelpers";
 import { useUserSession, withUserIdHeader } from "../common/userSession";
 import { useCategories } from "../common/categoriesSession";
+import { MoneyTextField } from "./MoneyTextField";
 
 // La categoría se identifica por su `id` dinámico (string).
 type Category = string;
@@ -666,14 +667,13 @@ export default function ExpensesDashboard() {
                 <Typography variant="h6" sx={{ fontWeight: 700, color: TEXT_PRIMARY }}>
                   {selectedItem ? t.expenses.editExpense : t.expenses.newExpense}
                 </Typography>
-                <TextField
+                <MoneyTextField
                   label={t.expenses.amount}
                   value={form.amount}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, amount: event.target.value }))
+                  onAmountChange={(digits) =>
+                    setForm((prev) => ({ ...prev, amount: digits }))
                   }
                   size="small"
-                  type="number"
                 />
                 <TextField
                   label={t.expenses.description}

@@ -28,6 +28,7 @@ import * as Sx from "../styles";
 import { useMemo, useState } from "react";
 import type { Deduction, ManagementRecord } from "../types";
 import { useI18n } from "../../i18n/I18nProvider";
+import { MoneyTextField } from "@/app/components/MoneyTextField";
 import { updateDeductionsInManagementRecord } from "../services/managementApi";
 
 interface ListDeductionsModalProps {
@@ -297,15 +298,14 @@ export const ListDeductionsModal = ({
                                                     </TableCell>
                                                     <TableCell sx={Sx.deductionsTableAmountCellSx}>
                                                         {isEditing ? (
-                                                            <TextField
+                                                            <MoneyTextField
                                                                 size="small"
-                                                                type="number"
                                                                 value={deduction.amount}
-                                                                onChange={(event) =>
+                                                                onAmountChange={(digits) =>
                                                                     handleDraftDeductionChange(
                                                                         originalIndex,
                                                                         "amount",
-                                                                        event.target.value
+                                                                        digits
                                                                     )
                                                                 }
                                                                 slotProps={{
@@ -313,7 +313,7 @@ export const ListDeductionsModal = ({
                                                                         "aria-label": t.management.amount,
                                                                     },
                                                                 }}
-                                                                sx={Sx.textFieldSx}
+                                                                sx={Sx.moneyAmountTextFieldSx}
                                                             />
                                                         ) : (
                                                             currencyFormatter.format(deduction.amount)

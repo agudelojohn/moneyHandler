@@ -31,7 +31,7 @@ export const dialogSx = {
     },
 };
 
-export { textFieldSx } from "../components/styles";
+export { moneyAmountTextFieldSx, textFieldSx } from "../components/styles";
 
 export const StaticPaymentsStackSx = {
     border: "2px solid rgb(120 116 116)",

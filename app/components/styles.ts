@@ -43,10 +43,15 @@ export const staticPaymentDescriptionTextFieldSx = {
     minWidth: { sm: 0 },
 };
 
+export const moneyAmountTextFieldSx = {
+    ...textFieldSx,
+    minWidth: 168,
+};
+
 export const staticPaymentAmountTextFieldSx = {
     ...textFieldSx,
     flex: { xs: 1, sm: "0 0 auto" },
-    minWidth: { sm: 120 },
+    minWidth: { sm: 168 },
 };
 
 export const staticPaymentDeleteButtonSx = {

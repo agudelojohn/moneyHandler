@@ -20,6 +20,7 @@ import {
 import { useMemo, useState } from "react";
 import type { ManagementRecord, StaticPayment } from "../types";
 import { useI18n } from "../../i18n/I18nProvider";
+import { MoneyTextField } from "@/app/components/MoneyTextField";
 import { updateStaticPaymentsInManagementRecord } from "../services/managementApi";
 import * as Sx from "../styles";
 
@@ -320,18 +321,16 @@ export const ListStaticPaymentsModal = ({
                                                         fullWidth
                                                         sx={Sx.textFieldSx}
                                                     />
-                                                    <TextField
+                                                    <MoneyTextField
                                                         label={t.management.deductionAmount}
-                                                        type="number"
                                                         value={payment.amount}
-                                                        onChange={(event) => {
-                                                            const raw = event.target.value;
+                                                        onAmountChange={(digits) => {
                                                             handleDraftChange(index, {
-                                                                amount: raw === "" ? 0 : Number(raw),
+                                                                amount: digits === "" ? 0 : Number(digits),
                                                             });
                                                         }}
                                                         fullWidth
-                                                        sx={Sx.textFieldSx}
+                                                        sx={Sx.moneyAmountTextFieldSx}
                                                     />
                                                     <FormControlLabel
                                                         control={

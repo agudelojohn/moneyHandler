@@ -29,6 +29,7 @@ import * as Sx from "../styles";
 import { ManagementRecordCreate, StaticPayment } from "../types";
 import { getCategoryLabel } from "@/app/i18n/translations";
 import { useCategories } from "@/app/common/categoriesSession";
+import { MoneyTextField } from "@/app/components/MoneyTextField";
 import StaticPaymentField from "@/app/components/StaticPaymentField";
 
 interface CreateManagementModalProps {
@@ -140,13 +141,12 @@ export const CreateManagementModal = ({
                 <DialogTitle>{t.management.createManagementTitle}: {category ? getCategoryLabel(category, t) : ""}</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={Sx.createDeductionStackSx}>
-                        <TextField
+                        <MoneyTextField
                             label={t.management.initialAmount}
-                            type="number"
                             value={initialAmount}
-                            onChange={(event) => setInitialAmount(event.target.value)}
+                            onAmountChange={setInitialAmount}
                             fullWidth
-                            sx={Sx.textFieldSx}
+                            sx={Sx.moneyAmountTextFieldSx}
                         />
                         {suggestedRangeDate ? (
                             <div style={{ display: "flex", justifyContent: "space-between", paddingLeft: 16 }}>

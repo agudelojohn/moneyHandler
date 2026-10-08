@@ -95,7 +95,7 @@ describe("ListDeductionsModal", () => {
     await user.click(screen.getAllByRole("button", { name: t.editDeductionAria })[0]);
 
     expect(screen.getByRole("textbox", { name: t.deductionDescription })).toHaveValue("Almuerzo");
-    expect(screen.getByRole("spinbutton", { name: t.amount })).toHaveValue(15000);
+    expect(screen.getByRole("textbox", { name: t.amount })).toHaveValue("$15.000");
     expect(screen.getByRole("button", { name: t.saveDeductionAria })).toBeInTheDocument();
   });
 });

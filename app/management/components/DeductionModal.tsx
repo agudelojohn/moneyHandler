@@ -17,6 +17,7 @@ import { useI18n } from "../../i18n/I18nProvider";
 import { COLORS } from "../../theme";
 import * as Sx from "../styles";
 import { ManagementRecord } from "../types";
+import { MoneyTextField } from "@/app/components/MoneyTextField";
 import { appendDeductionToManagementRecord } from "../services/managementApi";
 
 type DeductionModalProps = {
@@ -133,13 +134,12 @@ export const DeductionModal = ({
                         fullWidth
                         sx={Sx.textFieldSx}
                     />
-                    <TextField
+                    <MoneyTextField
                         label={t.management.deductionAmount}
-                        type="number"
                         value={deductionAmount}
-                        onChange={(event) => setDeductionAmount(event.target.value)}
+                        onAmountChange={setDeductionAmount}
                         fullWidth
-                        sx={Sx.textFieldSx}
+                        sx={Sx.moneyAmountTextFieldSx}
                     />
                     <FormControlLabel
                         control={

@@ -3,6 +3,7 @@
 import { IconButton, Stack, TextField, Typography } from "@mui/material";
 import { useI18n } from "@/app/i18n/I18nProvider";
 import type { StaticPayment } from "@/app/management/types";
+import { MoneyTextField } from "./MoneyTextField";
 import * as Sx from "./styles";
 
 interface StaticPaymentFieldProps {
@@ -27,13 +28,11 @@ const StaticPaymentField = ({ payment, onChange, onDelete }: StaticPaymentFieldP
                 sx={Sx.staticPaymentDescriptionTextFieldSx}
             />
             <Stack sx={Sx.staticPaymentFieldActionsSx}>
-                <TextField
-                    type="number"
+                <MoneyTextField
                     label={t.management.deductionAmount}
                     value={payment.amount}
-                    onChange={(e) => {
-                        const raw = e.target.value;
-                        onChange({ amount: raw === "" ? 0 : Number(raw) });
+                    onAmountChange={(digits) => {
+                        onChange({ amount: digits === "" ? 0 : Number(digits) });
                     }}
                     fullWidth
                     sx={Sx.staticPaymentAmountTextFieldSx}

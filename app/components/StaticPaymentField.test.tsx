@@ -23,7 +23,7 @@ describe("StaticPaymentField", () => {
     const amountLabel = translations.es.management.deductionAmount;
 
     expect(screen.getByLabelText(descLabel)).toHaveValue("Arriendo");
-    expect(screen.getByLabelText(amountLabel)).toHaveValue(500000);
+    expect(screen.getByLabelText(amountLabel)).toHaveValue("$500.000");
 
     await user.clear(screen.getByLabelText(descLabel));
     await user.type(screen.getByLabelText(descLabel), "Nuevo");
