@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "./providers";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import { I18nProvider } from "./i18n/I18nProvider";
+import { TourProvider } from "./tour/TourProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,8 +43,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <I18nProvider>
-            <LanguageSwitcher />
-            {children}
+            <TourProvider>
+              <LanguageSwitcher />
+              {children}
+            </TourProvider>
           </I18nProvider>
         </Providers>
       </body>

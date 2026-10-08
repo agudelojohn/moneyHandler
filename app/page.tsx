@@ -5,10 +5,13 @@ import { useI18n } from "./i18n/I18nProvider";
 import { useUserSession } from "./common/userSession";
 import { APP_USER_PROFILES } from "./common/userProfiles";
 import { COLORS } from "./theme";
+import { useTour } from "./tour/TourProvider";
+import { tourReplayButtonSx } from "./tour/styles";
 
 export default function Home() {
   const { t } = useI18n();
   const { activeUser, setActiveUserByKey } = useUserSession();
+  const { startTour } = useTour();
   const { DARK_BG, TEXT_PRIMARY, TEXT_SECONDARY, BLUE_DEEP, BLUE_ACCENT, DARK_SURFACE, DARK_BORDER } = COLORS;
 
   return (
@@ -55,7 +58,7 @@ export default function Home() {
           ))}
         </Stack>
       ) : (
-        <Alert severity="success" sx={{ width: "100%", maxWidth: 320 }}>
+        <Alert severity="success" data-tour="active-user" sx={{ width: "100%", maxWidth: 320 }}>
           Usuario activo: {activeUser.label}
         </Alert>
       )}
@@ -66,6 +69,7 @@ export default function Home() {
             size="large"
             fullWidth
             disabled={!activeUser}
+            data-tour="home-management"
             sx={{
               display: activeUser ? "block" : "none",
               backgroundColor: BLUE_DEEP,
@@ -98,6 +102,17 @@ export default function Home() {
             {t.home.expensesButton}
           </Button>
         </Link>
+        {activeUser ? (
+          <Button
+            variant="outlined"
+            size="large"
+            fullWidth
+            onClick={startTour}
+            sx={tourReplayButtonSx}
+          >
+            {t.tour.replay}
+          </Button>
+        ) : null}
       </Stack>
     </Stack>
   );

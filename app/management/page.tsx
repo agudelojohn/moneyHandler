@@ -97,7 +97,7 @@ function CategoryGate() {
           {t.management.selectCategoryTitle}
         </Typography>
         <Typography sx={Sx.categoryGateSubtitleSx}>{t.management.selectCategorySubtitle}</Typography>
-        <Stack sx={Sx.categoryGatePillsRowSx}>
+        <Stack sx={Sx.categoryGatePillsRowSx} data-tour="category-list">
           {isLoading ? (
             <CircularProgress />
           ) : (
@@ -121,6 +121,7 @@ function CategoryGate() {
             variant="outlined"
             size="large"
             onClick={() => setOpenManageCategories(true)}
+            data-tour="manage-categories"
             sx={{...Sx.managementTopBarOutlinedButtonSx, marginBottom: 2}}
           >
             {t.categoriesManager.manageButton}
@@ -168,6 +169,7 @@ function ManagementTopBar({ categoryId }: { categoryId: string }) {
           component={Link}
           href={`/management/settings?categoryId=${encodeURIComponent(categoryId)}`}
           aria-label={t.categorySettings.openAria}
+          data-tour="category-settings"
           sx={Sx.editRangeButtonSx}
         >
           <SettingsOutlinedIcon />
@@ -380,7 +382,7 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
     return (
       <>
         <ManagementTopBar categoryId={selectedCategoryId} />
-        <Stack spacing={3} sx={Sx.managementWorkspaceContentStackSx}>
+        <Stack spacing={3} data-tour="management-workspace" sx={Sx.managementWorkspaceContentStackSx}>
           <Typography variant="h2" sx={Sx.titleSx}>
             {t.management.title}
           </Typography>
@@ -398,7 +400,7 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
   return (
     <>
       <ManagementTopBar categoryId={selectedCategoryId} />
-      <Stack spacing={4} sx={Sx.managementWorkspaceContentStackSx}>
+      <Stack spacing={4} data-tour="management-workspace" sx={Sx.managementWorkspaceContentStackSx}>
         <Typography variant="h2" sx={Sx.titleSx}>
           {t.management.title}
         </Typography>
@@ -489,6 +491,7 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
                           sx={Sx.staticPaymentsViewButtonSx}
                           onClick={() => handleOpenStaticPaymentsModal(record)}
                           aria-label={t.management.viewStaticPaymentsAria}
+                          data-tour="static-payments"
                         >
                           <VisibilityIcon />
                         </Button>
@@ -541,6 +544,7 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
                     <Button
                       variant="outlined"
                       onClick={() => handleOpenAddDeductionModal(record)}
+                      data-tour="add-deduction"
                       sx={Sx.managementAddDeductionButtonSx}
                     >
                       {t.management.addDeduction}

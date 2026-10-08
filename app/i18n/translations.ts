@@ -18,6 +18,34 @@ type TranslationSchema = {
     managementButton: string;
     expensesButton: string;
   };
+  tour: {
+    skip: string;
+    back: string;
+    next: string;
+    done: string;
+    replay: string;
+    step: string;
+    of: string;
+    clickHint: string;
+    expensesFormTitle: string;
+    expensesFormBody: string;
+    welcomeTitle: string;
+    welcomeBody: string;
+    modulesTitle: string;
+    modulesBody: string;
+    categoriesTitle: string;
+    categoriesBody: string;
+    recordTitle: string;
+    recordBody: string;
+    dailyTitle: string;
+    dailyBody: string;
+    staticPaymentsTitle: string;
+    staticPaymentsBody: string;
+    deductionsTitle: string;
+    deductionsBody: string;
+    expensesTitle: string;
+    expensesBody: string;
+  };
   management: {
     staticPayments: string;
     addStaticPayment: string;
@@ -220,6 +248,34 @@ export const translations: Record<Locale, TranslationSchema> = {
       managementButton: "Gestion de dinero",
       expensesButton: "Historial de precios",
     },
+    tour: {
+      skip: "Saltar",
+      back: "Atras",
+      next: "Siguiente",
+      done: "Entendido",
+      replay: "Como funciona",
+      step: "Paso",
+      of: "de",
+      clickHint: "Pulsa lo resaltado o Siguiente.",
+      expensesFormTitle: "Nuevo gasto",
+      expensesFormBody: "Aqui registras descripcion, valor, fecha y categoria. Mas abajo puedes buscar, editar o borrar cada gasto.",
+      welcomeTitle: "Tu usuario",
+      welcomeBody: "Aqui ves quien esta usando la app. Alejo y Clau no comparten categorias, registros ni gastos.",
+      modulesTitle: "Gestion de dinero",
+      modulesBody: "Este boton abre el disponible del periodo. Cada categoria tiene su propio registro.",
+      categoriesTitle: "Elige una categoria",
+      categoriesBody: "Cada pastilla entra al detalle de esa categoria. Gastos, Mercado y las que crees viven aqui.",
+      recordTitle: "Tus categorias",
+      recordBody: "Este boton crea, renombra o borra categorias. Gastos queda fija: no se renombra ni se elimina.",
+      dailyTitle: "Configuracion de la categoria",
+      dailyBody: "Este icono abre los interruptores de la categoria. Ahi enciendes la configuracion diaria, que reparte el disponible por los dias del rango.",
+      staticPaymentsTitle: "El registro",
+      staticPaymentsBody: "En esta zona estan el disponible, el monto inicial, los pagos fijos y las deducciones. Al crear un registro puedes copiar los pagos fijos del ultimo guardado.",
+      deductionsTitle: "Deducciones",
+      deductionsBody: "Las deducciones restan del disponible. Si una es credito, se marca aparte. Desde el registro las agregas, las ves o las quitas.",
+      expensesTitle: "La grafica",
+      expensesBody: "Aqui filtras por categoria, descripcion y fechas. La grafica resume los gastos de ese rango.",
+    },
     management: {
       staticPayments: "Pagos fijos",
       addStaticPayment: "Agregar pago fijo",
@@ -406,6 +462,34 @@ export const translations: Record<Locale, TranslationSchema> = {
       subtitle: "Select the module you want to open.",
       managementButton: "Money management",
       expensesButton: "Price history",
+    },
+    tour: {
+      skip: "Skip",
+      back: "Back",
+      next: "Next",
+      done: "Got it",
+      replay: "How it works",
+      step: "Step",
+      of: "of",
+      clickHint: "Tap the highlight or Next.",
+      expensesFormTitle: "New expense",
+      expensesFormBody: "Here you enter the description, amount, date, and category. Further down you can search, edit, or delete each expense.",
+      welcomeTitle: "Your user",
+      welcomeBody: "This shows who is using the app. Alejo and Clau do not share categories, records, or expenses.",
+      modulesTitle: "Money management",
+      modulesBody: "This button opens the available amount for the period. Each category has its own record.",
+      categoriesTitle: "Pick a category",
+      categoriesBody: "Each pill opens that category's detail. Expenses, groceries, and the ones you create live here.",
+      recordTitle: "Your categories",
+      recordBody: "This button creates, renames, or deletes categories. Expenses stays locked: it cannot be renamed or deleted.",
+      dailyTitle: "Category settings",
+      dailyBody: "This icon opens the category switches. That is where you turn on daily configuration, which splits the available amount across the days in the range.",
+      staticPaymentsTitle: "The record",
+      staticPaymentsBody: "This area shows available, initial amount, static payments, and deductions. When you create a record you can copy the static payments from the latest saved one.",
+      deductionsTitle: "Deductions",
+      deductionsBody: "Deductions subtract from available. A credit is marked separately. From the record you add, view, or remove them.",
+      expensesTitle: "The chart",
+      expensesBody: "Here you filter by category, description, and dates. The chart summarizes the expenses in that range.",
     },
     management: {
       staticPayments: "Static payments",

@@ -517,6 +517,7 @@ export default function ExpensesDashboard() {
       </Typography>
 
       <Card
+        data-tour="expenses-chart"
         sx={{
           borderRadius: 4,
           border: "1px solid",
@@ -653,6 +654,7 @@ export default function ExpensesDashboard() {
       <Grid container spacing={{ xs: 2, md: 2.5 }}>
         <Grid size={{ xs: 12, md: 4 }}>
           <Card
+            data-tour="expenses-form"
             sx={{
               borderRadius: 4,
               height: "100%",
