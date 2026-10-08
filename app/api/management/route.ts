@@ -368,6 +368,9 @@ export async function PUT(request: Request) {
             staticPayments,
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString(),
+            ...(parsed.data.initialAmount !== undefined
+                ? { initialAmount: parsed.data.initialAmount }
+                : {}),
         };
 
         await db.send(new PutCommand({

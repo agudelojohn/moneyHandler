@@ -9,6 +9,9 @@ export const updateManagementSchema = z
         staticPayments: managementSchema.shape.staticPayments.optional(),
         startDate: managementSchema.shape.startDate.optional(),
         endDate: managementSchema.shape.endDate.optional(),
+        initialAmount: managementSchema.shape.initialAmount
+            .positive("El monto debe ser un numero entero positivo.")
+            .optional(),
     })
     .refine(
         (data) =>

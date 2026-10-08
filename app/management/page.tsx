@@ -13,6 +13,8 @@ import {
   IconButton,
   Stack,
   Typography,
+  type SxProps,
+  type Theme,
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,6 +36,7 @@ import { ListStaticPaymentsModal } from "./components/ListStaticPaymentsModal";
 import * as Sx from "./styles";
 import type { Deduction, ManagementRecord } from "./types";
 import { CreateManagementModal } from "./components/CreateManagementModal";
+import { EditInitialAmountModal } from "./components/EditInitialAmountModal";
 import { EditRangeModal } from "./components/EditRangeModal";
 import { useUserSession, withUserIdHeader } from "../common/userSession";
 import { useCategories } from "../common/categoriesSession";
@@ -52,9 +55,17 @@ const DateTypography = ({ labelText, date }: { labelText: string; date: string }
   );
 };
 
-const ItemValueTypography = ({ labelText, value }: { labelText: string; value: string }) => {
+const ItemValueTypography = ({
+  labelText,
+  value,
+  sx = Sx.valuePillSx,
+}: {
+  labelText: string;
+  value: string;
+  sx?: SxProps<Theme>;
+}) => {
   return (
-    <Box sx={Sx.valuePillSx}>
+    <Box sx={sx}>
       <Typography variant="caption" sx={Sx.itemLabelSx}>
         {labelText}
       </Typography>
@@ -177,6 +188,7 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openEditRangeModal, setOpenEditRangeModal] = useState(false);
+  const [openEditInitialAmountModal, setOpenEditInitialAmountModal] = useState(false);
   const [openDeductionModal, setOpenDeductionModal] = useState(false);
   const [managementRecord, setSelectedRecord] = useState<ManagementRecord | null>(null);
   const [openViewDeductionsModal, setOpenViewDeductionsModal] = useState(false);
@@ -294,6 +306,11 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
   const handleOpenEditRangeModal = (record: ManagementRecord) => {
     setSelectedRecord(record);
     setOpenEditRangeModal(true);
+  };
+
+  const handleOpenEditInitialAmountModal = (record: ManagementRecord) => {
+    setSelectedRecord(record);
+    setOpenEditInitialAmountModal(true);
   };
 
   const handleOpenAddDeductionModal = (record: ManagementRecord) => {
@@ -462,10 +479,22 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
                       </Stack>
                       <hr />
 
-                      <ItemValueTypography
-                        labelText={t.management.initialAmount}
-                        value={currencyFormatter.format(record.initialAmount)}
-                      />
+                      <Box sx={Sx.initialAmountRowSx}>
+                        <ItemValueTypography
+                          labelText={t.management.initialAmount}
+                          value={currencyFormatter.format(record.initialAmount)}
+                          sx={Sx.initialAmountValuePillSx}
+                        />
+                        <IconButton
+                          type="button"
+                          size="small"
+                          onClick={() => handleOpenEditInitialAmountModal(record)}
+                          aria-label={t.management.editInitialAmountAria}
+                          sx={Sx.editRangeButtonSx}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
                       <ItemValueTypography
                         labelText={t.management.deductions}
                         value={currencyFormatter.format(deductionTotal)}
@@ -520,6 +549,17 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
         <EditRangeModal
           openEditRangeModal={openEditRangeModal}
           setOpenEditRangeModal={setOpenEditRangeModal}
+          managementRecord={managementRecord}
+          setSelectedRecord={setSelectedRecord}
+          fetchRecordsByDate={fetchRecordsByDate}
+          baseRequestDate={baseRequestDate}
+          activeUserId={activeUser?.userId ?? ""}
+          categoryId={selectedCategoryId}
+        />
+
+        <EditInitialAmountModal
+          openEditInitialAmountModal={openEditInitialAmountModal}
+          setOpenEditInitialAmountModal={setOpenEditInitialAmountModal}
           managementRecord={managementRecord}
           setSelectedRecord={setSelectedRecord}
           fetchRecordsByDate={fetchRecordsByDate}

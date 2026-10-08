@@ -87,6 +87,9 @@ type TranslationSchema = {
     editRangeAria: string;
     editRangeTitle: string;
     updateRangeError: string;
+    editInitialAmountAria: string;
+    editInitialAmountTitle: string;
+    updateInitialAmountError: string;
   };
   expenses: {
     pageTitle: string;
@@ -265,6 +268,9 @@ export const translations: Record<Locale, TranslationSchema> = {
       editRangeAria: "Editar rango de fechas",
       editRangeTitle: "Editar rango de fechas",
       updateRangeError: "No se pudo actualizar el rango de fechas.",
+      editInitialAmountAria: "Editar monto inicial",
+      editInitialAmountTitle: "Editar monto inicial",
+      updateInitialAmountError: "No se pudo actualizar el monto inicial.",
     },
     expenses: {
       pageTitle: "Historial de precios",
@@ -433,6 +439,9 @@ export const translations: Record<Locale, TranslationSchema> = {
       editRangeAria: "Edit date range",
       editRangeTitle: "Edit date range",
       updateRangeError: "The date range could not be updated.",
+      editInitialAmountAria: "Edit initial amount",
+      editInitialAmountTitle: "Edit initial amount",
+      updateInitialAmountError: "The initial amount could not be updated.",
     },
     expenses: {
       pageTitle: "Price history",

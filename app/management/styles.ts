@@ -391,6 +391,19 @@ export const rangeDateLabelSx = {
     flex: 1,
 };
 
+export const initialAmountRowSx = {
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
+    width: "100%",
+};
+
+export const initialAmountValuePillSx = {
+    ...valuePillSx,
+    flex: 1,
+    minWidth: 0,
+};
+
 export const editRangeButtonSx = {
     color: TEXT_SECONDARY,
     borderColor: DARK_BORDER,

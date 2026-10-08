@@ -111,6 +111,44 @@ export async function updateStaticPaymentsInManagementRecord(
     return response.json();
 }
 
+export async function updateInitialAmountInManagementRecord(
+    managementRecord: ManagementRecord,
+    initialAmount: number,
+    userId: string,
+    categoryId: string
+) {
+    const response = await fetch("/api/management", {
+        method: "PUT",
+        headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
+        body: JSON.stringify({
+            id: managementRecord.id,
+            date: managementRecord.creationDate,
+            categoryId,
+            deductions: managementRecord.deductions.map((item) => ({
+                description: item.description.trim(),
+                amount: item.amount,
+                isCredit: item.isCredit,
+                isPayed: item.isPayed,
+            })),
+            staticPayments: managementRecord.staticPayments.map((item) => ({
+                description: item.description.trim(),
+                amount: item.amount,
+                isCredit: item.isCredit,
+                isPayed: item.isPayed,
+                paymentDay: item.paymentDay,
+            })),
+            initialAmount,
+        }),
+    });
+
+    if (!response.ok) {
+        const errorData: { error?: string } = await response.json().catch(() => ({}));
+        throw new Error(errorData.error ?? "No se pudo actualizar el monto inicial");
+    }
+
+    return response.json();
+}
+
 export async function updateRangeInManagementRecord(
     managementRecord: ManagementRecord,
     startDate: string,
