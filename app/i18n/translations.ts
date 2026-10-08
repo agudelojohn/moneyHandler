@@ -74,6 +74,8 @@ type TranslationSchema = {
     selectCategorySubtitle: string;
     listStaticPaymentsTitle: string;
     noStaticPayments: string;
+    pendingStaticPayments: string;
+    paidStaticPayments: string;
     payStaticPaymentButton: string;
     payingStaticPayment: string;
     updateStaticPaymentsError: string;
@@ -280,6 +282,8 @@ export const translations: Record<Locale, TranslationSchema> = {
         "Debes elegir una categoria para continuar con la gestion de dinero.",
       listStaticPaymentsTitle: "Pagos fijos del registro",
       noStaticPayments: "Este registro no tiene pagos fijos.",
+      pendingStaticPayments: "Pendientes",
+      paidStaticPayments: "Pagados",
       payStaticPaymentButton: "Pagar",
       payingStaticPayment: "Registrando...",
       updateStaticPaymentsError: "No se pudo registrar el pago.",
@@ -466,6 +470,8 @@ export const translations: Record<Locale, TranslationSchema> = {
         "Pick a category to continue with money management.",
       listStaticPaymentsTitle: "Static payments for this record",
       noStaticPayments: "This record has no static payments.",
+      pendingStaticPayments: "Pending",
+      paidStaticPayments: "Paid",
       payStaticPaymentButton: "Pay",
       payingStaticPayment: "Saving...",
       updateStaticPaymentsError: "The payment could not be recorded.",

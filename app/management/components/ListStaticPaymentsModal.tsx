@@ -1,6 +1,7 @@
 "use client";
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import {
     Alert,
     Box,
@@ -12,7 +13,6 @@ import {
     DialogContent,
     DialogTitle,
     FormControlLabel,
-    IconButton,
     Stack,
     TextField,
     Typography,
@@ -55,6 +55,57 @@ function validateStaticPayment(payment: StaticPayment): boolean {
     return true;
 }
 
+function StaticPaymentPendingActions({
+    editDisabled,
+    deleteDisabled,
+    payDisabled,
+    paying,
+    onEdit,
+    onDelete,
+    onPay,
+}: {
+    editDisabled: boolean;
+    deleteDisabled: boolean;
+    payDisabled: boolean;
+    paying: boolean;
+    onEdit: () => void;
+    onDelete: () => void;
+    onPay: () => void;
+}) {
+    const { t } = useI18n();
+
+    return (
+        <Stack sx={Sx.staticPaymentPendingActionsSx}>
+            <Button
+                variant="outlined"
+                disabled={editDisabled}
+                onClick={onEdit}
+                sx={[Sx.outlinedButtonSx, Sx.staticPaymentPendingActionButtonSx]}
+            >
+                {t.management.edit}
+            </Button>
+            <Button
+                variant="contained"
+                disabled={payDisabled}
+                onClick={onPay}
+                sx={[Sx.staticPaymentPayButtonSx, Sx.staticPaymentPendingActionButtonSx]}
+            >
+                {paying ? t.management.payingStaticPayment : t.management.payStaticPaymentButton}
+            </Button>
+            <Button
+                variant="outlined"
+                aria-label={t.management.staticPaymentDeleteAria}
+                onClick={onDelete}
+                disabled={deleteDisabled}
+                startIcon={<DeleteOutlinedIcon fontSize="small" />}
+                sx={[Sx.deleteDeductionButtonSx, Sx.staticPaymentPendingActionButtonSx]}
+            >
+                {t.management.delete}
+            </Button>
+        </Stack>
+    );
+}
+
 function createEmptyStaticPayment(): StaticPayment {
     return {
         description: "",
@@ -80,6 +131,8 @@ export const ListStaticPaymentsModal = ({
     const [payingIndex, setPayingIndex] = useState<number | null>(null);
     const [persisting, setPersisting] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [editSnapshot, setEditSnapshot] = useState<StaticPayment | null>(null);
+    const [isNewDraft, setIsNewDraft] = useState(false);
     const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [collectionSource, setCollectionSource] = useState<{
@@ -110,6 +163,8 @@ export const ListStaticPaymentsModal = ({
             setPayingIndex(null);
             setPersisting(false);
             setEditingIndex(null);
+            setEditSnapshot(null);
+            setIsNewDraft(false);
             setDeletingIndex(null);
         }
     }
@@ -117,7 +172,7 @@ export const ListStaticPaymentsModal = ({
     const persistCollection = async (next: StaticPayment[]) => {
         if (!managementRecord) {
             setErrorMessage(t.management.updateRecordNotFoundError);
-            return;
+            return false;
         }
 
         setPersisting(true);
@@ -131,8 +186,10 @@ export const ListStaticPaymentsModal = ({
             );
             setCollection(normalizeStaticPayments(next));
             await fetchRecordsByDate(baseRequestDate);
+            return true;
         } catch {
             setErrorMessage(t.management.updateStaticPaymentsError);
+            return false;
         } finally {
             setPersisting(false);
         }
@@ -162,6 +219,8 @@ export const ListStaticPaymentsModal = ({
             return;
         }
         const newItem = createEmptyStaticPayment();
+        setIsNewDraft(true);
+        setEditSnapshot(null);
         setEditingIndex(0);
         setErrorMessage(null);
         setCollection((previous) => [newItem, ...previous]);
@@ -178,12 +237,40 @@ export const ListStaticPaymentsModal = ({
                 setErrorMessage(t.management.invalidEditedDeductionError);
                 return;
             }
-            await persistCollection(collection);
+            const saved = await persistCollection(collection);
+            if (!saved) {
+                return;
+            }
             setEditingIndex(null);
+            setEditSnapshot(null);
+            setIsNewDraft(false);
             return;
         }
 
+        setIsNewDraft(false);
+        setEditSnapshot(collection[index]);
         setEditingIndex(index);
+        setErrorMessage(null);
+    };
+
+    const handleCancelEdit = () => {
+        if (editingIndex === null) {
+            return;
+        }
+
+        if (isNewDraft) {
+            setCollection((previous) => previous.filter((_, index) => index !== editingIndex));
+        } else if (editSnapshot) {
+            const snapshot = editSnapshot;
+            const index = editingIndex;
+            setCollection((previous) =>
+                previous.map((item, i) => (i === index ? snapshot : item))
+            );
+        }
+
+        setEditingIndex(null);
+        setEditSnapshot(null);
+        setIsNewDraft(false);
         setErrorMessage(null);
     };
 
@@ -200,17 +287,20 @@ export const ListStaticPaymentsModal = ({
         }
 
         const removed = deletingIndex;
-        let nextEditing = editingIndex;
-        if (editingIndex === removed) {
-            nextEditing = null;
-        } else if (editingIndex !== null && editingIndex > removed) {
-            nextEditing = editingIndex - 1;
+        const next = collection.filter((_, i) => i !== removed);
+        const saved = await persistCollection(next);
+        setDeletingIndex(null);
+        if (!saved) {
+            return;
         }
 
-        const next = collection.filter((_, i) => i !== removed);
-        setDeletingIndex(null);
-        setEditingIndex(nextEditing);
-        await persistCollection(next);
+        if (editingIndex === removed) {
+            setEditingIndex(null);
+            setEditSnapshot(null);
+            setIsNewDraft(false);
+        } else if (editingIndex !== null && editingIndex > removed) {
+            setEditingIndex(editingIndex - 1);
+        }
     };
 
     const handlePayOne = async (index: number) => {
@@ -258,6 +348,26 @@ export const ListStaticPaymentsModal = ({
         setOpenStaticPaymentsModal(false);
     };
 
+    const editingPayment = editingIndex === null ? null : collection[editingIndex] ?? null;
+    const pendingRows = collection
+        .map((payment, index) => ({ payment, index }))
+        .filter(({ payment, index }) => !payment.isPayed && index !== editingIndex);
+    const paidRows = collection
+        .map((payment, index) => ({ payment, index }))
+        .filter(({ payment }) => payment.isPayed);
+
+    const renderSummary = (payment: StaticPayment) => (
+        <>
+            <Typography sx={Sx.staticPaymentDescriptionSx}>{payment.description}</Typography>
+            <Typography sx={Sx.staticPaymentAmountLabelSx}>
+                {t.management.amount}:{" "}
+                <Box component="span" sx={Sx.staticPaymentAmountValueSx}>
+                    {currencyFormatter.format(payment.amount)}
+                </Box>
+            </Typography>
+        </>
+    );
+
     return (
         <>
             <Dialog
@@ -280,87 +390,123 @@ export const ListStaticPaymentsModal = ({
                         >
                             {t.management.addStaticPayment}
                         </Button>
-                        {collection.length === 0 ? (
+                        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+                        {editingPayment && editingIndex !== null ? (
+                            <Stack sx={Sx.staticPaymentFormCardSx}>
+                                <Stack sx={Sx.staticPaymentFormFieldsSx}>
+                                    <TextField
+                                        label={t.management.deductionDescription}
+                                        value={editingPayment.description}
+                                        onChange={(event) =>
+                                            handleDraftChange(editingIndex, {
+                                                description: event.target.value,
+                                            })
+                                        }
+                                        sx={[Sx.textFieldSx, Sx.staticPaymentFormDescriptionSx]}
+                                    />
+                                    <MoneyTextField
+                                        label={t.management.deductionAmount}
+                                        value={editingPayment.amount}
+                                        onAmountChange={(digits) => {
+                                            handleDraftChange(editingIndex, {
+                                                amount: digits === "" ? 0 : Number(digits),
+                                            });
+                                        }}
+                                        sx={[Sx.moneyAmountTextFieldSx, Sx.staticPaymentFormAmountSx]}
+                                    />
+                                </Stack>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={editingPayment.isCredit}
+                                            onChange={(event) =>
+                                                handleDraftChange(editingIndex, {
+                                                    isCredit: event.target.checked,
+                                                })
+                                            }
+                                            sx={Sx.deductionCreditCheckboxSx}
+                                        />
+                                    }
+                                    label={t.management.credit}
+                                    sx={Sx.deductionCreditLabelSx}
+                                />
+                                <Stack sx={Sx.staticPaymentFormActionsSx}>
+                                    <Button
+                                        variant="outlined"
+                                        disabled={isBusy}
+                                        onClick={handleCancelEdit}
+                                        sx={[Sx.outlinedButtonSx, Sx.staticPaymentFormActionButtonSx]}
+                                    >
+                                        {t.management.cancel}
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        disabled={isBusy}
+                                        onClick={() => void handleToggleEditSave(editingIndex)}
+                                        sx={[Sx.primaryContainedButtonSx, Sx.staticPaymentFormActionButtonSx]}
+                                    >
+                                        {t.management.save}
+                                    </Button>
+                                </Stack>
+                            </Stack>
+                        ) : null}
+                        {collection.length === 0 && editingIndex === null ? (
                             <Alert severity="info">{t.management.noStaticPayments}</Alert>
                         ) : null}
-                        {collection.map((payment, index) => (
-                                <Box
-                                    key={`static-payment-${index}`}
-                                    sx={Sx.deductionItemCardSx(payment.isCredit, payment.isPayed)}
-                                >
-                                    <Stack sx={Sx.staticPaymentRowStackSx}>
+                        {pendingRows.length > 0 ? (
+                            <Stack spacing={1.5}>
+                                <Typography sx={Sx.staticPaymentSectionTitleSx}>
+                                    {t.management.pendingStaticPayments}
+                                </Typography>
+                                {pendingRows.map(({ payment, index }) => (
+                                    <Box
+                                        key={`static-payment-${index}`}
+                                        sx={Sx.deductionItemCardSx(payment.isCredit, payment.isPayed)}
+                                    >
+                                        <Stack sx={Sx.staticPaymentRowStackSx}>
+                                            <Stack sx={Sx.staticPaymentFieldsStackSx}>
+                                                {renderSummary(payment)}
+                                                <Box sx={Sx.staticPaymentChipsRowSx}>
+                                                    {payment.isCredit ? (
+                                                        <Chip
+                                                            size="small"
+                                                            label={t.management.credit}
+                                                            sx={Sx.staticPaymentCreditChipSx}
+                                                        />
+                                                    ) : null}
+                                                    <Chip
+                                                        size="small"
+                                                        label={t.management.staticPaymentUnpaidStatus}
+                                                        sx={Sx.staticPaymentStatusChipSx(false)}
+                                                    />
+                                                </Box>
+                                            </Stack>
+                                            <StaticPaymentPendingActions
+                                                editDisabled={isBusy || editingIndex !== null}
+                                                deleteDisabled={isBusy}
+                                                payDisabled={isBusy || !validateStaticPayment(payment)}
+                                                paying={payingIndex === index}
+                                                onEdit={() => void handleToggleEditSave(index)}
+                                                onDelete={() => handleRequestDelete(index)}
+                                                onPay={() => void handlePayOne(index)}
+                                            />
+                                        </Stack>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        ) : null}
+                        {paidRows.length > 0 ? (
+                            <Stack spacing={1.5}>
+                                <Typography sx={Sx.staticPaymentSectionTitleSx}>
+                                    {t.management.paidStaticPayments}
+                                </Typography>
+                                {paidRows.map(({ payment, index }) => (
+                                    <Box
+                                        key={`static-payment-paid-${index}`}
+                                        sx={Sx.deductionItemCardSx(payment.isCredit, true)}
+                                    >
                                         <Stack sx={Sx.staticPaymentFieldsStackSx}>
-                                            {payment.isPayed ? (
-                                                <>
-                                                    <Typography sx={Sx.staticPaymentDescriptionSx}>
-                                                        {payment.description}
-                                                    </Typography>
-                                                    <Typography sx={Sx.staticPaymentAmountLabelSx}>
-                                                        {t.management.amount}:{" "}
-                                                        <Box
-                                                            component="span"
-                                                            sx={Sx.staticPaymentAmountValueSx}
-                                                        >
-                                                            {currencyFormatter.format(payment.amount)}
-                                                        </Box>
-                                                    </Typography>
-                                                </>
-                                            ) : editingIndex === index ? (
-                                                <>
-                                                    <TextField
-                                                        label={t.management.deductionDescription}
-                                                        value={payment.description}
-                                                        onChange={(event) =>
-                                                            handleDraftChange(index, {
-                                                                description: event.target.value,
-                                                            })
-                                                        }
-                                                        fullWidth
-                                                        sx={Sx.textFieldSx}
-                                                    />
-                                                    <MoneyTextField
-                                                        label={t.management.deductionAmount}
-                                                        value={payment.amount}
-                                                        onAmountChange={(digits) => {
-                                                            handleDraftChange(index, {
-                                                                amount: digits === "" ? 0 : Number(digits),
-                                                            });
-                                                        }}
-                                                        fullWidth
-                                                        sx={Sx.moneyAmountTextFieldSx}
-                                                    />
-                                                    <FormControlLabel
-                                                        control={
-                                                            <Checkbox
-                                                                checked={payment.isCredit}
-                                                                onChange={(event) =>
-                                                                    handleDraftChange(index, {
-                                                                        isCredit: event.target.checked,
-                                                                    })
-                                                                }
-                                                                sx={Sx.deductionCreditCheckboxSx}
-                                                            />
-                                                        }
-                                                        label={t.management.credit}
-                                                        sx={Sx.deductionCreditLabelSx}
-                                                    />
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Typography sx={Sx.staticPaymentDescriptionSx}>
-                                                        {payment.description}
-                                                    </Typography>
-                                                    <Typography sx={Sx.staticPaymentAmountLabelSx}>
-                                                        {t.management.amount}:{" "}
-                                                        <Box
-                                                            component="span"
-                                                            sx={Sx.staticPaymentAmountValueSx}
-                                                        >
-                                                            {currencyFormatter.format(payment.amount)}
-                                                        </Box>
-                                                    </Typography>
-                                                </>
-                                            )}
+                                            {renderSummary(payment)}
                                             <Box sx={Sx.staticPaymentChipsRowSx}>
                                                 {payment.isCredit ? (
                                                     <Chip
@@ -371,70 +517,21 @@ export const ListStaticPaymentsModal = ({
                                                 ) : null}
                                                 <Chip
                                                     size="small"
-                                                    label={
-                                                        payment.isPayed
-                                                            ? t.management.staticPaymentPaidStatus
-                                                            : t.management.staticPaymentUnpaidStatus
-                                                    }
-                                                    sx={Sx.staticPaymentStatusChipSx(payment.isPayed)}
+                                                    label={t.management.staticPaymentPaidStatus}
+                                                    sx={Sx.staticPaymentStatusChipSx(true)}
                                                 />
                                             </Box>
                                             {payment.paymentDay ? (
                                                 <Typography sx={Sx.staticPaymentPaymentDaySx}>
                                                     {t.management.staticPaymentPaymentDay}:{" "}
-                                                    {dateTimeFormatter.format(
-                                                        new Date(payment.paymentDay)
-                                                    )}
+                                                    {dateTimeFormatter.format(new Date(payment.paymentDay))}
                                                 </Typography>
                                             ) : null}
                                         </Stack>
-                                        {!payment.isPayed ? (
-                                            <Stack sx={Sx.staticPaymentUnpaidActionsStackSx}>
-                                                <Box sx={Sx.deductionItemButtonsSx}>
-                                                    <Button
-                                                        variant="outlined"
-                                                        disabled={isBusy}
-                                                        onClick={() => void handleToggleEditSave(index)}
-                                                        sx={Sx.outlinedButtonSx}
-                                                    >
-                                                        {editingIndex === index
-                                                            ? t.management.save
-                                                            : t.management.edit}
-                                                    </Button>
-                                                    <IconButton
-                                                        aria-label={t.management.staticPaymentDeleteAria}
-                                                        onClick={() => handleRequestDelete(index)}
-                                                        disabled={isBusy}
-                                                        sx={Sx.deleteDeductionButtonSx}
-                                                    >
-                                                        <Typography
-                                                            component="span"
-                                                            sx={Sx.deleteDeductionIconSx}
-                                                        >
-                                                            🗑
-                                                        </Typography>
-                                                    </IconButton>
-                                                </Box>
-                                                <Button
-                                                    variant="contained"
-                                                    disabled={
-                                                        isBusy ||
-                                                        editingIndex === index ||
-                                                        !validateStaticPayment(payment)
-                                                    }
-                                                    onClick={() => void handlePayOne(index)}
-                                                    sx={Sx.staticPaymentPayButtonSx}
-                                                >
-                                                    {payingIndex === index
-                                                        ? t.management.payingStaticPayment
-                                                        : t.management.payStaticPaymentButton}
-                                                </Button>
-                                            </Stack>
-                                        ) : null}
-                                    </Stack>
-                                </Box>
-                            ))}
-                        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+                                    </Box>
+                                ))}
+                            </Stack>
+                        ) : null}
                     </Stack>
                 </DialogContent>
                 <DialogActions>

@@ -565,6 +565,67 @@ export const staticPaymentPayButtonSx = {
     minWidth: { xs: "100%", sm: 120 },
 };
 
+export const staticPaymentFormCardSx = {
+    border: `1px solid ${BORDER_COLOR}`,
+    borderRadius: 2,
+    p: 2,
+    backgroundColor: SURFACE_BG,
+    width: "100%",
+    gap: 2,
+};
+
+export const staticPaymentFormFieldsSx = {
+    flexDirection: { xs: "column", sm: "row" },
+    gap: 2,
+    width: "100%",
+    alignItems: "stretch",
+};
+
+export const staticPaymentFormDescriptionSx = {
+    flex: { xs: "1 1 auto", sm: "1 1 0" },
+    width: { xs: "100%", sm: "auto" },
+    minWidth: { xs: 0, sm: 180 },
+};
+
+export const staticPaymentFormAmountSx = {
+    flex: { xs: "1 1 auto", sm: "0 0 200px" },
+    width: { xs: "100%", sm: 200 },
+    minWidth: { xs: 0, sm: 200 },
+    maxWidth: { sm: 220 },
+};
+
+export const staticPaymentFormActionsSx = {
+    flexDirection: "row",
+    gap: 1,
+    width: "100%",
+};
+
+export const staticPaymentFormActionButtonSx = {
+    flex: "1 1 0",
+    width: "100%",
+    minWidth: 0,
+};
+
+export const staticPaymentSectionTitleSx = {
+    color: TEXT_SECONDARY,
+    fontWeight: 700,
+};
+
+export const staticPaymentPendingActionsSx = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 1,
+    width: { xs: "100%", sm: 180 },
+    flexShrink: 0,
+    alignSelf: "stretch",
+};
+
+export const staticPaymentPendingActionButtonSx = {
+    width: "100%",
+    minWidth: 0,
+};
+
 export const categoriesManagerContentStackSx = { mt: 1 };
 
 export const categoriesManagerCreateRowSx = {
