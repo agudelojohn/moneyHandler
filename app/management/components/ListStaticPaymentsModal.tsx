@@ -162,12 +162,9 @@ export const ListStaticPaymentsModal = ({
             return;
         }
         const newItem = createEmptyStaticPayment();
-        setCollection((previous) => {
-            const next = [...previous, newItem];
-            setEditingIndex(next.length - 1);
-            setErrorMessage(null);
-            return next;
-        });
+        setEditingIndex(0);
+        setErrorMessage(null);
+        setCollection((previous) => [newItem, ...previous]);
     };
 
     const handleToggleEditSave = async (index: number) => {
