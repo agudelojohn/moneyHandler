@@ -128,6 +128,85 @@ export const backButtonSx = {
 
 export const listDeductionsStackSx = { mt: 1 };
 
+export const deductionsTableContainerSx = {
+    mt: 0,
+    border: `1px solid ${BORDER_COLOR}`,
+    borderRadius: 1,
+    overflowX: "auto",
+};
+
+export const deductionsTableSx = {
+    minWidth: 480,
+};
+
+export const deductionsTableHeadCellSx = {
+    backgroundColor: DARK_SURFACE,
+    color: TEXT_SECONDARY,
+    fontWeight: 600,
+    fontSize: 12,
+    py: 0.75,
+    px: 1,
+    borderColor: BORDER_COLOR,
+    whiteSpace: "nowrap",
+};
+
+export const deductionsTableCellSx = {
+    color: TEXT_PRIMARY,
+    py: 0.5,
+    px: 1,
+    borderColor: BORDER_COLOR,
+    fontSize: 13,
+};
+
+export const deductionsTableAmountCellSx = {
+    ...deductionsTableCellSx,
+    textAlign: "right",
+    whiteSpace: "nowrap",
+};
+
+export const deductionsTableActionsCellSx = {
+    ...deductionsTableCellSx,
+    whiteSpace: "nowrap",
+    width: 1,
+    px: 0.5,
+};
+
+export const deductionsTableRowSx = (isCredit: boolean, isPayed: boolean) => ({
+    backgroundColor: isCredit
+        ? isPayed
+            ? COLORS.DEDUCTION_CREDIT_BG
+            : COLORS.DEDUCTION_CREDIT_BG_PAYED
+        : SURFACE_BG,
+});
+
+export const deductionsTableDescriptionSx = {
+    color: TEXT_PRIMARY,
+    fontSize: 13,
+    wordBreak: "break-word",
+};
+
+export const deductionsTableActionsSx = {
+    display: "flex",
+    flexDirection: "row",
+    gap: 0.25,
+    justifyContent: "flex-end",
+    alignItems: "center",
+};
+
+export const deductionsTableEditButtonSx = {
+    color: TEXT_SECONDARY,
+    "&:hover": { color: BLUE_ACCENT },
+};
+
+export const deductionsTableSaveButtonSx = {
+    color: "#86efac",
+};
+
+export const deductionsTableDeleteButtonSx = {
+    color: "#f87171",
+    "&:hover": { color: "#fca5a5" },
+};
+
 export const deductionItemCardSx = (isCredit: boolean, isPayed: boolean) => ({
     border: `1px solid ${BORDER_COLOR}`,
     borderRadius: 2,

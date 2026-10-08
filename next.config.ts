@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
   // Next.js 16 bloquea recursos dev cross-origin (p. ej. acceso por IP LAN desde el móvil).
   // Sin esto, los onClick de Client Components pueden no responder en Safari iOS/Android.
   allowedDevOrigins: [...getLanIpv4Addresses(), ...getAllowedDevOriginsFromEnv()],
+  // Evita que `next dev` reescriba AGENTS.md con el bloque de reglas del framework.
+  agentRules: false,
 };
 
 export default nextConfig;

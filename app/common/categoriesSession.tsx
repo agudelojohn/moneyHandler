@@ -47,6 +47,8 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   }, [activeUser]);
 
   useEffect(() => {
+    // Carga categorías al montar o al cambiar de usuario.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch al montar
     void load();
   }, [load]);
 

@@ -14,6 +14,7 @@ Next.js 16 (App Router) + TypeScript (strict) + MUI v9 + Tailwind v4, backed by 
 
 ## Testing
 
+- Do not use Cursor's built-in browser (or navigate to the running app) for user/QA testing. Verify with vitest, typecheck, lint, and code review unless the user explicitly asks to open the browser.
 - vitest + jsdom + Testing Library. Wrap renders in `renderWithProviders` from `test/test-utils.tsx` (adds MUI + i18n + user-session providers).
 - `test/setup.tsx` globally mocks `next/link`, `ResizeObserver`, `matchMedia`. Tests mock `fetch` and `next/navigation`; they never hit real DynamoDB.
 - Add a test file alongside the code with `page.test.tsx` / `Component.test.tsx` naming (vitest `include` is `**/*.{test,spec}.{ts,tsx}`).

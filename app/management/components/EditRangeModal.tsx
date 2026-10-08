@@ -10,7 +10,7 @@ import {
     Stack,
     TextField,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     formatDateAsYyyyMmDd,
     isValidDateRangeOrder,
@@ -48,18 +48,25 @@ export const EditRangeModal = ({
     const [rangeEndDate, setRangeEndDate] = useState(() => formatDateAsYyyyMmDd(new Date()));
     const [updateError, setUpdateError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [rangeFormSource, setRangeFormSource] = useState<{
+        open: boolean;
+        record: ManagementRecord | null;
+    }>({ open: openEditRangeModal, record: managementRecord });
 
-    useEffect(() => {
-        if (!openEditRangeModal || !managementRecord) {
-            return;
+    // Al abrir el modal, sincroniza las fechas del registro durante el render.
+    if (
+        openEditRangeModal !== rangeFormSource.open ||
+        managementRecord !== rangeFormSource.record
+    ) {
+        setRangeFormSource({ open: openEditRangeModal, record: managementRecord });
+        if (openEditRangeModal && managementRecord) {
+            const startSource = managementRecord.startDate ?? managementRecord.creationDate;
+            const endSource = managementRecord.endDate ?? managementRecord.creationDate;
+            setRangeStartDate(utcIsoToLocalCalendarDay(startSource));
+            setRangeEndDate(utcIsoToLocalCalendarDay(endSource));
+            setUpdateError(null);
         }
-
-        const startSource = managementRecord.startDate ?? managementRecord.creationDate;
-        const endSource = managementRecord.endDate ?? managementRecord.creationDate;
-        setRangeStartDate(utcIsoToLocalCalendarDay(startSource));
-        setRangeEndDate(utcIsoToLocalCalendarDay(endSource));
-        setUpdateError(null);
-    }, [openEditRangeModal, managementRecord]);
+    }
 
     const handleClose = () => {
         setOpenEditRangeModal(false);

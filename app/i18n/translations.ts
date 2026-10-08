@@ -49,6 +49,9 @@ type TranslationSchema = {
     updateRecord: string;
     updatingRecord: string;
     deleteDeductionAria: string;
+    editDeductionAria: string;
+    saveDeductionAria: string;
+    actions: string;
     deleteConfirmTitle: string;
     deleteConfirmMessage: string;
     cancel: string;
@@ -217,6 +220,9 @@ export const translations: Record<Locale, TranslationSchema> = {
       updateRecord: "Actualizar registro",
       updatingRecord: "Actualizando...",
       deleteDeductionAria: "Eliminar deduccion",
+      editDeductionAria: "Editar deduccion",
+      saveDeductionAria: "Guardar deduccion",
+      actions: "Acciones",
       deleteConfirmTitle: "Confirmar eliminacion",
       deleteConfirmMessage:
         "Esta accion quitara la deduccion de la lista. ¿Deseas continuar?",
@@ -381,6 +387,9 @@ export const translations: Record<Locale, TranslationSchema> = {
       updateRecord: "Update record",
       updatingRecord: "Updating...",
       deleteDeductionAria: "Delete deduction",
+      editDeductionAria: "Edit deduction",
+      saveDeductionAria: "Save deduction",
+      actions: "Actions",
       deleteConfirmTitle: "Confirm deletion",
       deleteConfirmMessage:
         "This action will remove the deduction from the list. Do you want to continue?",

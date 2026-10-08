@@ -1,22 +1,31 @@
 "use client";
 
+import CheckIcon from "@mui/icons-material/Check";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import EditIcon from "@mui/icons-material/Edit";
 import {
     Alert,
     Box,
     Button,
     Checkbox,
+    Chip,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    FormControlLabel,
     IconButton,
     Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     TextField,
-    Typography
+    Typography,
 } from "@mui/material";
 import * as Sx from "../styles";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Deduction, ManagementRecord } from "../types";
 import { useI18n } from "../../i18n/I18nProvider";
 import { updateDeductionsInManagementRecord } from "../services/managementApi";
@@ -60,7 +69,15 @@ export const ListDeductionsModal = ({
     const [viewDeductionsError, setViewDeductionsError] = useState<string | null>(null);
     const [isUpdatingDeductions, setIsUpdatingDeductions] = useState(false);
     const [registerCreditPayments, setRegisterCreditPayments] = useState(false);
-    const [dataCollection, setDataCollection] = useState<Deduction[]>([]);
+    const dataCollection = useMemo(
+        () =>
+            deductionsCollection
+                .map((item, originalIndex) => ({ item, originalIndex }))
+                .filter(({ item }) =>
+                    registerCreditPayments ? item.isCredit && !item.isPayed : true
+                ),
+        [deductionsCollection, registerCreditPayments]
+    );
 
 
     const creditDeductionsTotal = useMemo(
@@ -80,6 +97,16 @@ export const ListDeductionsModal = ({
         }
 
         return true;
+    };
+
+    const handleToggleEditDeduction = (index: number, deduction: Deduction, isEditing: boolean) => {
+        if (isEditing && !validateDeduction(deduction)) {
+            setViewDeductionsError(t.management.invalidEditedDeductionError);
+            return;
+        }
+
+        setViewDeductionsError(null);
+        setEditingDeductionIndex(isEditing ? null : index);
     };
 
 
@@ -108,7 +135,7 @@ export const ListDeductionsModal = ({
             setOpenViewDeductionsModal(false);
             setSelectedRecord(null);
             await fetchRecordsByDate(baseRequestDate);
-        } catch (error) {
+        } catch {
             setViewDeductionsError(t.management.updateDeductionsError);
             // TODO: handle error internally
         } finally {
@@ -140,7 +167,7 @@ export const ListDeductionsModal = ({
             setOpenViewDeductionsModal(false);
             setSelectedRecord(null);
             await fetchRecordsByDate(baseRequestDate);
-        } catch (error) {
+        } catch {
             setViewDeductionsError(t.management.updateDeductionsError);
             // TODO: handle error internally
         } finally {
@@ -180,14 +207,6 @@ export const ListDeductionsModal = ({
         setDeletingDeductionIndex(null);
     };
 
-    useEffect(() => {
-        if (registerCreditPayments) {
-            setDataCollection(deductionsCollection.filter(item => item.isCredit && !item.isPayed));
-        } else {
-            setDataCollection(deductionsCollection);
-        }
-    }, [deductionsCollection, registerCreditPayments])
-
     return (
         <>
             <Dialog
@@ -221,86 +240,161 @@ export const ListDeductionsModal = ({
                         {dataCollection.length === 0 ? (
                             <Alert severity="info">{t.management.noDeductions}</Alert>
                         ) : (
-                            dataCollection.map((deduction, index) => {
-                                const isEditing = editingDeductionIndex === index;
+                            <TableContainer sx={Sx.deductionsTableContainerSx}>
+                                <Table size="small" sx={Sx.deductionsTableSx}>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell sx={Sx.deductionsTableHeadCellSx}>
+                                                {t.management.deductionDescription}
+                                            </TableCell>
+                                            <TableCell sx={Sx.deductionsTableHeadCellSx}>
+                                                {t.management.amount}
+                                            </TableCell>
+                                            <TableCell sx={Sx.deductionsTableHeadCellSx}>
+                                                {t.management.credit}
+                                            </TableCell>
+                                            {!registerCreditPayments ? (
+                                                <TableCell sx={Sx.deductionsTableHeadCellSx} align="right">
+                                                    {t.management.actions}
+                                                </TableCell>
+                                            ) : null}
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {dataCollection.map(({ item: deduction, originalIndex }) => {
+                                            const isEditing = editingDeductionIndex === originalIndex;
 
-                                return (
-                                    <Box
-                                        key={`${deduction.description}-${index}`}
-                                        sx={Sx.deductionItemCardSx(deduction.isCredit, deduction.isPayed)}
-                                    >
-                                        <Box sx={Sx.deductionItemGridSx}>
-                                            <TextField
-                                                label={t.management.deductionDescription}
-                                                value={deduction.description}
-                                                onChange={(event) =>
-                                                    handleDraftDeductionChange(index, "description", event.target.value)
-                                                }
-                                                fullWidth
-                                                disabled={!isEditing}
-                                                sx={Sx.textFieldSx}
-                                            />
-                                            <TextField
-                                                label={t.management.amount}
-                                                type="number"
-                                                value={deduction.amount}
-                                                onChange={(event) =>
-                                                    handleDraftDeductionChange(index, "amount", event.target.value)
-                                                }
-                                                fullWidth
-                                                disabled={!isEditing}
-                                                sx={Sx.textFieldSx}
-                                            />
-                                            {isEditing && <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        checked={deduction.isCredit}
-                                                        onChange={(event) =>
-                                                            handleDraftDeductionChange(index, "isCredit", event.target.checked)
-                                                        }
-                                                        disabled={!isEditing}
-                                                        sx={Sx.deductionCreditCheckboxSx}
-                                                    />
-                                                }
-                                                label={t.management.credit}
-                                                sx={Sx.deductionCreditLabelSx}
-                                            />}
-                                            {!registerCreditPayments && <>
-                                                <Box sx={Sx.deductionItemButtonsSx}>
-                                                    <Button
-                                                        variant="outlined"
-                                                        sx={Sx.outlinedButtonSx}
-                                                        onClick={() => {
-                                                            if (isEditing && !validateDeduction(deduction)) {
-                                                                setViewDeductionsError(
-                                                                    t.management.invalidEditedDeductionError
-                                                                );
-                                                                return;
-                                                            }
-
-                                                            setViewDeductionsError(null);
-                                                            setEditingDeductionIndex(isEditing ? null : index);
-                                                        }}
-                                                    >
-                                                        {isEditing ? t.management.save : t.management.edit}
-                                                    </Button>
-                                                    <IconButton
-                                                        aria-label={t.management.deleteDeductionAria}
-                                                        onClick={() => handleRequestDeleteDeduction(index)}
-                                                        disabled={isUpdatingDeductions}
-                                                        sx={Sx.deleteDeductionButtonSx}
-                                                    >
-                                                        <Typography component="span" sx={Sx.deleteDeductionIconSx}>
-                                                            🗑
-                                                        </Typography>
-                                                    </IconButton>
-                                                </Box>
-                                            </>}
-
-                                        </Box>
-                                    </Box>
-                                );
-                            })
+                                            return (
+                                                <TableRow
+                                                    key={`${deduction.description}-${originalIndex}`}
+                                                    sx={Sx.deductionsTableRowSx(deduction.isCredit, deduction.isPayed)}
+                                                >
+                                                    <TableCell sx={Sx.deductionsTableCellSx}>
+                                                        {isEditing ? (
+                                                            <TextField
+                                                                size="small"
+                                                                value={deduction.description}
+                                                                onChange={(event) =>
+                                                                    handleDraftDeductionChange(
+                                                                        originalIndex,
+                                                                        "description",
+                                                                        event.target.value
+                                                                    )
+                                                                }
+                                                                slotProps={{
+                                                                    htmlInput: {
+                                                                        "aria-label": t.management.deductionDescription,
+                                                                    },
+                                                                }}
+                                                                fullWidth
+                                                                sx={Sx.textFieldSx}
+                                                            />
+                                                        ) : (
+                                                            <Typography sx={Sx.deductionsTableDescriptionSx}>
+                                                                {deduction.description}
+                                                            </Typography>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell sx={Sx.deductionsTableAmountCellSx}>
+                                                        {isEditing ? (
+                                                            <TextField
+                                                                size="small"
+                                                                type="number"
+                                                                value={deduction.amount}
+                                                                onChange={(event) =>
+                                                                    handleDraftDeductionChange(
+                                                                        originalIndex,
+                                                                        "amount",
+                                                                        event.target.value
+                                                                    )
+                                                                }
+                                                                slotProps={{
+                                                                    htmlInput: {
+                                                                        "aria-label": t.management.amount,
+                                                                    },
+                                                                }}
+                                                                sx={Sx.textFieldSx}
+                                                            />
+                                                        ) : (
+                                                            currencyFormatter.format(deduction.amount)
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell sx={Sx.deductionsTableCellSx}>
+                                                        {isEditing ? (
+                                                            <Checkbox
+                                                                checked={deduction.isCredit}
+                                                                onChange={(event) =>
+                                                                    handleDraftDeductionChange(
+                                                                        originalIndex,
+                                                                        "isCredit",
+                                                                        event.target.checked
+                                                                    )
+                                                                }
+                                                                slotProps={{
+                                                                    input: {
+                                                                        "aria-label": t.management.credit,
+                                                                    },
+                                                                }}
+                                                                sx={Sx.deductionCreditCheckboxSx}
+                                                            />
+                                                        ) : deduction.isCredit ? (
+                                                            <Chip
+                                                                size="small"
+                                                                label={t.management.credit}
+                                                                sx={Sx.staticPaymentCreditChipSx}
+                                                            />
+                                                        ) : null}
+                                                    </TableCell>
+                                                    {!registerCreditPayments ? (
+                                                        <TableCell sx={Sx.deductionsTableActionsCellSx} align="right">
+                                                            <Box sx={Sx.deductionsTableActionsSx}>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    aria-label={
+                                                                        isEditing
+                                                                            ? t.management.saveDeductionAria
+                                                                            : t.management.editDeductionAria
+                                                                    }
+                                                                    onClick={() =>
+                                                                        handleToggleEditDeduction(
+                                                                            originalIndex,
+                                                                            deduction,
+                                                                            isEditing
+                                                                        )
+                                                                    }
+                                                                    disabled={isUpdatingDeductions}
+                                                                    sx={
+                                                                        isEditing
+                                                                            ? Sx.deductionsTableSaveButtonSx
+                                                                            : Sx.deductionsTableEditButtonSx
+                                                                    }
+                                                                >
+                                                                    {isEditing ? (
+                                                                        <CheckIcon fontSize="small" />
+                                                                    ) : (
+                                                                        <EditIcon fontSize="small" />
+                                                                    )}
+                                                                </IconButton>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    aria-label={t.management.deleteDeductionAria}
+                                                                    onClick={() =>
+                                                                        handleRequestDeleteDeduction(originalIndex)
+                                                                    }
+                                                                    disabled={isUpdatingDeductions}
+                                                                    sx={Sx.deductionsTableDeleteButtonSx}
+                                                                >
+                                                                    <DeleteOutlinedIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Box>
+                                                        </TableCell>
+                                                    ) : null}
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
                         )}
                         <Box sx={Sx.valuePillSx}>
                             <Typography variant="caption" sx={Sx.totalCreditsLabelSx}>

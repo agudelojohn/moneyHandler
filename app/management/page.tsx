@@ -156,15 +156,10 @@ function ManagementTopBar({ categoryId }: { categoryId: string }) {
   );
 }
 
-function ManagementWorkspace({ categoryId: initialCategoryId }: { categoryId: string }) {
+function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: string }) {
   const { t } = useI18n();
   const { activeUser } = useUserSession();
   const { categories } = useCategories();
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(initialCategoryId);
-
-  useEffect(() => {
-    setSelectedCategoryId(initialCategoryId);
-  }, [initialCategoryId]);
 
   const isDevelopment = process.env.NODE_ENV === "development";
   const currencyFormatter = useMemo(
@@ -190,7 +185,7 @@ function ManagementWorkspace({ categoryId: initialCategoryId }: { categoryId: st
   const [deductionsCollection, setDeductionsCollection] = useState<Deduction[]>([]);
   const [deletingDeductionIndex, setDeletingDeductionIndex] = useState<number | null>(null);
   const [suggestedRangeDate, setSuggestedRangeDate] = useState<{ startDate: string; endDate: string } | null>(null);
-  const [isExpensesCategory, setIsExpensesCategory] = useState(false);
+  const isExpensesCategory = selectedCategoryId === EXPENSES_CATEGORY_ID;
 
   const baseRequestDate = useMemo(() => {
     if (isDevelopment && isValidDateString(DEV_INITIAL_REQUEST_DATE)) {
@@ -276,10 +271,6 @@ function ManagementWorkspace({ categoryId: initialCategoryId }: { categoryId: st
     },
     [activeUser, selectedCategoryId, categories]
   );
-
-  useEffect(() => {
-    setIsExpensesCategory(selectedCategoryId === EXPENSES_CATEGORY_ID);
-  }, [selectedCategoryId]);
 
   const staticPaymentsModalRecord = useMemo(() => {
     if (!staticPaymentsModalRecordId) {

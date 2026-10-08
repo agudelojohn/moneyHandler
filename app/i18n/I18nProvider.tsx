@@ -27,6 +27,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedLocale = window.localStorage.getItem(I18N_STORAGE_KEY);
     if (storedLocale === "es" || storedLocale === "en") {
+      // Hidrata el idioma persistido tras el primer render (evita mismatch de hidratación).
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage no está en el servidor
       setLocaleState(storedLocale);
     }
   }, []);

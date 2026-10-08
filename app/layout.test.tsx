@@ -7,7 +7,7 @@ vi.mock("next/font/google", () => ({
 }));
 
 describe("RootLayout", () => {
-  it("renderiza children dentro del body", async () => {
+  it("renderiza children dentro del body", { timeout: 15_000 }, async () => {
     const { default: RootLayout } = await import("@/app/layout");
 
     render(

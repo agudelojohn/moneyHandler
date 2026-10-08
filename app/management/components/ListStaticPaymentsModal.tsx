@@ -17,7 +17,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ManagementRecord, StaticPayment } from "../types";
 import { useI18n } from "../../i18n/I18nProvider";
 import { updateStaticPaymentsInManagementRecord } from "../services/managementApi";
@@ -81,6 +81,10 @@ export const ListStaticPaymentsModal = ({
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [collectionSource, setCollectionSource] = useState<{
+        open: boolean;
+        record: ManagementRecord | null;
+    }>({ open: openStaticPaymentsModal, record: managementRecord });
 
     const dateTimeFormatter = useMemo(
         () =>
@@ -93,17 +97,21 @@ export const ListStaticPaymentsModal = ({
 
     const isBusy = persisting || payingIndex !== null;
 
-    useEffect(() => {
-        if (!openStaticPaymentsModal || !managementRecord) {
-            return;
+    // Al abrir el modal, sincroniza la colección del registro durante el render.
+    if (
+        openStaticPaymentsModal !== collectionSource.open ||
+        managementRecord !== collectionSource.record
+    ) {
+        setCollectionSource({ open: openStaticPaymentsModal, record: managementRecord });
+        if (openStaticPaymentsModal && managementRecord) {
+            setCollection(normalizeStaticPayments(managementRecord.staticPayments));
+            setErrorMessage(null);
+            setPayingIndex(null);
+            setPersisting(false);
+            setEditingIndex(null);
+            setDeletingIndex(null);
         }
-        setCollection(normalizeStaticPayments(managementRecord.staticPayments));
-        setErrorMessage(null);
-        setPayingIndex(null);
-        setPersisting(false);
-        setEditingIndex(null);
-        setDeletingIndex(null);
-    }, [openStaticPaymentsModal, managementRecord]);
+    }
 
     const persistCollection = async (next: StaticPayment[]) => {
         if (!managementRecord) {

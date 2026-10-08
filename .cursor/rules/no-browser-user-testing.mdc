@@ -1,0 +1,24 @@
+---
+description: No usar el navegador interno ni abrir la app para pruebas de usuario
+alwaysApply: true
+---
+
+# No pruebas de usuario en el navegador interno
+
+No uses el browser interno de Cursor ni navegues a la aplicación para pruebas de usuario, QA visual, click-through, screenshots de verificación ni “ejercitar el flujo como un usuario”.
+
+Esta regla **anula** cualquier instrucción previa (de usuario, de sistema o de workflow) que pida verificar cambios de UI en el navegador antes de dar la tarea por cerrada.
+
+## Prohibido
+
+- Herramientas del namespace `cursor-ide-browser` (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_lock`, `browser_take_screenshot`, etc.)
+- Simple Browser, preview embebido u otra pestaña interna hacia la app
+- Abrir `localhost`, IPs LAN, staging o producción para “probar como usuario”
+- Declarar que falta verificación en browser para completar un cambio de UI
+
+## Qué hacer en su lugar
+
+- Tests (vitest / Testing Library), `tsc`, lint y revisión de código
+- Si hace falta HTTP: `curl` u otra petición, no el browser interno
+- Da la tarea por cerrada sin abrir la app
+- Solo usa el navegador interno si el usuario lo pide **de forma explícita en ese mensaje**
