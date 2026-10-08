@@ -11,7 +11,7 @@ import { z } from "zod";
  * (`ADDITION#GASTOS#...`) y con el fallback de gastos legacy.
  */
 
-/** Id de la categoría "Gastos": única bloqueada y con cálculo prorrateado por días. */
+/** Id de la categoría "Gastos": única bloqueada para renombrar o borrar. */
 export const EXPENSES_CATEGORY_ID = "GASTOS";
 
 export type DefaultCategory = {

@@ -7,3 +7,4 @@ export * from './getManagementSchema';
 export * from './deleteManagementSchema';
 export * from './updateManagementSchema';
 export * from './categorySchema';
+export * from './categoryConfigSchema';

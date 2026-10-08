@@ -155,7 +155,18 @@ type TranslationSchema = {
     duplicateCategoryError: string;
     noCategories: string;
     lockedCategory: string;
-  }
+  };
+  categorySettings: {
+    openAria: string;
+    title: string;
+    subtitle: string;
+    dailyConfiguration: string;
+    dailyConfigurationDescription: string;
+    loadError: string;
+    saveError: string;
+    missingCategory: string;
+    backToCategory: string;
+  };
   // Abierto: las categorías por defecto se traducen por su `id`; las
   // personalizadas no tienen traducción y muestran su nombre crudo.
   categories: Record<string, string>;
@@ -178,6 +189,17 @@ export const translations: Record<Locale, TranslationSchema> = {
       duplicateCategoryError: "Ya existe una categoria con ese nombre",
       noCategories: "Aun no tienes categorias. Crea la primera.",
       lockedCategory: "Fija",
+    },
+    categorySettings: {
+      openAria: "Configuracion de la categoria",
+      title: "Configuracion de la categoria",
+      subtitle: "Activa o desactiva los comportamientos de esta categoria.",
+      dailyConfiguration: "Configuracion diaria",
+      dailyConfigurationDescription: "Divide el valor disponible y muestra los dias del rango, los dias transcurridos y el disponible diario.",
+      loadError: "No se pudo cargar la configuracion de la categoria.",
+      saveError: "No se pudo guardar la configuracion de la categoria.",
+      missingCategory: "Selecciona una categoria para ver su configuracion.",
+      backToCategory: "Volver al detalle",
     },
     common: {
       language: "Idioma",
@@ -348,6 +370,17 @@ export const translations: Record<Locale, TranslationSchema> = {
       duplicateCategoryError: "A category with that name already exists",
       noCategories: "You have no categories yet. Create the first one.",
       lockedCategory: "Locked",
+    },
+    categorySettings: {
+      openAria: "Category settings",
+      title: "Category settings",
+      subtitle: "Turn this category's behaviors on or off.",
+      dailyConfiguration: "Daily configuration",
+      dailyConfigurationDescription: "Prorates the available amount and shows range days, elapsed days, and the daily available amount.",
+      loadError: "Could not load the category settings.",
+      saveError: "Could not save the category settings.",
+      missingCategory: "Select a category to see its settings.",
+      backToCategory: "Back to detail",
     },
     common: {
       language: "Language",

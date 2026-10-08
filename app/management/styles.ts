@@ -404,6 +404,31 @@ export const initialAmountValuePillSx = {
     minWidth: 0,
 };
 
+export const categorySettingsPageSx = {
+    ...mainStackSx,
+    justifyContent: "flex-start",
+    pt: { xs: 4, sm: 6 },
+    pb: 4,
+};
+
+export const categorySettingsCardSx = {
+    width: "100%",
+    maxWidth: 640,
+    p: { xs: 2, sm: 3 },
+    borderRadius: 2,
+    border: `1px solid ${DARK_BORDER}`,
+    backgroundColor: DARK_SURFACE,
+    gap: 2,
+};
+
+export const categorySettingsSwitchRowSx = {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 2,
+    width: "100%",
+};
+
 export const editRangeButtonSx = {
     color: TEXT_SECONDARY,
     borderColor: DARK_BORDER,

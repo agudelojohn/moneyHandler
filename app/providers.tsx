@@ -5,6 +5,7 @@ import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import type { ReactNode } from "react";
 import { UserSessionProvider } from "./common/userSession";
 import { CategoriesProvider } from "./common/categoriesSession";
+import { CategoryConfigProvider } from "./common/categoryConfigSession";
 import theme from "./theme";
 
 type ProvidersProps = {
@@ -17,7 +18,9 @@ export default function Providers({ children }: ProvidersProps) {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <UserSessionProvider>
-          <CategoriesProvider>{children}</CategoriesProvider>
+          <CategoriesProvider>
+            <CategoryConfigProvider>{children}</CategoryConfigProvider>
+          </CategoriesProvider>
         </UserSessionProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>

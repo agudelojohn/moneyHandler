@@ -3,6 +3,7 @@
 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
   Alert,
   Box,
@@ -40,7 +41,8 @@ import { EditInitialAmountModal } from "./components/EditInitialAmountModal";
 import { EditRangeModal } from "./components/EditRangeModal";
 import { useUserSession, withUserIdHeader } from "../common/userSession";
 import { useCategories } from "../common/categoriesSession";
-import { EXPENSES_CATEGORY_ID } from "@/lib/aws/schemas/common";
+import { useCategoryConfig } from "../common/categoryConfigSession";
+import { buildManagementFigures } from "./managementFigures";
 import ManageCategoriesModal from "./components/ManageCategoriesModal";
 
 // Cambia este valor para emular la fecha de las peticiones en desarrollo.
@@ -162,6 +164,14 @@ function ManagementTopBar({ categoryId }: { categoryId: string }) {
           {t.expenses.changeCategory}
         </Button>
         <Chip label={categoryLabel} sx={Sx.managementTopBarCategoryChipSx} />
+        <IconButton
+          component={Link}
+          href={`/management/settings?categoryId=${encodeURIComponent(categoryId)}`}
+          aria-label={t.categorySettings.openAria}
+          sx={Sx.editRangeButtonSx}
+        >
+          <SettingsOutlinedIcon />
+        </IconButton>
       </Stack>
     </Container>
   );
@@ -171,6 +181,7 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
   const { t } = useI18n();
   const { activeUser } = useUserSession();
   const { categories } = useCategories();
+  const { getSwitches } = useCategoryConfig();
 
   const isDevelopment = process.env.NODE_ENV === "development";
   const currencyFormatter = useMemo(
@@ -197,7 +208,7 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
   const [deductionsCollection, setDeductionsCollection] = useState<Deduction[]>([]);
   const [deletingDeductionIndex, setDeletingDeductionIndex] = useState<number | null>(null);
   const [suggestedRangeDate, setSuggestedRangeDate] = useState<{ startDate: string; endDate: string } | null>(null);
-  const isExpensesCategory = selectedCategoryId === EXPENSES_CATEGORY_ID;
+  const categorySwitches = getSwitches(selectedCategoryId);
 
   const baseRequestDate = useMemo(() => {
     if (isDevelopment && isValidDateString(DEV_INITIAL_REQUEST_DATE)) {
@@ -423,12 +434,17 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
                 const endDate = new Date(record.endDate ?? record.creationDate);
                 const totalDaysInRange = getInclusiveDaysBetween(startDate, endDate);
                 const elapsedDays = getElapsedDaysInRange(referenceDate, startDate, endDate);
-                const dailyAvailableAmount = (record.initialAmount - staticPaymentsTotal) / totalDaysInRange;
-                const availableBeforeDeductions = dailyAvailableAmount * elapsedDays;
-
-                const availableLessDeductions = (availableBeforeDeductions) - deductionTotal;
-                const initialLessDeductions = (record.initialAmount - staticPaymentsTotal) - deductionTotal;
-                const availableAmount = isExpensesCategory ? availableLessDeductions : initialLessDeductions;
+                const figures = buildManagementFigures(
+                  {
+                    initialAmount: record.initialAmount,
+                    staticPaymentsTotal,
+                    deductionTotal,
+                    totalDaysInRange,
+                    elapsedDays,
+                  },
+                  categorySwitches,
+                );
+                const expectedPocket = record.initialAmount - deductionTotal - staticPaymentsPaidTotal;
 
                 return (
                   <Box key={record.id} sx={Sx.containerSx}>
@@ -453,12 +469,12 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
 
                     <Stack spacing={3} sx={Sx.managementRecordBodyStackSx}>
                       <hr />
-                      <Box sx={Sx.mainValuePillSx(availableAmount)}>
+                      <Box sx={Sx.mainValuePillSx(figures.availableAmount)}>
                         <Typography variant="caption" sx={Sx.valueTypographySx}>
                           {t.management.available}
                         </Typography>
-                        <Typography sx={Sx.mainValueTypographySx(availableAmount)}>
-                          {currencyFormatter.format(availableAmount)}
+                        <Typography sx={Sx.mainValueTypographySx(figures.availableAmount)}>
+                          {currencyFormatter.format(figures.availableAmount)}
                         </Typography>
                       </Box>
                       <hr />
@@ -499,24 +515,26 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
                         labelText={t.management.deductions}
                         value={currencyFormatter.format(deductionTotal)}
                       />
-                      {isExpensesCategory && <>
-                        <ItemValueTypography
-                          labelText={t.management.rangeDays}
-                          value={totalDaysInRange.toString()}
-                        />
-                        <ItemValueTypography
-                          labelText={t.management.elapsedDays}
-                          value={elapsedDays.toString()}
-                        />
-                        <ItemValueTypography
-                          labelText={t.management.dailyAvailable}
-                          value={currencyFormatter.format(dailyAvailableAmount)}
-                        />
-                      </>}
+                      {figures.dailyAvailableAmount !== null && figures.totalDaysInRange !== null && figures.elapsedDays !== null && (
+                        <>
+                          <ItemValueTypography
+                            labelText={t.management.rangeDays}
+                            value={figures.totalDaysInRange.toString()}
+                          />
+                          <ItemValueTypography
+                            labelText={t.management.elapsedDays}
+                            value={figures.elapsedDays.toString()}
+                          />
+                          <ItemValueTypography
+                            labelText={t.management.dailyAvailable}
+                            value={currencyFormatter.format(figures.dailyAvailableAmount)}
+                          />
+                        </>
+                      )}
 
                       <ItemValueTypography
                         labelText={t.management.expectedPocket}
-                        value={currencyFormatter.format(record.initialAmount - deductionTotal - staticPaymentsPaidTotal)}
+                        value={currencyFormatter.format(expectedPocket)}
                       />
                     </Stack>
 
