@@ -24,7 +24,8 @@ import {
     utcIsoToLocalCalendarDay,
 } from "../../common/utils/dateHelpers";
 import { useI18n } from "../../i18n/I18nProvider";
-import { createManagementRecord } from "../services/managementApi";
+import { createManagementRecord, getLatestManagementRecord } from "../services/managementApi";
+import { copyStaticPaymentsAsDraft } from "../staticPayments";
 import * as Sx from "../styles";
 import { ManagementRecordCreate, StaticPayment } from "../types";
 import { getCategoryLabel } from "@/app/i18n/translations";
@@ -62,6 +63,8 @@ export const CreateManagementModal = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [useSuggestedRange, setUseSuggestedRange] = useState(false);
     const [staticPayments, setStaticPayments] = useState<StaticPayment[]>([]);
+    const [isCopyingStaticPayments, setIsCopyingStaticPayments] = useState(false);
+    const [copyNotice, setCopyNotice] = useState<string | null>(null);
 
     function updateStaticPaymentAt(index: number, patch: Partial<StaticPayment>) {
         setStaticPayments((prev) =>
@@ -114,6 +117,26 @@ export const CreateManagementModal = ({
             setIsSubmitting(false);
         }
     };
+
+    async function handleCopyLatestStaticPayments() {
+        setIsCopyingStaticPayments(true);
+        setCopyNotice(null);
+
+        try {
+            const latest = await getLatestManagementRecord(categoryId, activeUserId);
+            const payments = Array.isArray(latest?.staticPayments) ? latest.staticPayments : [];
+            if (payments.length === 0) {
+                setCopyNotice(t.management.noPreviousStaticPayments);
+                return;
+            }
+
+            setStaticPayments(copyStaticPaymentsAsDraft(payments));
+        } catch {
+            setCopyNotice(t.management.copyLatestStaticPaymentsError);
+        } finally {
+            setIsCopyingStaticPayments(false);
+        }
+    }
 
     function handleUseSuggestedRange() {
         setUseSuggestedRange(prev => {
@@ -226,6 +249,20 @@ export const CreateManagementModal = ({
                             >
                                 {t.management.addStaticPayment}
                             </Button>
+                            <Button
+                                type="button"
+                                variant="outlined"
+                                onClick={() => {
+                                    void handleCopyLatestStaticPayments();
+                                }}
+                                disabled={isCopyingStaticPayments || isSubmitting}
+                                sx={Sx.outlinedButtonSx}
+                            >
+                                {isCopyingStaticPayments
+                                    ? t.management.copyingLatestStaticPayments
+                                    : t.management.copyLatestStaticPayments}
+                            </Button>
+                            {copyNotice ? <Alert severity="info">{copyNotice}</Alert> : null}
                         </Stack>
                         {createError ? <Alert severity="error">{createError}</Alert> : null}
                     </Stack>

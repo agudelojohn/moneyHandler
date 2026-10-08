@@ -8,4 +8,9 @@ export const getManagementSchema = z.object({
     categoryId: categoryIdSchema,
 });
 
+export const getLatestManagementSchema = z.object({
+    categoryId: categoryIdSchema,
+});
+
 export type GetManagementSchema = z.infer<typeof getManagementSchema>;
+export type GetLatestManagementSchema = z.infer<typeof getLatestManagementSchema>;

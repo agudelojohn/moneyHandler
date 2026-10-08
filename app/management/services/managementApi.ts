@@ -189,6 +189,28 @@ export async function updateRangeInManagementRecord(
     return response.json();
 }
 
+export async function getLatestManagementRecord(
+    categoryId: string,
+    userId: string,
+): Promise<ManagementRecord | null> {
+    const response = await fetch(
+        `/api/management?latest=true&categoryId=${encodeURIComponent(categoryId)}`,
+        { headers: withUserIdHeader(userId) },
+    );
+
+    if (!response.ok) {
+        const errorData: { error?: string } = await response.json().catch(() => ({}));
+        throw new Error(errorData.error ?? "No se pudieron copiar los pagos fijos");
+    }
+
+    const data: unknown = await response.json();
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        return null;
+    }
+
+    return data as ManagementRecord;
+}
+
 export async function createManagementRecord(
     managementObject: ManagementRecordCreate,
     userId: string

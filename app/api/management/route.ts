@@ -10,6 +10,7 @@ import { db, TABLE_NAME } from "../../../lib/aws/dynamo";
 import { NextResponse } from "next/server";
 import {
     deleteManagementSchema,
+    getLatestManagementSchema,
     getManagementSchema,
     managementSchema,
     updateManagementSchema
@@ -23,6 +24,47 @@ const buildPK = (userId: string, year: number) => `MANAGEMENT#${userId}#${year}`
 // en mayúsculas, preservando la compatibilidad con los SK históricos.
 const buildSK = (date?: Date | null, categoryId?: string) => `${process.env.NEXT_PUBLIC_APP_ENV === "production" ? "" : "DEV#"}ADDITION#${(categoryId ?? "OTROS")}#${date ? date.toISOString() : new Date().toISOString()}`;
 const buildUniqueID = () => randomBytes(16).toString("hex");
+
+function normalizePaymentList(value: unknown) {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value.map((entry) => {
+        const payment = entry && typeof entry === "object" ? entry as Record<string, unknown> : {};
+        return {
+            ...payment,
+            isCredit: Boolean(payment.isCredit),
+            isPayed: Boolean(payment.isPayed),
+        };
+    });
+}
+
+function normalizeManagementItem(item: Record<string, unknown>) {
+    return {
+        ...item,
+        deductions: normalizePaymentList(item.deductions),
+        staticPayments: normalizePaymentList(item.staticPayments),
+    };
+}
+
+async function queryLatestManagementItem(userId: string, year: number, categoryId: string) {
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
+    const result = await db.send(new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: "PK = :pk AND SK BETWEEN :sk AND :sk2",
+        ExpressionAttributeValues: {
+            ":pk": buildPK(userId, year),
+            ":sk": buildSK(startOfYear, categoryId),
+            ":sk2": buildSK(endOfYear, categoryId),
+        },
+        ScanIndexForward: false,
+        Limit: 1,
+    }));
+
+    return result.Items?.[0] ?? null;
+}
 
 function isDateInRange(date: Date, startDate: Date, endDate: Date): boolean {
     const instant = date.getTime();
@@ -141,6 +183,27 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const dateRaw = searchParams.get("date");
     const categoryIdRaw = searchParams.get("categoryId");
+
+    if (searchParams.get("latest") === "true") {
+        const parsedLatest = getLatestManagementSchema.safeParse({ categoryId: categoryIdRaw });
+        if (!parsedLatest.success) {
+            return NextResponse.json(
+                { errors: parsedLatest.error.flatten().fieldErrors },
+                { status: 400 }
+            );
+        }
+
+        const year = new Date().getUTCFullYear();
+        const currentYearItem = await queryLatestManagementItem(userId, year, parsedLatest.data.categoryId);
+        const latestItem = currentYearItem
+            ?? await queryLatestManagementItem(userId, year - 1, parsedLatest.data.categoryId);
+
+        return NextResponse.json(
+            latestItem ? normalizeManagementItem(latestItem as Record<string, unknown>) : null,
+            { status: 200 },
+        );
+    }
+
     const parsed = getManagementSchema.safeParse({ date: dateRaw, categoryId: categoryIdRaw });
 
     if (!parsed.success) {
@@ -174,23 +237,7 @@ export async function GET(request: Request) {
             const endDate = parseDatePreservingCalendarDay(endDateRaw);
             return isDateInRange(requestedDate, startDate, endDate);
         })
-        .map((item) => ({
-            ...item,
-            deductions: Array.isArray(item.deductions)
-                ? item.deductions.map((deduction) => ({
-                    ...deduction,
-                    isCredit: Boolean(deduction.isCredit),
-                    isPayed: Boolean(deduction.isPayed),
-                }))
-                : [],
-            staticPayments: Array.isArray(item.staticPayments)
-                ? item.staticPayments.map((staticPayment) => ({
-                    ...staticPayment,
-                    isCredit: Boolean(staticPayment.isCredit),
-                    isPayed: Boolean(staticPayment.isPayed),
-                }))
-                : [],
-        }));
+        .map((item) => normalizeManagementItem(item as Record<string, unknown>));
 
     return NextResponse.json(filteredItems, { status: 200 });
 }

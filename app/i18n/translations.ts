@@ -90,6 +90,10 @@ type TranslationSchema = {
     editInitialAmountAria: string;
     editInitialAmountTitle: string;
     updateInitialAmountError: string;
+    copyLatestStaticPayments: string;
+    copyingLatestStaticPayments: string;
+    noPreviousStaticPayments: string;
+    copyLatestStaticPaymentsError: string;
   };
   expenses: {
     pageTitle: string;
@@ -293,6 +297,10 @@ export const translations: Record<Locale, TranslationSchema> = {
       editInitialAmountAria: "Editar monto inicial",
       editInitialAmountTitle: "Editar monto inicial",
       updateInitialAmountError: "No se pudo actualizar el monto inicial.",
+      copyLatestStaticPayments: "Copiar ultimos pagos fijos",
+      copyingLatestStaticPayments: "Copiando...",
+      noPreviousStaticPayments: "No hay pagos fijos guardados en el ultimo registro.",
+      copyLatestStaticPaymentsError: "No se pudieron copiar los pagos fijos.",
     },
     expenses: {
       pageTitle: "Historial de precios",
@@ -475,6 +483,10 @@ export const translations: Record<Locale, TranslationSchema> = {
       editInitialAmountAria: "Edit initial amount",
       editInitialAmountTitle: "Edit initial amount",
       updateInitialAmountError: "The initial amount could not be updated.",
+      copyLatestStaticPayments: "Copy latest static payments",
+      copyingLatestStaticPayments: "Copying...",
+      noPreviousStaticPayments: "The latest record has no static payments.",
+      copyLatestStaticPaymentsError: "Could not copy the static payments.",
     },
     expenses: {
       pageTitle: "Price history",
