@@ -1,38 +1,51 @@
 "use client";
 import Link from "next/link";
-import { Alert, Button, Stack, Typography } from "@mui/material";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Alert, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { getSoloHomeFeatureRoute, isHomeFeatureEnabled } from "@/lib/config/featureFlags";
 import { useI18n } from "./i18n/I18nProvider";
 import { useUserSession } from "./common/userSession";
 import { APP_USER_PROFILES } from "./common/userProfiles";
-import { COLORS } from "./theme";
+import * as Sx from "./styles";
 
 export default function Home() {
   const { t } = useI18n();
+  const router = useRouter();
   const { activeUser, setActiveUserByKey } = useUserSession();
-  const { DARK_BG, TEXT_PRIMARY, TEXT_SECONDARY, BLUE_DEEP, BLUE_ACCENT, DARK_SURFACE, DARK_BORDER } = COLORS;
+  const showManagement = isHomeFeatureEnabled("management");
+  const showExpenses = isHomeFeatureEnabled("expenses");
+  const hasActiveModules = showManagement || showExpenses;
+  const soloRoute = getSoloHomeFeatureRoute();
+  const shouldRedirectToSoloModule = Boolean(activeUser && soloRoute);
+  const moduleButtonVisibilitySx = activeUser ? Sx.moduleButtonVisibleSx : Sx.moduleButtonHiddenSx;
+
+  useEffect(() => {
+    if (!activeUser || !soloRoute) {
+      return;
+    }
+    router.replace(soloRoute);
+  }, [activeUser, router, soloRoute]);
+
+  if (shouldRedirectToSoloModule) {
+    return (
+      <Stack sx={Sx.loadingStackSx}>
+        <CircularProgress sx={Sx.loadingProgressSx} />
+      </Stack>
+    );
+  }
 
   return (
-    <Stack
-      spacing={3}
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        px: 2,
-        backgroundColor: DARK_BG,
-        color: TEXT_PRIMARY,
-      }}
-    >
-      <Typography variant="h3" sx={{ fontWeight: 700, textAlign: "center", color: TEXT_PRIMARY }}>
+    <Stack spacing={3} sx={Sx.pageStackSx}>
+      <Typography variant="h3" sx={Sx.titleSx}>
         {t.home.title}
       </Typography>
-      <Typography sx={{ color: TEXT_SECONDARY, textAlign: "center" }}>
+      <Typography sx={Sx.subtitleSx}>
         {t.home.subtitle}
       </Typography>
       {!activeUser ? (
-        <Stack spacing={1.5} sx={{ width: "100%", maxWidth: 320 }}>
-          <Alert severity="info" sx={{ width: "100%" }}>
+        <Stack spacing={1.5} sx={Sx.userStackSx}>
+          <Alert severity="info" sx={Sx.fullWidthAlertSx}>
             Selecciona el usuario con el que quieres trabajar.
           </Alert>
           {APP_USER_PROFILES.map((profile) => (
@@ -42,63 +55,57 @@ export default function Home() {
               size="large"
               fullWidth
               onClick={() => setActiveUserByKey(profile.key)}
-              sx={{
-                backgroundColor: BLUE_DEEP,
-                color: TEXT_PRIMARY,
-                border: "1px solid",
-                borderColor: BLUE_DEEP,
-                "&:hover": { backgroundColor: "#1e40af" },
-              }}
+              sx={Sx.containedButtonSx}
             >
               {profile.label}
             </Button>
           ))}
         </Stack>
       ) : (
-        <Alert severity="success" sx={{ width: "100%", maxWidth: 320 }}>
+        <Alert severity="success" sx={Sx.activeUserAlertSx}>
           Usuario activo: {activeUser.label}
         </Alert>
       )}
-      <Stack spacing={2} sx={{ width: "100%", maxWidth: 320 }}>
-        <Link href="/management" style={{ textDecoration: "none" }}>
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            disabled={!activeUser}
-            sx={{
-              display: activeUser ? "block" : "none",
-              backgroundColor: BLUE_DEEP,
-              color: TEXT_PRIMARY,
-              border: "1px solid",
-              borderColor: BLUE_DEEP,
-              "&:hover": { backgroundColor: "#1e40af" },
-            }}
-          >
-            {t.home.managementButton}
-          </Button>
-        </Link>
-        <Link href="/expenses" style={{ textDecoration: "none" }}>
-          <Button
-            variant="outlined"
-            size="large"
-            fullWidth
-            disabled={!activeUser}
-            sx={{
-              display: activeUser ? "block" : "none",
-              backgroundColor: DARK_SURFACE,
-              color: BLUE_ACCENT,
-              borderColor: DARK_BORDER,
-              "&:hover": {
-                borderColor: BLUE_ACCENT,
-                backgroundColor: "#0b1220",
-              },
-            }}
-          >
-            {t.home.expensesButton}
-          </Button>
-        </Link>
-      </Stack>
+      {hasActiveModules && !soloRoute ? (
+        <Stack spacing={2} sx={Sx.moduleButtonsStackSx}>
+          {showManagement && (
+            <Link href="/management" style={{ textDecoration: "none" }}>
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                disabled={!activeUser}
+                sx={[Sx.containedButtonSx, moduleButtonVisibilitySx]}
+              >
+                {t.home.managementButton}
+              </Button>
+            </Link>
+          )}
+          {showExpenses && (
+            <Link href="/expenses" style={{ textDecoration: "none" }}>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth
+                disabled={!activeUser}
+                sx={[Sx.expensesButtonSx, moduleButtonVisibilitySx]}
+              >
+                {t.home.expensesButton}
+              </Button>
+            </Link>
+          )}
+        </Stack>
+      ) : null}
+      {!hasActiveModules ? (
+        <Stack spacing={1} sx={Sx.emptyStateSx}>
+          <Typography variant="h6" sx={Sx.emptyStateTitleSx}>
+            {t.home.noActiveModules}
+          </Typography>
+          <Typography sx={Sx.emptyStateDescriptionSx}>
+            {t.home.noActiveModulesDescription}
+          </Typography>
+        </Stack>
+      ) : null}
     </Stack>
   );
 }

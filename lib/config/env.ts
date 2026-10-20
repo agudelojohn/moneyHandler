@@ -7,6 +7,8 @@ const envSchema = z.object({
     AWS_REGION: z.string(),
     AWS_TABLE_NAME_DEV: z.string(),
     NEXT_PUBLIC_APP_ENV: z.string(),
+    NEXT_PUBLIC_FEATURE_MANAGEMENT: z.string(),
+    NEXT_PUBLIC_FEATURE_EXPENSES: z.string(),
 })
 
 export const env = envSchema.parse(process.env);

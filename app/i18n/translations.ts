@@ -17,6 +17,8 @@ type TranslationSchema = {
     subtitle: string;
     managementButton: string;
     expensesButton: string;
+    noActiveModules: string;
+    noActiveModulesDescription: string;
   };
   management: {
     staticPayments: string;
@@ -219,6 +221,8 @@ export const translations: Record<Locale, TranslationSchema> = {
       subtitle: "Selecciona el modulo que quieres abrir.",
       managementButton: "Gestion de dinero",
       expensesButton: "Historial de precios",
+      noActiveModules: "No hay módulos activos.",
+      noActiveModulesDescription: "Ninguna funcionalidad está habilitada en este momento.",
     },
     management: {
       staticPayments: "Pagos fijos",
@@ -406,6 +410,8 @@ export const translations: Record<Locale, TranslationSchema> = {
       subtitle: "Select the module you want to open.",
       managementButton: "Money management",
       expensesButton: "Price history",
+      noActiveModules: "There are no active modules.",
+      noActiveModulesDescription: "No features are enabled right now.",
     },
     management: {
       staticPayments: "Static payments",
