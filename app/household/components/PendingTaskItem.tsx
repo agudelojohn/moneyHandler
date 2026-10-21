@@ -26,7 +26,7 @@ export function PendingTaskItem({
   return (
     <Stack sx={Sx.pendingItemRowSx}>
       <Typography sx={Sx.descriptionSx}>{task.description}</Typography>
-      <Stack direction="row" spacing={0.5}>
+      <Stack spacing={0.5} sx={Sx.pendingActionsRowSx}>
         <IconButton
           aria-label={t.household.markDoneAria}
           onClick={() => onMarkDone(task)}

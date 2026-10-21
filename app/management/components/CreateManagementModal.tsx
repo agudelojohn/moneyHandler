@@ -172,21 +172,21 @@ export const CreateManagementModal = ({
                             sx={Sx.moneyAmountTextFieldSx}
                         />
                         {suggestedRangeDate ? (
-                            <div style={{ display: "flex", justifyContent: "space-between", paddingLeft: 16 }}>
-                                <div style={{ display: "flex", alignItems: "start", flexDirection: "column", gap: 6 }}>
+                            <Stack sx={Sx.suggestedRangeRowSx}>
+                                <Stack sx={Sx.suggestedRangeDatesSx}>
                                     <Typography variant="h6" color="text.secondary">
                                         {t.management.suggestedRangeDate}:{" "}
                                     </Typography>
                                     <Typography variant="subtitle1" color="text.secondary">
                                         {`${formatDateWithMonthName(parseStoredDateValue(suggestedRangeDate.startDate))} - ${formatDateWithMonthName(parseStoredDateValue(suggestedRangeDate.endDate))}`}
                                     </Typography>
-                                </div>
+                                </Stack>
                                 <FormControlLabel
                                     control={<Checkbox checked={useSuggestedRange} onChange={handleUseSuggestedRange} />}
                                     label={t.management.useSuggestedRange}
-                                    sx={{ m: 0, ml: -5 }}
+                                    sx={Sx.suggestedRangeCheckboxSx}
                                 />
-                            </div>
+                            </Stack>
                         ) : null}
                         <TextField
                             label={t.management.rangeStartDate}

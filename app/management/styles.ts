@@ -14,13 +14,14 @@ const {
 
 export const actionButtonsStackSx = {
     display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    flexDirection: { xs: "column", sm: "row" },
+    justifyContent: { xs: "stretch", sm: "flex-end" },
+    alignItems: { xs: "stretch", sm: "center" },
     mb: 2,
-    gap: 3,
+    gap: { xs: 1.5, sm: 3 },
     textAlign: 'center',
     alignContent: 'center',
+    width: "100%",
 }
 
 export const dialogSx = {
@@ -62,7 +63,9 @@ export const valuePillSx = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 1,
     width: "100%",
+    minWidth: 0,
     px: 1.5,
     py: 0.75,
     borderRadius: 999,
@@ -77,6 +80,8 @@ export const mainStackSx = {
     px: 2,
     backgroundColor: DARK_BG,
     color: TEXT_PRIMARY,
+    minWidth: 0,
+    overflowX: "hidden",
 }
 
 export const titleSx = { fontWeight: 700, textAlign: "center", color: TEXT_PRIMARY, paddingTop: { xs: 10, sm: 2 } }
@@ -86,6 +91,10 @@ export const containerSx = {
     border: `1px solid ${BORDER_COLOR}`,
     borderRadius: 2,
     p: 2,
+    width: "100%",
+    maxWidth: 760,
+    boxSizing: "border-box",
+    minWidth: 0,
 }
 
 export const mainValuePillSx = (availableAmount: number) => {
@@ -112,7 +121,7 @@ export const mainValueTypographySx = (availableAmount: number) => {
 
 export const itemLabelSx = { color: TEXT_SECONDARY, fontSize: 15 }
 
-export const itemValueSx = { color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right" }
+export const itemValueSx = { color: TEXT_PRIMARY, fontWeight: 600, textAlign: "right", wordBreak: "break-word", minWidth: 0 }
 
 /** Botón primario sin margen (top bar, category gate, etc.) */
 export const primaryContainedButtonSx = {
@@ -270,6 +279,29 @@ export const confirmDeleteButtonSx = {
 
 export const createDeductionStackSx = { mt: 1 };
 
+export const suggestedRangeRowSx = {
+    display: "flex",
+    flexDirection: { xs: "column", sm: "row" },
+    justifyContent: "space-between",
+    alignItems: { xs: "stretch", sm: "flex-start" },
+    gap: 1.5,
+    pl: { xs: 0, sm: 2 },
+    minWidth: 0,
+};
+
+export const suggestedRangeDatesSx = {
+    display: "flex",
+    alignItems: "flex-start",
+    flexDirection: "column",
+    gap: 0.75,
+    minWidth: 0,
+};
+
+export const suggestedRangeCheckboxSx = {
+    m: 0,
+    ml: { xs: 0, sm: 1 },
+};
+
 export const createManagementRecordButtonSx = {
     ...primaryContainedButtonSx,
 };
@@ -346,6 +378,7 @@ export const managementTopBarContainerSx = {
     left: 0,
     zIndex: 10,
     p: 2,
+    pr: { xs: 12, sm: 18 },
     backgroundColor: DARK_BG,
 };
 
@@ -380,15 +413,20 @@ export const dateTypographyLabelSx = {
 
 export const rangeDateRowSx = {
     display: "flex",
-    alignItems: "center",
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: 1,
     mt: 2,
     mb: 1,
+    minWidth: 0,
+    width: "100%",
 };
 
 export const rangeDateLabelSx = {
     color: TEXT_SECONDARY,
     flex: 1,
+    minWidth: 0,
+    wordBreak: "break-word",
 };
 
 export const initialAmountRowSx = {
@@ -396,6 +434,7 @@ export const initialAmountRowSx = {
     alignItems: "center",
     gap: 1,
     width: "100%",
+    minWidth: 0,
 };
 
 export const initialAmountValuePillSx = {
@@ -407,7 +446,7 @@ export const initialAmountValuePillSx = {
 export const categorySettingsPageSx = {
     ...mainStackSx,
     justifyContent: "flex-start",
-    pt: { xs: 4, sm: 6 },
+    pt: { xs: 8, sm: 6 },
     pb: 4,
 };
 
@@ -423,7 +462,8 @@ export const categorySettingsCardSx = {
 
 export const categorySettingsSwitchRowSx = {
     display: "flex",
-    alignItems: "flex-start",
+    flexDirection: { xs: "column", sm: "row" },
+    alignItems: { xs: "stretch", sm: "flex-start" },
     justifyContent: "space-between",
     gap: 2,
     width: "100%",
@@ -481,10 +521,11 @@ export const managementViewDeductionsButtonSx = {
 
 export const staticPaymentsSummaryGridSx = {
     display: "grid",
-    gridTemplateColumns: "5fr 1fr",
+    gridTemplateColumns: { xs: "1fr", sm: "5fr 1fr" },
     alignItems: "center",
-    justifyItems: "center",
+    justifyItems: { xs: "stretch", sm: "center" },
     gap: 2,
+    width: "100%",
 };
 
 export const staticPaymentsViewButtonSx = {
@@ -629,14 +670,18 @@ export const staticPaymentPendingActionButtonSx = {
 export const categoriesManagerContentStackSx = { mt: 1 };
 
 export const categoriesManagerCreateRowSx = {
-    alignItems: "center",
+    flexDirection: { xs: "column", sm: "row" },
+    alignItems: { xs: "stretch", sm: "center" },
+    gap: 1,
+    width: "100%",
 };
 
 export const categoriesManagerCreateButtonSx = {
     ...primaryContainedButtonSx,
     height: 56,
-    whiteSpace: "nowrap",
-    paddingX: 10
+    whiteSpace: { xs: "normal", sm: "nowrap" },
+    px: { xs: 2, sm: 3 },
+    width: { xs: "100%", sm: "auto" },
 };
 
 export const categoriesManagerLoadingProgressSx = {
@@ -650,12 +695,14 @@ export const categoriesManagerEmptySx = {
 };
 
 export const categoriesManagerCategoryRowSx = {
-    alignItems: "center",
+    flexDirection: { xs: "column", sm: "row" },
+    alignItems: { xs: "stretch", sm: "center" },
     gap: 1,
     border: `1px solid ${BORDER_COLOR}`,
     borderRadius: 2,
     p: 1.5,
     backgroundColor: DARK_SURFACE,
+    minWidth: 0,
 };
 
 export const categoriesManagerCategoryNameSx = {
@@ -667,6 +714,8 @@ export const categoriesManagerCategoryNameSx = {
 
 export const categoriesManagerRowActionsSx = {
     flexDirection: "row",
+    flexShrink: 0,
+    justifyContent: { xs: "flex-end", sm: "flex-start" },
 };
 
 export const categoriesManagerIconButtonSx = {

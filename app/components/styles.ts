@@ -1,6 +1,6 @@
 import { COLORS } from "../theme";
 
-const { TEXT_PRIMARY, TEXT_SECONDARY, BORDER_COLOR, BLUE_DEEP, DARK_SURFACE, DARK_BORDER } = COLORS;
+const { TEXT_PRIMARY, TEXT_SECONDARY, BORDER_COLOR, BLUE_DEEP, BLUE_ACCENT, DARK_SURFACE, DARK_BORDER } = COLORS;
 
 export const textFieldSx = {
     "& .MuiInputBase-input": { color: TEXT_PRIMARY },
@@ -45,7 +45,8 @@ export const staticPaymentDescriptionTextFieldSx = {
 
 export const moneyAmountTextFieldSx = {
     ...textFieldSx,
-    minWidth: 168,
+    minWidth: { xs: 0, sm: 168 },
+    width: { xs: "100%", sm: "auto" },
 };
 
 export const staticPaymentAmountTextFieldSx = {
@@ -77,4 +78,43 @@ export const developmentModeLabelTextSx = {
     fontWeight: 700,
     letterSpacing: 0.4,
     textTransform: "uppercase",
+};
+
+export const languageSwitcherStackSx = {
+    position: "fixed",
+    top: 12,
+    right: 12,
+    zIndex: 2000,
+    alignItems: "center",
+    px: { xs: 1, sm: 1.5 },
+    py: 1,
+    borderRadius: 2,
+    border: "1px solid",
+    borderColor: DARK_BORDER,
+    backgroundColor: DARK_SURFACE,
+    maxWidth: { xs: "calc(100vw - 24px)", sm: "none" },
+};
+
+export const languageSwitcherCaptionSx = {
+    color: TEXT_SECONDARY,
+    fontWeight: 700,
+    display: { xs: "none", sm: "block" },
+};
+
+export const languageSwitcherButtonSx = {
+    minWidth: 44,
+    color: TEXT_PRIMARY,
+    borderColor: BLUE_ACCENT,
+};
+
+export const languageSwitcherButtonActiveSx = {
+    ...languageSwitcherButtonSx,
+    backgroundColor: BLUE_ACCENT,
+    "&:hover": { backgroundColor: "#3b82f6" },
+};
+
+export const languageSwitcherButtonInactiveSx = {
+    ...languageSwitcherButtonSx,
+    backgroundColor: "transparent",
+    "&:hover": { backgroundColor: "#0b1220" },
 };

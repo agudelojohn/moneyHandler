@@ -103,9 +103,7 @@ export default function Home() {
                 fullWidth
                 disabled={!activeUser}
                 sx={[Sx.containedButtonSx, moduleButtonVisibilitySx]}
-              >
-                {t.home.householdButton}
-              </Button>
+              >{t.home.householdButton}</Button>
             </Link>
           )}
         </Stack>

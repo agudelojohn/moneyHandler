@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const { userId, errorResponse } = getUserIdFromRequest(request);
   if (errorResponse || !userId) {
-    return errorResponse;
+    return errorResponse ?? NextResponse.json({ error: "Usuario inválido o no seleccionado" }, { status: 401 });
   }
 
   try {
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const { userId, errorResponse } = getUserIdFromRequest(request);
   if (errorResponse || !userId) {
-    return errorResponse;
+    return errorResponse ?? NextResponse.json({ error: "Usuario inválido o no seleccionado" }, { status: 401 });
   }
 
   try {
