@@ -20,11 +20,13 @@ export const pageStackSx = {
   color: TEXT_PRIMARY,
   px: { xs: 2, sm: 4 },
   py: 2,
+  pt: { xs: 8, sm: 2 },
 };
 
 export const topBarContainerSx = {
   width: "100%",
   mb: 3,
+  pr: { xs: 12, sm: 2 },
 };
 
 export const backButtonSx = {
@@ -43,7 +45,8 @@ export const contentStackSx = {
   width: "100%",
   maxWidth: 720,
   mx: "auto",
-  pb: 6,
+  pb: { xs: 10, sm: 6 },
+  minWidth: 0,
 };
 
 export const createRowSx = {
@@ -56,8 +59,9 @@ export const createRowSx = {
 export const addButtonSx = {
   backgroundColor: BLUE_DEEP,
   color: TEXT_PRIMARY,
-  whiteSpace: "nowrap",
+  whiteSpace: { xs: "normal", sm: "nowrap" },
   height: 56,
+  width: { xs: "100%", sm: "auto" },
   "&:hover": { backgroundColor: "#1e40af" },
 };
 
@@ -88,13 +92,20 @@ export const emptyStateSx = {
 };
 
 export const pendingItemRowSx = {
-  flexDirection: "row",
-  alignItems: "center",
+  flexDirection: { xs: "column", sm: "row" },
+  alignItems: { xs: "stretch", sm: "center" },
   justifyContent: "space-between",
   gap: 1,
   py: 1,
+  minWidth: 0,
   borderBottom: `1px solid ${DARK_BORDER}`,
   "&:last-child": { borderBottom: "none" },
+};
+
+export const pendingActionsRowSx = {
+  flexDirection: "row",
+  flexShrink: 0,
+  justifyContent: { xs: "flex-end", sm: "flex-start" },
 };
 
 export const doneItemRowSx = {
@@ -106,6 +117,8 @@ export const doneItemRowSx = {
 export const descriptionSx = {
   color: TEXT_PRIMARY,
   flex: 1,
+  minWidth: 0,
+  wordBreak: "break-word",
 };
 
 export const doneMetaSx = {

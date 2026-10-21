@@ -471,7 +471,7 @@ export default function ExpensesDashboard() {
         sx={{
           minHeight: "100vh",
           py: { xs: 8 },
-          px: { xs: 6, sm: 15 },
+          px: { xs: 2, sm: 6, md: 15 },
           backgroundColor: DARK_BG,
           color: TEXT_PRIMARY,
         }}
@@ -492,7 +492,7 @@ export default function ExpensesDashboard() {
         margin: 0,
         minHeight: "100vh",
         py: { xs: 8 },
-        px: { xs: 6, sm: 15 },
+        px: { xs: 2, sm: 6, md: 15 },
         backgroundColor: DARK_BG,
         color: TEXT_PRIMARY,
         "& .MuiInputLabel-root": { color: TEXT_SECONDARY },
@@ -832,6 +832,7 @@ export default function ExpensesDashboard() {
                   <TableContainer
                     sx={{
                       maxHeight: 380,
+                      overflowX: "auto",
                       border: "1px solid",
                       borderColor: DARK_BORDER,
                       borderRadius: 2,

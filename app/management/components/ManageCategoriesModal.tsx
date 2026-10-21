@@ -150,7 +150,7 @@ const ManageCategoriesModal = ({ open, onClose }: ManageCategoriesModalProps) =>
             <DialogTitle>{t.categoriesManager.manageCategories}</DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={Sx.categoriesManagerContentStackSx}>
-                    <Stack direction="row" spacing={1} sx={Sx.categoriesManagerCreateRowSx}>
+                    <Stack spacing={1} sx={Sx.categoriesManagerCreateRowSx}>
                         <TextField
                             label={t.categoriesManager.newCategoryNameLabel}
                             value={newName}
@@ -179,7 +179,6 @@ const ManageCategoriesModal = ({ open, onClose }: ManageCategoriesModalProps) =>
                         categories.map((category) => (
                             <Stack
                                 key={category.id}
-                                direction="row"
                                 spacing={1}
                                 sx={Sx.categoriesManagerCategoryRowSx}
                             >

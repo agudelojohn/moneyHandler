@@ -16,6 +16,8 @@ export const pageStackSx = {
   justifyContent: "center",
   alignItems: "center",
   px: 2,
+  pt: { xs: 8, sm: 2 },
+  pb: { xs: 8, sm: 2 },
   backgroundColor: DARK_BG,
   color: TEXT_PRIMARY,
 };
