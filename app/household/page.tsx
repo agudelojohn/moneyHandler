@@ -181,7 +181,14 @@ export default function HouseholdPage() {
         ) : (
           <>
             {error ? <Alert severity="error">{error}</Alert> : null}
-            <Stack sx={Sx.createRowSx}>
+            <Stack
+              component="form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleCreate();
+              }}
+              sx={Sx.createRowSx}
+            >
               <TextField
                 label={t.household.descriptionLabel}
                 value={newDescription}
@@ -190,8 +197,8 @@ export default function HouseholdPage() {
                 sx={Sx.textFieldSx}
               />
               <Button
+                type="submit"
                 variant="contained"
-                onClick={() => void handleCreate()}
                 disabled={isSaving}
                 sx={Sx.addButtonSx}
               >

@@ -49,6 +49,22 @@ describe("HouseholdPage", () => {
             json: async () => ({ ...pendingTask, status: "done", doneBy: "6b7b7b40" }),
           });
         }
+        if (url.includes("/api/household-tasks") && init?.method === "POST") {
+          const body = JSON.parse(String(init.body ?? "{}")) as { description?: string };
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              id: "created-1",
+              description: body.description ?? "",
+              creationDate: "2026-01-04T00:00:00.000Z",
+              createdBy: "6b7b7b40",
+              updateDate: "2026-01-04T00:00:00.000Z",
+              lastUpdatedBy: "6b7b7b40",
+              doneBy: null,
+              status: "pending",
+            }),
+          });
+        }
         return Promise.resolve({
           ok: true,
           json: async () => [],
@@ -105,5 +121,26 @@ describe("HouseholdPage", () => {
       "href",
       "/",
     );
+  });
+
+  it("crea una tarea al presionar Enter en la descripcion", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<HouseholdPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(pendingTask.description)).toBeInTheDocument();
+    });
+
+    await user.type(screen.getByLabelText(t.descriptionLabel), "Comprar pan{Enter}");
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/household-tasks",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ description: "Comprar pan" }),
+        }),
+      );
+    });
   });
 });
