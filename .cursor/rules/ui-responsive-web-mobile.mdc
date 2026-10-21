@@ -1,0 +1,40 @@
+---
+description: Toda UI nueva o tocada debe funcionar en web y en móvil (breakpoints MUI en styles.ts)
+globs:
+  - "**/*.tsx"
+  - "**/styles.ts"
+alwaysApply: false
+---
+
+# UI responsive: web y móvil
+
+Cada **componente o pantalla nueva** (y cualquier cambio de layout/estilos en TSX) debe quedar usable tanto en **viewport de escritorio** como en **móvil**. No diseñar solo para pantalla ancha.
+
+Los breakpoints van en el `styles.ts` del módulo (`sx={Sx.…}`), no como `sx={{ … }}` inline.
+
+## Qué cubrir
+
+- En `xs`, apilar en columna y estirar al 100% del ancho; en `sm`+ se puede pasar a fila.
+- Evitar anchos fijos, `minWidth` grandes o filas de acciones que desborden ~360px.
+- Botones y filas táctiles: `fullWidth` o alto suficiente en móvil; iconos con `aria-label`.
+- Modales, tablas y stacks: scroll o wrap en pantallas chicas, no overflow horizontal.
+- Elementos `fixed` (barras, chips) no deben tapar acciones principales en móvil.
+
+## Referencia
+
+```ts
+// ✅ GOOD — app/components/styles.ts
+flexDirection: { xs: "column", sm: "row" },
+alignItems: { xs: "stretch", sm: "center" },
+width: { xs: "100%", sm: "auto" },
+```
+
+```ts
+// ❌ BAD
+flexDirection: "row",
+minWidth: 720,
+```
+
+## Comprobación
+
+Revisar los `sx` con `xs`/`sm` en código. **No** abrir el browser interno para “probar como usuario” (regla de no pruebas en navegador).

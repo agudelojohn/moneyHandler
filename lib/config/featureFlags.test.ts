@@ -1,6 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getSoloHomeFeatureRoute, isHomeFeatureEnabled } from "./featureFlags";
 
+function stubAllHomeFlags(values: {
+  management: string;
+  expenses: string;
+  household: string;
+}) {
+  vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", values.management);
+  vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", values.expenses);
+  vi.stubEnv("NEXT_PUBLIC_FEATURE_HOUSEHOLD", values.household);
+}
+
 describe("isHomeFeatureEnabled", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -16,14 +26,19 @@ describe("isHomeFeatureEnabled", () => {
     expect(isHomeFeatureEnabled("expenses")).toBe(true);
   });
 
+  it("enciende household por defecto si la variable no está definida", () => {
+    delete process.env.NEXT_PUBLIC_FEATURE_HOUSEHOLD;
+    expect(isHomeFeatureEnabled("household")).toBe(true);
+  });
+
   it("enciende la flag cuando vale true", () => {
     vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "true");
     expect(isHomeFeatureEnabled("management")).toBe(true);
   });
 
   it("apaga la flag cuando vale false", () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "false");
-    expect(isHomeFeatureEnabled("expenses")).toBe(false);
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_HOUSEHOLD", "false");
+    expect(isHomeFeatureEnabled("household")).toBe(false);
   });
 });
 
@@ -33,26 +48,27 @@ describe("getSoloHomeFeatureRoute", () => {
   });
 
   it("devuelve null si no hay módulos activos", () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "false");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "false");
+    stubAllHomeFlags({ management: "false", expenses: "false", household: "false" });
     expect(getSoloHomeFeatureRoute()).toBeNull();
   });
 
   it("devuelve /management si solo management está activo", () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "true");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "false");
+    stubAllHomeFlags({ management: "true", expenses: "false", household: "false" });
     expect(getSoloHomeFeatureRoute()).toBe("/management");
   });
 
   it("devuelve /expenses si solo expenses está activo", () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "false");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "true");
+    stubAllHomeFlags({ management: "false", expenses: "true", household: "false" });
     expect(getSoloHomeFeatureRoute()).toBe("/expenses");
   });
 
+  it("devuelve /household si solo household está activo", () => {
+    stubAllHomeFlags({ management: "false", expenses: "false", household: "true" });
+    expect(getSoloHomeFeatureRoute()).toBe("/household");
+  });
+
   it("devuelve null si hay más de un módulo activo", () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "true");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "true");
+    stubAllHomeFlags({ management: "true", expenses: "true", household: "false" });
     expect(getSoloHomeFeatureRoute()).toBeNull();
   });
 });

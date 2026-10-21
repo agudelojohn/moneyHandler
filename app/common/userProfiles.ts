@@ -24,5 +24,8 @@ const USER_ID_SET = new Set(APP_USER_PROFILES.map((profile) => profile.userId));
 export const getAppUserByKey = (key: AppUserKey) =>
   APP_USER_PROFILES.find((profile) => profile.key === key) ?? null;
 
+export const getAppUserByUserId = (userId: string) =>
+  APP_USER_PROFILES.find((profile) => profile.userId === userId) ?? null;
+
 export const isValidAppUserId = (userId: string | null | undefined): userId is string =>
   typeof userId === "string" && USER_ID_SET.has(userId);

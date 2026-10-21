@@ -1,12 +1,13 @@
 /** Flags públicas de home. Se leen en runtime para poder stubbearlas en tests. */
 
-export type HomeFeature = "management" | "expenses";
+export type HomeFeature = "management" | "expenses" | "household";
 
-const HOME_FEATURES: HomeFeature[] = ["management", "expenses"];
+const HOME_FEATURES: HomeFeature[] = ["management", "expenses", "household"];
 
 const HOME_FEATURE_ROUTES: Record<HomeFeature, string> = {
   management: "/management",
   expenses: "/expenses",
+  household: "/household",
 };
 
 const DEFAULT_ENABLED = true;
@@ -31,6 +32,8 @@ export function isHomeFeatureEnabled(feature: HomeFeature): boolean {
       return parsePublicFlag(process.env.NEXT_PUBLIC_FEATURE_MANAGEMENT);
     case "expenses":
       return parsePublicFlag(process.env.NEXT_PUBLIC_FEATURE_EXPENSES);
+    case "household":
+      return parsePublicFlag(process.env.NEXT_PUBLIC_FEATURE_HOUSEHOLD);
   }
 }
 

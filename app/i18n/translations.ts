@@ -11,14 +11,42 @@ type TranslationSchema = {
     english: string;
     switchLanguage: string;
     backToHome: string;
+    developmentMode: string;
   };
   home: {
     title: string;
     subtitle: string;
     managementButton: string;
     expensesButton: string;
+    householdButton: string;
     noActiveModules: string;
     noActiveModulesDescription: string;
+  };
+  household: {
+    title: string;
+    pendingSection: string;
+    doneSection: string;
+    descriptionLabel: string;
+    addTask: string;
+    save: string;
+    cancel: string;
+    edit: string;
+    delete: string;
+    deleteConfirm: string;
+    markDoneAria: string;
+    editAria: string;
+    deleteAria: string;
+    emptyPending: string;
+    emptyDone: string;
+    loadError: string;
+    createError: string;
+    updateError: string;
+    deleteError: string;
+    markDoneError: string;
+    descriptionRequired: string;
+    selectUser: string;
+    doneBy: string;
+    updateDate: string;
   };
   management: {
     staticPayments: string;
@@ -215,14 +243,42 @@ export const translations: Record<Locale, TranslationSchema> = {
       english: "Ingles",
       switchLanguage: "Cambiar idioma",
       backToHome: "Volver al inicio",
+      developmentMode: "Modo desarrollo",
     },
     home: {
       title: "Bienvenido!",
       subtitle: "Selecciona el modulo que quieres abrir.",
       managementButton: "Gestion de dinero",
       expensesButton: "Historial de precios",
+      householdButton: "Pendientes hogar",
       noActiveModules: "No hay módulos activos.",
       noActiveModulesDescription: "Ninguna funcionalidad está habilitada en este momento.",
+    },
+    household: {
+      title: "Pendientes hogar",
+      pendingSection: "Pendientes",
+      doneSection: "Hechas",
+      descriptionLabel: "Nueva tarea",
+      addTask: "Agregar",
+      save: "Guardar",
+      cancel: "Cancelar",
+      edit: "Editar",
+      delete: "Eliminar",
+      deleteConfirm: "¿Seguro que quieres eliminar esta tarea?",
+      markDoneAria: "Marcar como hecha",
+      editAria: "Editar tarea",
+      deleteAria: "Eliminar tarea",
+      emptyPending: "No hay tareas pendientes.",
+      emptyDone: "Aun no hay tareas hechas.",
+      loadError: "No se pudieron cargar las tareas.",
+      createError: "No se pudo crear la tarea.",
+      updateError: "No se pudo actualizar la tarea.",
+      deleteError: "No se pudo eliminar la tarea.",
+      markDoneError: "No se pudo marcar la tarea como hecha.",
+      descriptionRequired: "La descripcion es obligatoria.",
+      selectUser: "Debes seleccionar un usuario en la pantalla principal.",
+      doneBy: "Hecha por",
+      updateDate: "Fecha",
     },
     management: {
       staticPayments: "Pagos fijos",
@@ -404,14 +460,42 @@ export const translations: Record<Locale, TranslationSchema> = {
       english: "English",
       switchLanguage: "Switch language",
       backToHome: "Back to home",
+      developmentMode: "Development mode",
     },
     home: {
       title: "Welcome!",
       subtitle: "Select the module you want to open.",
       managementButton: "Money management",
       expensesButton: "Price history",
+      householdButton: "Household tasks",
       noActiveModules: "There are no active modules.",
       noActiveModulesDescription: "No features are enabled right now.",
+    },
+    household: {
+      title: "Household tasks",
+      pendingSection: "Pending",
+      doneSection: "Done",
+      descriptionLabel: "New task",
+      addTask: "Add",
+      save: "Save",
+      cancel: "Cancel",
+      edit: "Edit",
+      delete: "Delete",
+      deleteConfirm: "Are you sure you want to delete this task?",
+      markDoneAria: "Mark as done",
+      editAria: "Edit task",
+      deleteAria: "Delete task",
+      emptyPending: "There are no pending tasks.",
+      emptyDone: "There are no completed tasks yet.",
+      loadError: "Could not load the tasks.",
+      createError: "Could not create the task.",
+      updateError: "Could not update the task.",
+      deleteError: "Could not delete the task.",
+      markDoneError: "Could not mark the task as done.",
+      descriptionRequired: "The description is required.",
+      selectUser: "You must select a user on the home screen.",
+      doneBy: "Done by",
+      updateDate: "Date",
     },
     management: {
       staticPayments: "Static payments",

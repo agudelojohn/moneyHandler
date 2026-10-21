@@ -403,13 +403,11 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
           {t.management.title}
         </Typography>
 
-        {isDevelopment && <>
-          <Alert severity="info" sx={Sx.managementDevAlertSx}>DEVELOPMENT MODE</Alert>
-          {isValidDateString(DEV_INITIAL_REQUEST_DATE) && (
-            <Alert severity="info" sx={Sx.managementDevAlertSx}>
-              Fecha de emulación activa para desarrollo: {DEV_INITIAL_REQUEST_DATE}
-            </Alert>)}
-        </>}
+        {isDevelopment && isValidDateString(DEV_INITIAL_REQUEST_DATE) ? (
+          <Alert severity="info" sx={Sx.managementDevAlertSx}>
+            Fecha de emulación activa para desarrollo: {DEV_INITIAL_REQUEST_DATE}
+          </Alert>
+        ) : null}
 
         {isLoading ? (
           <CircularProgress sx={Sx.managementMainLoadingProgressSx} />

@@ -37,3 +37,4 @@ Calendar days are persisted as UTC ISO but displayed in device-local time. Use `
 
 - **i18n**: every user-visible string (labels, placeholders, aria/title, errors, empty states) must go through i18n. Add the key to `TranslationSchema` and to **both** `es` and `en` in `app/i18n/translations.ts`, then consume via `const { t } = useI18n()` → `t.section.key`. No hardcoded user-facing literals in JSX.
 - **MUI styles**: define styles in a module-level `styles.ts` exported as `XxxSx` constants, used as `sx={Sx.xxx}` with `import * as Sx`. Pull color tokens from `COLORS` in `app/theme.ts`. No substantive inline `sx={{...}}` objects in TSX (extract them when touching existing code).
+- **Responsive (web + mobile)**: every new UI component or layout change must work on desktop and on a ~360px phone. Use MUI breakpoints in `styles.ts` (`xs` column/fullWidth, `sm`+ row when needed). No fixed widths that overflow; don’t use the built-in browser to QA.

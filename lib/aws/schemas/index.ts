@@ -8,3 +8,4 @@ export * from './deleteManagementSchema';
 export * from './updateManagementSchema';
 export * from './categorySchema';
 export * from './categoryConfigSchema';
+export * from './householdTaskSchema';

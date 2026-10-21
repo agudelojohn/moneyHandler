@@ -29,6 +29,16 @@ const mockRouter = {
   bfcacheId: "_b_0_",
 } satisfies AppRouterInstance;
 
+function stubAllHomeFlags(values: {
+  management: string;
+  expenses: string;
+  household: string;
+}) {
+  vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", values.management);
+  vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", values.expenses);
+  vi.stubEnv("NEXT_PUBLIC_FEATURE_HOUSEHOLD", values.household);
+}
+
 function renderHome() {
   return renderWithProviders(
     <AppRouterContext.Provider value={mockRouter}>
@@ -46,38 +56,38 @@ describe("Home (page)", () => {
   });
 
   it("muestra el título principal", () => {
+    stubAllHomeFlags({ management: "true", expenses: "true", household: "true" });
     renderHome();
     expect(screen.getByText(t.title)).toBeInTheDocument();
   });
 
-  it("muestra ambos módulos cuando las flags están encendidas", () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "true");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "true");
+  it("muestra los módulos cuando las flags están encendidas", () => {
+    stubAllHomeFlags({ management: "true", expenses: "true", household: "true" });
 
     renderHome();
 
     expect(screen.getByText(t.managementButton)).toBeInTheDocument();
     expect(screen.getByText(t.expensesButton)).toBeInTheDocument();
+    expect(screen.getByText(t.householdButton)).toBeInTheDocument();
     expect(screen.queryByText(t.noActiveModules)).not.toBeInTheDocument();
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it("no redirige ni muestra el botón de módulo si solo hay una flag y no hay usuario", () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "true");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "false");
+    stubAllHomeFlags({ management: "true", expenses: "false", household: "false" });
 
     renderHome();
 
     expect(screen.getByText(t.title)).toBeInTheDocument();
     expect(screen.queryByText(t.managementButton)).not.toBeInTheDocument();
     expect(screen.queryByText(t.expensesButton)).not.toBeInTheDocument();
+    expect(screen.queryByText(t.householdButton)).not.toBeInTheDocument();
     expect(screen.queryByText(t.noActiveModules)).not.toBeInTheDocument();
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it("redirige a /management si solo management está activo y hay usuario", async () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "true");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "false");
+    stubAllHomeFlags({ management: "true", expenses: "false", household: "false" });
     window.sessionStorage.setItem("money-handler-active-user", "alejo");
 
     renderHome();
@@ -89,8 +99,7 @@ describe("Home (page)", () => {
   });
 
   it("redirige a /expenses si solo expenses está activo y hay usuario", async () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "false");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "true");
+    stubAllHomeFlags({ management: "false", expenses: "true", household: "false" });
     window.sessionStorage.setItem("money-handler-active-user", "alejo");
 
     renderHome();
@@ -101,9 +110,20 @@ describe("Home (page)", () => {
     expect(screen.queryByText(t.expensesButton)).not.toBeInTheDocument();
   });
 
+  it("redirige a /household si solo household está activo y hay usuario", async () => {
+    stubAllHomeFlags({ management: "false", expenses: "false", household: "true" });
+    window.sessionStorage.setItem("money-handler-active-user", "alejo");
+
+    renderHome();
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith("/household");
+    });
+    expect(screen.queryByText(t.householdButton)).not.toBeInTheDocument();
+  });
+
   it("muestra la vista vacía cuando todas las flags están apagadas", () => {
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_MANAGEMENT", "false");
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_EXPENSES", "false");
+    stubAllHomeFlags({ management: "false", expenses: "false", household: "false" });
 
     renderHome();
 
@@ -111,6 +131,7 @@ describe("Home (page)", () => {
     expect(screen.getByText(t.noActiveModulesDescription)).toBeInTheDocument();
     expect(screen.queryByText(t.managementButton)).not.toBeInTheDocument();
     expect(screen.queryByText(t.expensesButton)).not.toBeInTheDocument();
+    expect(screen.queryByText(t.householdButton)).not.toBeInTheDocument();
     expect(mockReplace).not.toHaveBeenCalled();
   });
 });

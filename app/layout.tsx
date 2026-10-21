@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
+import DevelopmentModeLabel from "./components/DevelopmentModeLabel";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import { I18nProvider } from "./i18n/I18nProvider";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
         <Providers>
           <I18nProvider>
             <LanguageSwitcher />
+            {process.env.NODE_ENV === "development" ? <DevelopmentModeLabel /> : null}
             {children}
           </I18nProvider>
         </Providers>

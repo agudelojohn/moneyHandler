@@ -15,7 +15,8 @@ export default function Home() {
   const { activeUser, setActiveUserByKey } = useUserSession();
   const showManagement = isHomeFeatureEnabled("management");
   const showExpenses = isHomeFeatureEnabled("expenses");
-  const hasActiveModules = showManagement || showExpenses;
+  const showHousehold = isHomeFeatureEnabled("household");
+  const hasActiveModules = showManagement || showExpenses || showHousehold;
   const soloRoute = getSoloHomeFeatureRoute();
   const shouldRedirectToSoloModule = Boolean(activeUser && soloRoute);
   const moduleButtonVisibilitySx = activeUser ? Sx.moduleButtonVisibleSx : Sx.moduleButtonHiddenSx;
@@ -91,6 +92,19 @@ export default function Home() {
                 sx={[Sx.expensesButtonSx, moduleButtonVisibilitySx]}
               >
                 {t.home.expensesButton}
+              </Button>
+            </Link>
+          )}
+          {showHousehold && (
+            <Link href="/household" style={{ textDecoration: "none" }}>
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                disabled={!activeUser}
+                sx={[Sx.containedButtonSx, moduleButtonVisibilitySx]}
+              >
+                {t.home.householdButton}
               </Button>
             </Link>
           )}

@@ -1,6 +1,6 @@
 import { COLORS } from "../theme";
 
-const { TEXT_PRIMARY, TEXT_SECONDARY, BORDER_COLOR, BLUE_DEEP } = COLORS;
+const { TEXT_PRIMARY, TEXT_SECONDARY, BORDER_COLOR, BLUE_DEEP, DARK_SURFACE, DARK_BORDER } = COLORS;
 
 export const textFieldSx = {
     "& .MuiInputBase-input": { color: TEXT_PRIMARY },
@@ -57,4 +57,24 @@ export const staticPaymentAmountTextFieldSx = {
 export const staticPaymentDeleteButtonSx = {
     color: "#f87171",
     flexShrink: 0,
+};
+
+export const developmentModeLabelSx = {
+    position: "fixed",
+    bottom: 12,
+    left: 12,
+    zIndex: 2000,
+    px: 1.5,
+    py: 0.75,
+    borderRadius: 2,
+    border: "1px solid",
+    borderColor: DARK_BORDER,
+    backgroundColor: DARK_SURFACE,
+};
+
+export const developmentModeLabelTextSx = {
+    color: TEXT_SECONDARY,
+    fontWeight: 700,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
 };
