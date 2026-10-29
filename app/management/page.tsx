@@ -23,10 +23,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   formatDateAsYyyyMmDd,
   formatDateWithMonthName,
-  getDateFromDateString,
   localCalendarDayToUtcIso,
-  getElapsedDaysInRange,
-  getInclusiveDaysBetween,
   isValidDateString,
 } from "../common/utils/dateHelpers";
 import { useI18n } from "../i18n/I18nProvider";
@@ -42,7 +39,7 @@ import { EditRangeModal } from "./components/EditRangeModal";
 import { useUserSession, withUserIdHeader } from "../common/userSession";
 import { useCategories } from "../common/categoriesSession";
 import { useCategoryConfig } from "../common/categoryConfigSession";
-import { buildManagementFigures } from "./managementFigures";
+import { buildManagementRecordView } from "./utils/recordFigures";
 import ManageCategoriesModal from "./components/ManageCategoriesModal";
 
 // Cambia este valor para emular la fecha de las peticiones en desarrollo.
@@ -421,28 +418,14 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
               </Alert>
             ) : (
               records.map((record) => {
-                const staticPaymentsTotal = record.staticPayments.length > 0 ? record.staticPayments.reduce((sum, item) => sum + item.amount, 0) : 0;
-                const staticPaymentsPaidTotal = record.staticPayments.reduce(
-                  (sum, item) => (item.isPayed ? sum + item.amount : sum),
-                  0
-                );
-                const deductionTotal = record.deductions.reduce((sum, item) => sum + item.amount, 0);
-                const referenceDate = getDateFromDateString(baseRequestDate);
                 const startDate = new Date(record.startDate ?? record.creationDate);
                 const endDate = new Date(record.endDate ?? record.creationDate);
-                const totalDaysInRange = getInclusiveDaysBetween(startDate, endDate);
-                const elapsedDays = getElapsedDaysInRange(referenceDate, startDate, endDate);
-                const figures = buildManagementFigures(
-                  {
-                    initialAmount: record.initialAmount,
-                    staticPaymentsTotal,
-                    deductionTotal,
-                    totalDaysInRange,
-                    elapsedDays,
-                  },
-                  categorySwitches,
-                );
-                const expectedPocket = record.initialAmount - deductionTotal - staticPaymentsPaidTotal;
+                const {
+                  staticPaymentsTotal,
+                  deductionTotal,
+                  expectedPocket,
+                  figures,
+                } = buildManagementRecordView(record, baseRequestDate, categorySwitches);
 
                 return (
                   <Box key={record.id} sx={Sx.containerSx}>
@@ -479,7 +462,7 @@ function ManagementWorkspace({ categoryId: selectedCategoryId }: { categoryId: s
                       <Stack sx={Sx.staticPaymentsSummaryGridSx}>
                         <ItemValueTypography
                           labelText={t.management.staticPayments}
-                          value={currencyFormatter.format(record.staticPayments.reduce((sum, item) => sum + item.amount, 0))}
+                          value={currencyFormatter.format(staticPaymentsTotal)}
                         />
                         <Button
                           type="button"

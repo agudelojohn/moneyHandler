@@ -48,6 +48,11 @@ import {
 import { useUserSession, withUserIdHeader } from "../common/userSession";
 import { useCategories } from "../common/categoriesSession";
 import { MoneyTextField } from "./MoneyTextField";
+import {
+  groupAmountsByDescription,
+  normalizeDescriptionKey,
+  sumExpenseAmounts,
+} from "../expenses/utils/expenseAmounts";
 
 // La categoría se identifica por su `id` dinámico (string).
 type Category = string;
@@ -83,8 +88,6 @@ const toLocalDateInputValue = (date: Date) => formatDateAsYyyyMmDd(date);
 
 const dateInputToUtcMillis = (dateInput: string, endOfDay = false) =>
   new Date(localCalendarDayToUtcIso(dateInput, endOfDay)).getTime();
-const normalizeDescriptionKey = (value: string) =>
-  value.toLowerCase().replaceAll(" ", "");
 
 const initialForm = (categoryId: Category = ""): ExpenseFormState => ({
   amount: "",
@@ -259,25 +262,9 @@ export default function ExpensesDashboard() {
     });
   }, [dateLocale, items, searchValue]);
 
-  const totalAmount = useMemo(
-    () => items.reduce((acc, item) => acc + Number(item.amount), 0),
-    [items]
-  );
+  const totalAmount = useMemo(() => sumExpenseAmounts(items), [items]);
 
-  const descriptionAmountMap = useMemo(() => {
-    const mappedDescriptions = new Map<string, { label: string; amount: number }>();
-    for (const item of items) {
-      const normalizedKey = normalizeDescriptionKey(item.description);
-      const current = mappedDescriptions.get(normalizedKey);
-      mappedDescriptions.set(
-        normalizedKey,
-        current
-          ? { ...current, amount: current.amount + Number(item.amount) }
-          : { label: item.description, amount: Number(item.amount) }
-      );
-    }
-    return mappedDescriptions;
-  }, [items]);
+  const descriptionAmountMap = useMemo(() => groupAmountsByDescription(items), [items]);
 
   const chartItems = useMemo(() => {
     if (!activeCategory || selectedDescription === SELECT_DESCRIPTION) return [];

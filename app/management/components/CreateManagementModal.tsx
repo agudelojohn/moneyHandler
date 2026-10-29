@@ -18,49 +18,22 @@ import { useEffect, useMemo, useState } from "react";
 import {
     formatDateAsYyyyMmDd,
     formatDateWithMonthName,
-    getDateFromDateString,
-    getElapsedDaysInRange,
-    getInclusiveDaysBetween,
     isValidDateRangeOrder,
     isValidDateString,
     parseStoredDateValue,
     utcIsoToLocalCalendarDay,
 } from "../../common/utils/dateHelpers";
 import { useI18n } from "../../i18n/I18nProvider";
-import { buildManagementFigures } from "../managementFigures";
 import { createManagementRecord, getLatestManagementRecord } from "../services/managementApi";
 import { copyStaticPaymentsAsDraft } from "../staticPayments";
 import * as Sx from "../styles";
-import { ManagementRecord, ManagementRecordCreate, StaticPayment } from "../types";
+import { ManagementRecordCreate, StaticPayment } from "../types";
+import { availableAmountFromRecord } from "../utils/recordFigures";
 import { getCategoryLabel } from "@/app/i18n/translations";
 import { useCategories } from "@/app/common/categoriesSession";
 import { useCategoryConfig } from "@/app/common/categoryConfigSession";
-import type { CategorySwitches } from "../categorySwitches";
 import { MoneyTextField } from "@/app/components/MoneyTextField";
 import StaticPaymentField from "@/app/components/StaticPaymentField";
-
-function availableAmountFromRecord(
-    record: ManagementRecord,
-    baseRequestDate: string,
-    switches: CategorySwitches,
-): number {
-    const staticPaymentsTotal = record.staticPayments.reduce((sum, item) => sum + item.amount, 0);
-    const deductionTotal = record.deductions.reduce((sum, item) => sum + item.amount, 0);
-    const referenceDate = getDateFromDateString(baseRequestDate);
-    const startDate = new Date(record.startDate ?? record.creationDate);
-    const endDate = new Date(record.endDate ?? record.creationDate);
-
-    return buildManagementFigures(
-        {
-            initialAmount: record.initialAmount,
-            staticPaymentsTotal,
-            deductionTotal,
-            totalDaysInRange: getInclusiveDaysBetween(startDate, endDate),
-            elapsedDays: getElapsedDaysInRange(referenceDate, startDate, endDate),
-        },
-        switches,
-    ).availableAmount;
-}
 
 interface CreateManagementModalProps {
     openCreateModal: boolean;

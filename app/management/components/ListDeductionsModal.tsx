@@ -30,6 +30,7 @@ import type { Deduction, ManagementRecord } from "../types";
 import { useI18n } from "../../i18n/I18nProvider";
 import { MoneyTextField } from "@/app/components/MoneyTextField";
 import { updateDeductionsInManagementRecord } from "../services/managementApi";
+import { sumCreditAmounts, sumUnpaidCreditAmounts } from "../utils/deductionTotals";
 
 interface ListDeductionsModalProps {
     managementRecord: ManagementRecord | null;
@@ -82,7 +83,7 @@ export const ListDeductionsModal = ({
 
 
     const creditDeductionsTotal = useMemo(
-        () => deductionsCollection.reduce((sum, item) => (item.isCredit ? sum + item.amount : sum), 0),
+        () => sumCreditAmounts(deductionsCollection),
         [deductionsCollection]
     );
 
@@ -222,7 +223,7 @@ export const ListDeductionsModal = ({
 
                     <Stack sx={Sx.actionButtonsStackSx}>
                         {registerCreditPayments && <p>
-                            Total de créditos: {deductionsCollection.reduce((sum, item) => (item.isCredit && !item.isPayed ? sum + item.amount : sum), 0)}
+                            Total de créditos: {sumUnpaidCreditAmounts(deductionsCollection)}
                         </p>}
                         {/* {dataCollection.some(item => item.isCredit && !item.isPayed) && ( */}
                             <Button
