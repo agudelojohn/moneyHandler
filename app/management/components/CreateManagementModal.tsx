@@ -14,24 +14,53 @@ import {
     Checkbox,
     FormControlLabel,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     formatDateAsYyyyMmDd,
     formatDateWithMonthName,
+    getDateFromDateString,
+    getElapsedDaysInRange,
+    getInclusiveDaysBetween,
     isValidDateRangeOrder,
     isValidDateString,
     parseStoredDateValue,
     utcIsoToLocalCalendarDay,
 } from "../../common/utils/dateHelpers";
 import { useI18n } from "../../i18n/I18nProvider";
+import { buildManagementFigures } from "../managementFigures";
 import { createManagementRecord, getLatestManagementRecord } from "../services/managementApi";
 import { copyStaticPaymentsAsDraft } from "../staticPayments";
 import * as Sx from "../styles";
-import { ManagementRecordCreate, StaticPayment } from "../types";
+import { ManagementRecord, ManagementRecordCreate, StaticPayment } from "../types";
 import { getCategoryLabel } from "@/app/i18n/translations";
 import { useCategories } from "@/app/common/categoriesSession";
+import { useCategoryConfig } from "@/app/common/categoryConfigSession";
+import type { CategorySwitches } from "../categorySwitches";
 import { MoneyTextField } from "@/app/components/MoneyTextField";
 import StaticPaymentField from "@/app/components/StaticPaymentField";
+
+function availableAmountFromRecord(
+    record: ManagementRecord,
+    baseRequestDate: string,
+    switches: CategorySwitches,
+): number {
+    const staticPaymentsTotal = record.staticPayments.reduce((sum, item) => sum + item.amount, 0);
+    const deductionTotal = record.deductions.reduce((sum, item) => sum + item.amount, 0);
+    const referenceDate = getDateFromDateString(baseRequestDate);
+    const startDate = new Date(record.startDate ?? record.creationDate);
+    const endDate = new Date(record.endDate ?? record.creationDate);
+
+    return buildManagementFigures(
+        {
+            initialAmount: record.initialAmount,
+            staticPaymentsTotal,
+            deductionTotal,
+            totalDaysInRange: getInclusiveDaysBetween(startDate, endDate),
+            elapsedDays: getElapsedDaysInRange(referenceDate, startDate, endDate),
+        },
+        switches,
+    ).availableAmount;
+}
 
 interface CreateManagementModalProps {
     openCreateModal: boolean;
@@ -54,9 +83,20 @@ export const CreateManagementModal = ({
 }: CreateManagementModalProps) => {
     const { t } = useI18n();
     const { categories } = useCategories();
+    const { getSwitches } = useCategoryConfig();
     const category = categories.find((item) => item.id === categoryId) ?? null;
+    const currencyFormatter = useMemo(
+        () =>
+            new Intl.NumberFormat("es-CO", {
+                style: "currency",
+                currency: "COP",
+                maximumFractionDigits: 0,
+            }),
+        [],
+    );
 
     const [initialAmount, setInitialAmount] = useState("");
+    const [lastAvailableAmount, setLastAvailableAmount] = useState<number | null>(null);
     const [rangeStartDate, setRangeStartDate] = useState(() => formatDateAsYyyyMmDd(new Date()));
     const [rangeEndDate, setRangeEndDate] = useState(() => formatDateAsYyyyMmDd(new Date()));
     const [createError, setCreateError] = useState<string | null>(null);
@@ -78,6 +118,36 @@ export const CreateManagementModal = ({
 
     const hasValidRangeDates = isValidDateString(rangeStartDate) && isValidDateString(rangeEndDate);
     const hasInvalidRangeOrder = hasValidRangeDates && !isValidDateRangeOrder(rangeStartDate, rangeEndDate);
+
+    useEffect(() => {
+        if (!openCreateModal) {
+            return;
+        }
+
+        let cancelled = false;
+        const timeoutId = window.setTimeout(() => {
+            setLastAvailableAmount(null);
+            void getLatestManagementRecord(categoryId, activeUserId)
+                .then((record) => {
+                    if (cancelled || !record) {
+                        return;
+                    }
+                    setLastAvailableAmount(
+                        availableAmountFromRecord(record, baseRequestDate, getSwitches(categoryId)),
+                    );
+                })
+                .catch(() => {
+                    if (!cancelled) {
+                        setLastAvailableAmount(null);
+                    }
+                });
+        }, 0);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timeoutId);
+        };
+    }, [openCreateModal, categoryId, activeUserId, baseRequestDate, getSwitches]);
 
     const handleCreateRecord = async () => {
         const amount = Number(initialAmount);
@@ -164,6 +234,11 @@ export const CreateManagementModal = ({
                 <DialogTitle>{t.management.createManagementTitle}: {category ? getCategoryLabel(category, t) : ""}</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={Sx.createDeductionStackSx}>
+                        {lastAvailableAmount === null ? null : (
+                            <Typography sx={Sx.lastAvailableSx}>
+                                {t.management.lastAvailable}: {currencyFormatter.format(lastAvailableAmount)}
+                            </Typography>
+                        )}
                         <MoneyTextField
                             label={t.management.initialAmount}
                             value={initialAmount}

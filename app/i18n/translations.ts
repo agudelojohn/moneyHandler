@@ -57,6 +57,7 @@ type TranslationSchema = {
     title: string;
     subtitle: string;
     available: string;
+    lastAvailable: string;
     initialAmount: string;
     deductions: string;
     rangeDays: string;
@@ -292,6 +293,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       title: "Management",
       subtitle: "Esta seccion usa la misma paleta del dashboard.",
       available: "Disponible",
+      lastAvailable: "Ultimo disponible",
       initialAmount: "Monto inicial",
       deductions: "Deducciones",
       rangeDays: "Dias del rango",
@@ -512,6 +514,7 @@ export const translations: Record<Locale, TranslationSchema> = {
       title: "Management",
       subtitle: "This section uses the same dashboard color palette.",
       available: "Available",
+      lastAvailable: "Last available",
       initialAmount: "Initial amount",
       deductions: "Deductions",
       rangeDays: "Range days",

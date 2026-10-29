@@ -279,6 +279,12 @@ export const confirmDeleteButtonSx = {
 
 export const createDeductionStackSx = { mt: 1 };
 
+export const lastAvailableSx = {
+    color: TEXT_SECONDARY,
+    fontSize: 14,
+    wordBreak: "break-word",
+};
+
 export const suggestedRangeRowSx = {
     display: "flex",
     flexDirection: { xs: "column", sm: "row" },

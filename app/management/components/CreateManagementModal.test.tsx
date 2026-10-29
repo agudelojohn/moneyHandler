@@ -1,14 +1,24 @@
-import { screen } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateManagementModal } from "@/app/management/components/CreateManagementModal";
 import * as managementApi from "@/app/management/services/managementApi";
 import { translations } from "@/app/i18n/translations";
 import { renderWithProviders } from "@/test/test-utils";
 
+const copFormatter = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "COP",
+  maximumFractionDigits: 0,
+});
+
 describe("CreateManagementModal", () => {
   beforeEach(() => {
     vi.spyOn(managementApi, "createManagementRecord").mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("muestra error de validación si el monto inicial no es válido", async () => {
@@ -144,5 +154,38 @@ describe("CreateManagementModal", () => {
 
     expect(screen.getByText(translations.es.management.noPreviousStaticPayments)).toBeInTheDocument();
     expect(screen.getByDisplayValue("Manual")).toBeInTheDocument();
+    expect(screen.queryByText(translations.es.management.lastAvailable, { exact: false })).not.toBeInTheDocument();
+  });
+
+  it("muestra el disponible del ultimo registro de la categoria", async () => {
+    vi.spyOn(managementApi, "getLatestManagementRecord").mockResolvedValue({
+      id: "prev",
+      categoryId: "GASTOS",
+      initialAmount: 1000,
+      creationDate: "2026-01-01T00:00:00.000Z",
+      startDate: "2026-01-01T00:00:00.000Z",
+      endDate: "2026-01-31T00:00:00.000Z",
+      deductions: [{ description: "Cafe", amount: 100, isCredit: false, isPayed: false }],
+      staticPayments: [
+        { description: "Arriendo", amount: 200, isCredit: false, isPayed: false, paymentDay: null },
+      ],
+    });
+
+    renderWithProviders(
+      <CreateManagementModal
+        openCreateModal
+        setOpenCreateModal={vi.fn()}
+        fetchRecordsByDate={vi.fn()}
+        baseRequestDate="2026-02-01"
+        activeUserId="6b7b7b40"
+        categoryId="GASTOS"
+        suggestedRangeDate={null}
+      />,
+    );
+
+    const expected = `${translations.es.management.lastAvailable}: ${copFormatter.format(700)}`;
+    await waitFor(() => {
+      expect(screen.getByText((_content, element) => element?.textContent === expected)).toBeInTheDocument();
+    });
   });
 });
