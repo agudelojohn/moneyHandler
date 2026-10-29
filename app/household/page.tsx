@@ -10,7 +10,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -35,6 +37,7 @@ export default function HouseholdPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newDescription, setNewDescription] = useState("");
+  const [shared, setShared] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null);
   const [taskToEdit, setTaskToEdit] = useState<HouseholdTask | null>(null);
@@ -88,11 +91,12 @@ export default function HouseholdPage() {
     setIsSaving(true);
     setError(null);
     try {
-      const created = await createHouseholdTask(description, activeUser.userId);
+      const created = await createHouseholdTask(description, activeUser.userId, shared);
       setTasks((current) =>
         [...current, created].sort((left, right) => left.creationDate.localeCompare(right.creationDate)),
       );
       setNewDescription("");
+      setShared(true);
     } catch {
       setError(t.household.createError);
     } finally {
@@ -187,23 +191,39 @@ export default function HouseholdPage() {
                 event.preventDefault();
                 void handleCreate();
               }}
-              sx={Sx.createRowSx}
+              sx={Sx.createFormSx}
             >
-              <TextField
-                label={t.household.descriptionLabel}
-                value={newDescription}
-                onChange={(event) => setNewDescription(event.target.value)}
-                fullWidth
-                sx={Sx.textFieldSx}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={isSaving}
-                sx={Sx.addButtonSx}
-              >
-                {t.household.addTask}
-              </Button>
+              <Stack sx={Sx.createRowSx}>
+                <TextField
+                  label={t.household.descriptionLabel}
+                  value={newDescription}
+                  onChange={(event) => setNewDescription(event.target.value)}
+                  fullWidth
+                  sx={Sx.textFieldSx}
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={shared}
+                      onChange={(_, checked) => setShared(checked)}
+                      sx={Sx.sharedSwitchSx}
+                    />
+                  }
+                  label={t.household.sharedSwitch}
+                  sx={Sx.sharedSwitchLabelSx}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSaving}
+                  sx={Sx.addButtonSx}
+                >
+                  {t.household.addTask}
+                </Button>
+              </Stack>
+              {shared ? null : (
+                <Typography sx={Sx.personalHintSx}>{t.household.personalHint}</Typography>
+              )}
             </Stack>
             {isLoading ? (
               <Stack sx={Sx.loadingStackSx}>

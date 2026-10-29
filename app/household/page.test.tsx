@@ -17,6 +17,7 @@ const pendingTask: HouseholdTask = {
   lastUpdatedBy: "6b7b7b40",
   doneBy: null,
   status: "pending",
+  visibility: "shared",
 };
 
 const doneTask: HouseholdTask = {
@@ -28,6 +29,7 @@ const doneTask: HouseholdTask = {
   lastUpdatedBy: "8cfdbf65",
   doneBy: "8cfdbf65",
   status: "done",
+  visibility: "shared",
 };
 
 describe("HouseholdPage", () => {
@@ -50,7 +52,7 @@ describe("HouseholdPage", () => {
           });
         }
         if (url.includes("/api/household-tasks") && init?.method === "POST") {
-          const body = JSON.parse(String(init.body ?? "{}")) as { description?: string };
+          const body = JSON.parse(String(init.body ?? "{}")) as { description?: string; shared?: boolean };
           return Promise.resolve({
             ok: true,
             json: async () => ({
@@ -62,6 +64,7 @@ describe("HouseholdPage", () => {
               lastUpdatedBy: "6b7b7b40",
               doneBy: null,
               status: "pending",
+              visibility: body.shared === false ? "personal" : "shared",
             }),
           });
         }
@@ -138,9 +141,35 @@ describe("HouseholdPage", () => {
         "/api/household-tasks",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ description: "Comprar pan" }),
+          body: JSON.stringify({ description: "Comprar pan", shared: true }),
         }),
       );
     });
+  });
+
+  it("crea una tarea individual cuando el switch esta apagado", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<HouseholdPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(pendingTask.description)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("switch", { name: t.sharedSwitch }));
+    expect(screen.getByText(t.personalHint)).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(t.descriptionLabel), "Llamar al banco{Enter}");
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/household-tasks",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ description: "Llamar al banco", shared: false }),
+        }),
+      );
+    });
+
+    expect(screen.getByText(t.personalBadge)).toBeInTheDocument();
   });
 });

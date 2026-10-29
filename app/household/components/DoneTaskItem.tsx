@@ -18,7 +18,12 @@ export function DoneTaskItem({ task }: DoneTaskItemProps) {
 
   return (
     <Stack sx={Sx.doneItemRowSx} spacing={0.5}>
-      <Typography sx={Sx.descriptionSx}>{task.description}</Typography>
+      <Stack spacing={0.25} sx={Sx.descriptionStackSx}>
+        <Typography sx={Sx.descriptionSx}>{task.description}</Typography>
+        {task.visibility === "personal" ? (
+          <Typography sx={Sx.personalBadgeSx}>{t.household.personalBadge}</Typography>
+        ) : null}
+      </Stack>
       <Typography sx={Sx.doneMetaSx}>
         {t.household.doneBy}: {doneByLabel}
       </Typography>

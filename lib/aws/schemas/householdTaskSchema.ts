@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const householdTaskStatusSchema = z.enum(["pending", "done"]);
 
+export const householdTaskVisibilitySchema = z.enum(["shared", "personal"]);
+
+export type HouseholdTaskVisibility = z.infer<typeof householdTaskVisibilitySchema>;
+
 export const householdTaskSchema = z.object({
   id: z.string().min(1),
   description: z.string().min(1),
@@ -11,6 +15,7 @@ export const householdTaskSchema = z.object({
   lastUpdatedBy: z.string().min(1),
   doneBy: z.string().nullable(),
   status: householdTaskStatusSchema,
+  visibility: householdTaskVisibilitySchema,
 });
 
 export type HouseholdTask = z.infer<typeof householdTaskSchema>;
@@ -21,6 +26,7 @@ export const createHouseholdTaskSchema = z.object({
     .trim()
     .min(1, "La descripcion es obligatoria")
     .max(200, "Maximo 200 caracteres"),
+  shared: z.boolean().default(true),
 });
 
 export const patchHouseholdTaskSchema = z

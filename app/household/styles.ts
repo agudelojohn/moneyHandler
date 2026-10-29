@@ -49,11 +49,52 @@ export const contentStackSx = {
   minWidth: 0,
 };
 
+export const createFormSx = {
+  gap: 1,
+  mb: 3,
+  minWidth: 0,
+};
+
 export const createRowSx = {
   flexDirection: { xs: "column", sm: "row" },
   alignItems: { xs: "stretch", sm: "center" },
   gap: 1.5,
-  mb: 3,
+};
+
+export const sharedSwitchLabelSx = {
+  color: TEXT_PRIMARY,
+  m: 0,
+  flexShrink: 0,
+  "& .MuiFormControlLabel-label": {
+    color: TEXT_PRIMARY,
+  },
+};
+
+export const sharedSwitchSx = {
+  "& .MuiSwitch-switchBase.Mui-checked": {
+    color: BLUE_ACCENT,
+  },
+  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+    backgroundColor: BLUE_ACCENT,
+  },
+};
+
+export const personalHintSx = {
+  color: TEXT_SECONDARY,
+  fontSize: 13,
+};
+
+export const personalBadgeSx = {
+  color: BLUE_ACCENT,
+  fontSize: 12,
+  fontWeight: 600,
+  flexShrink: 0,
+};
+
+export const descriptionStackSx = {
+  flex: 1,
+  minWidth: 0,
+  alignItems: "flex-start",
 };
 
 export const addButtonSx = {
@@ -116,7 +157,6 @@ export const doneItemRowSx = {
 
 export const descriptionSx = {
   color: TEXT_PRIMARY,
-  flex: 1,
   minWidth: 0,
   wordBreak: "break-word",
 };

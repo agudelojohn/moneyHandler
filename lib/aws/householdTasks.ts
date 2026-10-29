@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { db, TABLE_NAME } from "./dynamo";
-import type { HouseholdTask } from "./schemas/householdTaskSchema";
+import type { HouseholdTask, HouseholdTaskVisibility } from "./schemas/householdTaskSchema";
 
 const HOUSEHOLD_TASKS_PK = "HOUSEHOLD#TASKS";
 const TASK_TYPE = "HOUSEHOLD_TASK";
@@ -28,6 +28,13 @@ export class HouseholdTaskNotPendingError extends Error {
   }
 }
 
+export class HouseholdTaskForbiddenError extends Error {
+  constructor() {
+    super("No puedes modificar esta tarea");
+    this.name = "HouseholdTaskForbiddenError";
+  }
+}
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -50,6 +57,8 @@ function toHouseholdTask(item: Record<string, unknown>): HouseholdTask | null {
     return null;
   }
 
+  const visibility: HouseholdTaskVisibility = item.visibility === "personal" ? "personal" : "shared";
+
   return {
     id: item.id,
     description: item.description,
@@ -59,7 +68,14 @@ function toHouseholdTask(item: Record<string, unknown>): HouseholdTask | null {
     lastUpdatedBy: item.lastUpdatedBy,
     doneBy: typeof item.doneBy === "string" ? item.doneBy : null,
     status: item.status,
+    visibility,
   };
+}
+
+function assertCanMutate(task: HouseholdTask, actorUserId: string): void {
+  if (task.visibility === "personal" && task.createdBy !== actorUserId) {
+    throw new HouseholdTaskForbiddenError();
+  }
 }
 
 async function putHouseholdTaskItem(task: HouseholdTask): Promise<void> {
@@ -93,7 +109,7 @@ export async function getHouseholdTask(id: string): Promise<HouseholdTask | null
   return toHouseholdTask(result.Item);
 }
 
-export async function listHouseholdTasks(): Promise<HouseholdTask[]> {
+export async function listHouseholdTasks(userId: string): Promise<HouseholdTask[]> {
   const result = await db.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -108,10 +124,15 @@ export async function listHouseholdTasks(): Promise<HouseholdTask[]> {
   return (result.Items ?? [])
     .map((item) => toHouseholdTask(item))
     .filter((task): task is HouseholdTask => task !== null)
+    .filter((task) => task.visibility === "shared" || task.createdBy === userId)
     .sort((left, right) => left.creationDate.localeCompare(right.creationDate));
 }
 
-export async function createHouseholdTask(description: string, createdBy: string): Promise<HouseholdTask> {
+export async function createHouseholdTask(
+  description: string,
+  createdBy: string,
+  visibility: HouseholdTaskVisibility,
+): Promise<HouseholdTask> {
   const timestamp = nowIso();
   const task: HouseholdTask = {
     id: buildUniqueId(),
@@ -122,6 +143,7 @@ export async function createHouseholdTask(description: string, createdBy: string
     lastUpdatedBy: createdBy,
     doneBy: null,
     status: "pending",
+    visibility,
   };
   await putHouseholdTaskItem(task);
   return task;
@@ -136,6 +158,7 @@ export async function updateHouseholdTaskDescription(
   if (!existing) {
     throw new HouseholdTaskNotFoundError();
   }
+  assertCanMutate(existing, lastUpdatedBy);
   if (existing.status !== "pending") {
     throw new HouseholdTaskNotPendingError();
   }
@@ -155,6 +178,7 @@ export async function markHouseholdTaskDone(id: string, doneBy: string): Promise
   if (!existing) {
     throw new HouseholdTaskNotFoundError();
   }
+  assertCanMutate(existing, doneBy);
   if (existing.status !== "pending") {
     throw new HouseholdTaskNotPendingError();
   }
@@ -171,11 +195,12 @@ export async function markHouseholdTaskDone(id: string, doneBy: string): Promise
   return updated;
 }
 
-export async function deleteHouseholdTask(id: string): Promise<void> {
+export async function deleteHouseholdTask(id: string, actorUserId: string): Promise<void> {
   const existing = await getHouseholdTask(id);
   if (!existing) {
     throw new HouseholdTaskNotFoundError();
   }
+  assertCanMutate(existing, actorUserId);
   if (existing.status !== "pending") {
     throw new HouseholdTaskNotPendingError();
   }

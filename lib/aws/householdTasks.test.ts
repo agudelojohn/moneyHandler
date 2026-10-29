@@ -13,6 +13,7 @@ vi.hoisted(() => {
 
 import { db } from "./dynamo";
 import {
+  HouseholdTaskForbiddenError,
   HouseholdTaskNotPendingError,
   createHouseholdTask,
   listHouseholdTasks,
@@ -30,6 +31,7 @@ const pendingTask: HouseholdTask = {
   lastUpdatedBy: "6b7b7b40",
   doneBy: null,
   status: "pending",
+  visibility: "shared",
 };
 
 const olderTask: HouseholdTask = {
@@ -61,10 +63,11 @@ describe("householdTasks DAO", () => {
   it("crea una tarea pending con auditoria del usuario", async () => {
     const send = vi.spyOn(db, "send").mockResolvedValue({} as never);
 
-    const created = await createHouseholdTask("Comprar pan", "6b7b7b40");
+    const created = await createHouseholdTask("Comprar pan", "6b7b7b40", "shared");
 
     expect(created.description).toBe("Comprar pan");
     expect(created.status).toBe("pending");
+    expect(created.visibility).toBe("shared");
     expect(created.createdBy).toBe("6b7b7b40");
     expect(created.lastUpdatedBy).toBe("6b7b7b40");
     expect(created.doneBy).toBeNull();
@@ -76,7 +79,7 @@ describe("householdTasks DAO", () => {
       Items: [pendingTask, olderTask],
     } as never);
 
-    const tasks = await listHouseholdTasks();
+    const tasks = await listHouseholdTasks("6b7b7b40");
 
     expect(tasks.map((task) => task.id)).toEqual(["task-0", "task-1"]);
   });
@@ -100,6 +103,51 @@ describe("householdTasks DAO", () => {
 
     await expect(updateHouseholdTaskDescription("task-done", "Otra", "6b7b7b40")).rejects.toBeInstanceOf(
       HouseholdTaskNotPendingError,
+    );
+  });
+
+  it("crea una tarea personal", async () => {
+    vi.spyOn(db, "send").mockResolvedValue({} as never);
+
+    const created = await createHouseholdTask("Llamar al banco", "6b7b7b40", "personal");
+
+    expect(created.visibility).toBe("personal");
+    expect(created.createdBy).toBe("6b7b7b40");
+  });
+
+  it("lista las compartidas y las personales del usuario", async () => {
+    const legacyShared: Record<string, unknown> = { ...olderTask };
+    delete legacyShared.visibility;
+    const personalMine: HouseholdTask = {
+      ...pendingTask,
+      id: "mine",
+      visibility: "personal",
+    };
+    const personalOther: HouseholdTask = {
+      ...pendingTask,
+      id: "other",
+      description: "Privada de otro",
+      createdBy: "8cfdbf65",
+      visibility: "personal",
+    };
+
+    vi.spyOn(db, "send").mockResolvedValue({
+      Items: [personalOther, personalMine, legacyShared],
+    } as never);
+
+    const tasks = await listHouseholdTasks("6b7b7b40");
+
+    expect(tasks.map((task) => task.id)).toEqual(["task-0", "mine"]);
+    expect(tasks.find((task) => task.id === "task-0")?.visibility).toBe("shared");
+  });
+
+  it("rechaza modificar una tarea personal de otro usuario", async () => {
+    vi.spyOn(db, "send").mockResolvedValue({
+      Item: { ...pendingTask, visibility: "personal", createdBy: "8cfdbf65" },
+    } as never);
+
+    await expect(updateHouseholdTaskDescription("task-1", "Otra", "6b7b7b40")).rejects.toBeInstanceOf(
+      HouseholdTaskForbiddenError,
     );
   });
 });

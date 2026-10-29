@@ -19,11 +19,15 @@ export async function listHouseholdTasks(userId: string): Promise<HouseholdTask[
   return Array.isArray(data) ? data : [];
 }
 
-export async function createHouseholdTask(description: string, userId: string): Promise<HouseholdTask> {
+export async function createHouseholdTask(
+  description: string,
+  userId: string,
+  shared: boolean,
+): Promise<HouseholdTask> {
   const response = await fetch(HOUSEHOLD_TASKS_ENDPOINT, {
     method: "POST",
     headers: withUserIdHeader(userId, { "Content-Type": "application/json" }),
-    body: JSON.stringify({ description }),
+    body: JSON.stringify({ description, shared }),
   });
   if (!response.ok) {
     await parseError(response, "No se pudo crear la tarea");

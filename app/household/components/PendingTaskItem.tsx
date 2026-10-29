@@ -25,7 +25,12 @@ export function PendingTaskItem({
 
   return (
     <Stack sx={Sx.pendingItemRowSx}>
-      <Typography sx={Sx.descriptionSx}>{task.description}</Typography>
+      <Stack spacing={0.25} sx={Sx.descriptionStackSx}>
+        <Typography sx={Sx.descriptionSx}>{task.description}</Typography>
+        {task.visibility === "personal" ? (
+          <Typography sx={Sx.personalBadgeSx}>{t.household.personalBadge}</Typography>
+        ) : null}
+      </Stack>
       <Stack spacing={0.5} sx={Sx.pendingActionsRowSx}>
         <IconButton
           aria-label={t.household.markDoneAria}

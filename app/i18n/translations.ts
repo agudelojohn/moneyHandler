@@ -47,6 +47,9 @@ type TranslationSchema = {
     selectUser: string;
     doneBy: string;
     updateDate: string;
+    sharedSwitch: string;
+    personalHint: string;
+    personalBadge: string;
   };
   management: {
     staticPayments: string;
@@ -279,6 +282,9 @@ export const translations: Record<Locale, TranslationSchema> = {
       selectUser: "Debes seleccionar un usuario en la pantalla principal.",
       doneBy: "Hecha por",
       updateDate: "Fecha",
+      sharedSwitch: "Visible para todos",
+      personalHint: "Si lo apagas, solo tu veras esta tarea.",
+      personalBadge: "Solo yo",
     },
     management: {
       staticPayments: "Pagos fijos",
@@ -496,6 +502,9 @@ export const translations: Record<Locale, TranslationSchema> = {
       selectUser: "You must select a user on the home screen.",
       doneBy: "Done by",
       updateDate: "Date",
+      sharedSwitch: "Visible to everyone",
+      personalHint: "If you turn it off, only you will see this task.",
+      personalBadge: "Only me",
     },
     management: {
       staticPayments: "Static payments",

@@ -6,6 +6,7 @@ import {
   patchHouseholdTaskSchema,
 } from "@/lib/aws/schemas";
 import {
+  HouseholdTaskForbiddenError,
   HouseholdTaskNotFoundError,
   HouseholdTaskNotPendingError,
   createHouseholdTask,
@@ -19,6 +20,9 @@ function mapDaoError(error: unknown) {
   if (error instanceof HouseholdTaskNotFoundError) {
     return NextResponse.json({ error: error.message }, { status: 404 });
   }
+  if (error instanceof HouseholdTaskForbiddenError) {
+    return NextResponse.json({ error: error.message }, { status: 403 });
+  }
   if (error instanceof HouseholdTaskNotPendingError) {
     return NextResponse.json({ error: error.message }, { status: 409 });
   }
@@ -26,13 +30,13 @@ function mapDaoError(error: unknown) {
 }
 
 export async function GET(request: Request) {
-  const { errorResponse } = getUserIdFromRequest(request);
-  if (errorResponse) {
-    return errorResponse;
+  const { userId, errorResponse } = getUserIdFromRequest(request);
+  if (errorResponse || !userId) {
+    return errorResponse ?? NextResponse.json({ error: "Usuario inválido o no seleccionado" }, { status: 401 });
   }
 
   try {
-    const tasks = await listHouseholdTasks();
+    const tasks = await listHouseholdTasks(userId);
     return NextResponse.json(tasks);
   } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
@@ -55,7 +59,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const task = await createHouseholdTask(parsed.data.description, userId);
+    const visibility = parsed.data.shared ? "shared" : "personal";
+    const task = await createHouseholdTask(parsed.data.description, userId, visibility);
     return NextResponse.json(task, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
@@ -95,9 +100,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { errorResponse } = getUserIdFromRequest(request);
-  if (errorResponse) {
-    return errorResponse;
+  const { userId, errorResponse } = getUserIdFromRequest(request);
+  if (errorResponse || !userId) {
+    return errorResponse ?? NextResponse.json({ error: "Usuario inválido o no seleccionado" }, { status: 401 });
   }
 
   try {
@@ -110,7 +115,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    await deleteHouseholdTask(parsed.data.id);
+    await deleteHouseholdTask(parsed.data.id, userId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return mapDaoError(error);
